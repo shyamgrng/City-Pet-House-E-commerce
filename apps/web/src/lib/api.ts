@@ -35,11 +35,18 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   return res.json();
 }
 
+const API_ORIGIN = API_BASE.replace(/\/api\/v1$/, "");
+
+/** Resolves an API-relative path (e.g. a stored `/uploads/xxx.png`) to a fetchable URL. */
+export function resolveUploadUrl(path: string): string {
+  return path.startsWith("http") ? path : `${API_ORIGIN}${path}`;
+}
+
 export async function uploadFile(file: File): Promise<{ url: string }> {
   const form = new FormData();
   form.append("file", file);
   const res = await fetch(`${API_BASE}/uploads`, { method: "POST", body: form });
   if (!res.ok) throw new ApiError(res.status, "Upload failed");
   const data = await res.json();
-  return { url: `${API_BASE.replace(/\/api\/v1$/, "")}${data.url}` };
+  return { url: resolveUploadUrl(data.url) };
 }

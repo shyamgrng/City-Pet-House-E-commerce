@@ -392,6 +392,7 @@ model OrderStatusEvent {
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   stage     String
   actor     String?
+  note      String?
   at        DateTime @default(now())
 
   @@index([orderId])

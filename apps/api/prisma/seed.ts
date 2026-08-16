@@ -258,8 +258,29 @@ async function main() {
     }
   }
 
+  // Admin staff account — matches the prototype's usersData (admin@citypethouse.com / admin123).
+  // No self-registration: staff accounts are provisioned, so this is seed-only.
+  const ADMIN_SECTIONS = ["dashboard", "deliveries", "vetconsults", "shop", "finance", "users"];
+  const adminPassword = await argon2.hash("admin123");
+  await prisma.user.upsert({
+    where: { email: "admin@citypethouse.com" },
+    update: {},
+    create: {
+      email: "admin@citypethouse.com",
+      passwordHash: adminPassword,
+      role: "ADMIN_STAFF",
+      adminProfile: {
+        create: {
+          name: "Admin User",
+          role: "Admin",
+          permissions: { create: ADMIN_SECTIONS.map((section) => ({ section, granted: true })) },
+        },
+      },
+    },
+  });
+
   // eslint-disable-next-line no-console
-  console.log("Seed complete. Demo pet-owner login: eva.gurung@gmail.com / password123");
+  console.log("Seed complete. Pet-owner login: eva.gurung@gmail.com / password123 — Admin login: admin@citypethouse.com / admin123");
 }
 
 main()
