@@ -2,6 +2,9 @@ import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { Rail } from "@/components/Rail";
 import { ProductCard, ProductCardData } from "@/components/ProductCard";
+import { PromoBanner } from "@/components/PromoBanner";
+import { TestimonialCard, TestimonialData } from "@/components/TestimonialCard";
+import { BlogPostCard, BlogPostData } from "@/components/BlogPostCard";
 
 const CATEGORIES = [
   { label: "Dog", species: "Dog" },
@@ -11,20 +14,42 @@ const CATEGORIES = [
   { label: "Fish", species: "Fish" },
 ];
 
+interface Brand {
+  id: string;
+  name: string;
+  logo: string | null;
+}
+
 async function getDeals() {
   return apiFetch<ProductCardData[]>("/products/deals/today").catch(() => []);
 }
 
-async function getPetFood() {
-  return apiFetch<ProductCardData[]>("/products?category=Pet Food").catch(() => []);
+async function getByCategory(category: string) {
+  return apiFetch<ProductCardData[]>(`/products?category=${encodeURIComponent(category)}`).catch(() => []);
 }
 
-async function getFashionWear() {
-  return apiFetch<ProductCardData[]>("/products?category=Fashion Wear").catch(() => []);
+async function getBrands() {
+  return apiFetch<Brand[]>("/brands").catch(() => []);
+}
+
+async function getTestimonials() {
+  return apiFetch<TestimonialData[]>("/testimonials").catch(() => []);
+}
+
+async function getLatestBlogPosts() {
+  return apiFetch<BlogPostData[]>("/blog-posts?limit=3").catch(() => []);
 }
 
 export default async function HomePage() {
-  const [deals, petFood, fashionWear] = await Promise.all([getDeals(), getPetFood(), getFashionWear()]);
+  const [deals, petFood, fashionWear, groomingAccessories, brands, testimonials, blogPosts] = await Promise.all([
+    getDeals(),
+    getByCategory("Pet Food"),
+    getByCategory("Fashion Wear"),
+    getByCategory("Grooming Supplies"),
+    getBrands(),
+    getTestimonials(),
+    getLatestBlogPosts(),
+  ]);
 
   return (
     <div>
@@ -79,6 +104,63 @@ export default async function HomePage() {
             <ProductCard key={p.id} product={p} />
           ))}
         </Rail>
+      )}
+
+      {groomingAccessories.length > 0 && (
+        <Rail title="Grooming Accessories" viewAllHref="/shop?category=Grooming Supplies">
+          {groomingAccessories.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
+        </Rail>
+      )}
+
+      <PromoBanner
+        title="Professional Grooming for a Happier, Healthier Pet"
+        ctaLabel="Book Now"
+        ctaHref="tel:+9779851313717"
+        height="220px"
+        accent="success"
+      />
+
+      {brands.length > 0 && (
+        <section className="mx-auto max-w-7xl px-6 py-8">
+          <h2 className="mb-4 text-[20px]">Shop by Brand</h2>
+          <div className="grid grid-cols-4 gap-4 sm:grid-cols-8">
+            {brands.map((brand) => (
+              <Link
+                key={brand.id}
+                href={`/shop?brand=${encodeURIComponent(brand.name)}`}
+                className="flex flex-col items-center gap-2"
+              >
+                <span className="flex h-20 w-20 items-center justify-center rounded-full border border-border bg-bg-surface text-[11px] text-text-muted">
+                  {brand.name}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {testimonials.length > 0 && (
+        <section className="mx-auto max-w-7xl px-6 py-8">
+          <h2 className="mb-4 text-[20px]">Our Happy Customers</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {testimonials.map((t) => (
+              <TestimonialCard key={t.id} testimonial={t} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {blogPosts.length > 0 && (
+        <section className="mx-auto max-w-7xl px-6 py-8">
+          <h2 className="mb-4 text-[20px]">Latest from the Blog</h2>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {blogPosts.map((post) => (
+              <BlogPostCard key={post.id} post={post} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

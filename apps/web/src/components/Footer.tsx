@@ -1,32 +1,127 @@
 import Link from "next/link";
+import Image from "next/image";
+
+const GENERAL_LINKS = [
+  { href: "/about", label: "About Us" },
+  { href: "/careers", label: "Career" },
+  { href: "/pet-tags", label: "Pet Tag Archive" },
+  { href: "/microchip-archive", label: "Microchipping Archive" },
+  { href: "/dog-breeds", label: "Dog Breed Archive" },
+  { href: "/terms", label: "Terms & Conditions" },
+  { href: "/privacy", label: "Privacy Policy" },
+];
+
+const CUSTOMER_CARE_LINKS = [
+  { href: "/faq", label: "FAQ" },
+  { href: "/how-to-buy", label: "How to Buy" },
+  { href: "/refund-policy", label: "Return & Refund" },
+  { href: "/contact", label: "Contact Us" },
+];
+
+const QUICK_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/shop", label: "Shop" },
+  { href: "/pets", label: "Pets Available" },
+  { href: "/adoption", label: "Adoption" },
+  { href: "/vet", label: "Web Vet" },
+];
+
+// Presentational only — no Services feature/detail pages exist yet, so
+// these aren't links (see the home-page grooming banner note on the same
+// gap). Keeping the column non-clickable is more honest than routing it
+// to pages that don't exist.
+const SERVICE_NAMES = [
+  "Dog & Cat Microchipping",
+  "Dog & Cat Vaccination",
+  "Pet Grooming",
+  "Surgery",
+  "Clinical Treatment",
+  "Home Treatment",
+];
 
 export function Footer() {
   return (
-    <footer className="mt-16 border-t border-border bg-white">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-6 py-10 text-[13px] text-text-secondary sm:grid-cols-4">
-        <div>
-          <p className="mb-3 font-heading font-bold text-text-dark">City Pet House</p>
-          <p>Boudha, Gokarneshwor-6, Kathmandu</p>
-          <p>+977 9851313717</p>
-          <p>9:00 AM – 7:00 PM, daily</p>
+    <footer className="mt-16 bg-text-dark text-[#C9CFD4]">
+      <div className="mx-auto max-w-7xl px-6 pb-6 pt-11">
+        <div className="mb-7 flex items-center gap-3">
+          <Image src="/cph-logo.jpeg" alt="City Pet House logo" width={40} height={40} className="rounded-control" />
+          <span className="font-heading text-[22px] font-bold text-white">City Pet House</span>
         </div>
-        <div>
-          <p className="mb-3 font-semibold text-text-dark">Shop</p>
-          <Link href="/shop" className="block py-1 hover:text-primary">All Products</Link>
-          <Link href="/pets" className="block py-1 hover:text-primary">Pets Available</Link>
-          <Link href="/adoption" className="block py-1 hover:text-primary">Adoption</Link>
+
+        <div className="mb-7 grid grid-cols-2 gap-7 sm:grid-cols-3 lg:grid-cols-5">
+          <div>
+            <p className="mb-3 text-[15px] font-bold text-white">General</p>
+            <ul className="flex flex-col gap-2 text-[14px]">
+              {GENERAL_LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="hover:text-white">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="mb-3 text-[15px] font-bold text-white">Customer Care</p>
+            <ul className="flex flex-col gap-2 text-[14px]">
+              {CUSTOMER_CARE_LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="hover:text-white">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="mb-3 text-[15px] font-bold text-white">Quick Links</p>
+            <ul className="flex flex-col gap-2 text-[14px]">
+              {QUICK_LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="hover:text-white">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="mb-3 text-[15px] font-bold text-white">Our Services</p>
+            <ul className="flex flex-col gap-2 text-[14px]">
+              {SERVICE_NAMES.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="mb-3 text-[15px] font-bold text-white">Contact Us</p>
+            <p className="text-[14px] leading-loose">
+              Boudha, Gokarneshwor-6, Kathmandu
+              <br />
+              +977 9851313717
+              <br />
+              info@citypethouse.com.np
+              <br />
+              9:00 AM – 7:00 PM, daily
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="mb-3 font-semibold text-text-dark">Company</p>
-          <Link href="/about" className="block py-1 hover:text-primary">About Us</Link>
-          <Link href="/contact" className="block py-1 hover:text-primary">Contact</Link>
-          <Link href="/careers" className="block py-1 hover:text-primary">Careers</Link>
+
+        <div className="mb-5 flex justify-end gap-4">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1877F2] font-heading text-[18px] font-bold text-white">
+            f
+          </span>
+          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white">
+            <Image src="/instagram-logo.svg" alt="Instagram" width={40} height={40} />
+          </span>
+          <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-black">
+            <Image src="/tiktok-logo.webp" alt="TikTok" width={40} height={40} className="object-cover" />
+          </span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF0000] text-white">▶</span>
         </div>
-        <div>
-          <p className="mb-3 font-semibold text-text-dark">Legal</p>
-          <Link href="/terms" className="block py-1 hover:text-primary">Terms &amp; Conditions</Link>
-          <Link href="/privacy" className="block py-1 hover:text-primary">Privacy Policy</Link>
-          <Link href="/refund-policy" className="block py-1 hover:text-primary">Return &amp; Refund</Link>
+
+        <div className="border-t border-[#3A4652] pt-4 text-center text-[12px] text-text-muted">
+          Copyright © 2026 City Pet House &amp; Animal Clinic. All Rights Reserved.
         </div>
       </div>
     </footer>

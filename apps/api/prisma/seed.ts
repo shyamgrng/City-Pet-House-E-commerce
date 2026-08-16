@@ -61,6 +61,51 @@ const petFoodProducts: Array<{ name: string; price: number; badge?: string }> = 
   { name: "Fish Flake Food 200g", price: 380, badge: "Sale" },
 ];
 
+const testimonials = [
+  { author: "Lin Hollywood", quote: "The vet was on time and friendly with my dog — it responded to treatment right away. Will use this service again." },
+  { author: "Aarya Acharya", quote: "They treat every pet like family. Timely, exceptional service — highly recommend for anything your pet needs." },
+  { author: "Sanju Timalsina", quote: "Wonderful visit for our dog. Reasonable prices and great staff — thank you for the good service." },
+];
+
+const blogPosts = [
+  {
+    title: "Spring Alert: Is Your Dog Itching? Managing Skin Allergies",
+    slug: "spring-alert-dog-skin-allergies",
+    author: "Dr. Sujata Rai",
+    isDoctorPost: true,
+    excerpt: "Seasonal allergies are common in dogs and cats — here's how to spot the signs early and manage flare-ups at home.",
+    content: "Spring brings pollen, grass and dust that can trigger itchy skin, red patches and excessive licking in pets. If your dog is scratching more than usual, start by checking paws and belly for redness. Regular bathing with a mild, vet-approved shampoo can help remove allergens from the coat. Persistent symptoms — hot spots, hair loss or ear infections — mean it's time to book a clinical visit so we can recommend antihistamines or a diet trial. Prevention is easier than treatment: keep bedding clean, wipe paws after walks, and maintain a consistent grooming schedule.",
+    publishedAt: new Date("2026-03-20"),
+  },
+  {
+    title: "Parasite Prevention: 5 Critical Tips to Protect Your Pet",
+    slug: "parasite-prevention-5-tips",
+    author: "Dr. Bikash Shrestha",
+    isDoctorPost: true,
+    excerpt: "Fleas, ticks and worms are year-round risks in Kathmandu Valley. A simple prevention routine keeps your pet safe.",
+    content: "Parasite prevention is one of the most overlooked parts of pet care. Fleas and ticks thrive in warm, humid weather and can transmit serious diseases. We recommend: 1) Monthly spot-on treatment or oral preventives, 2) Routine deworming every 3 months, 3) Regular checks after outdoor walks, 4) Keeping your home and bedding clean, and 5) Annual fecal testing at your vet visit. If you notice scratching, visible parasites, or unusual lethargy, book a lab test with us right away — early treatment prevents complications.",
+    publishedAt: new Date("2026-03-08"),
+  },
+  {
+    title: "First Aid Tips Every Pet Owner Should Know",
+    slug: "first-aid-tips-every-pet-owner",
+    author: "Dr. Anjali Gurung",
+    isDoctorPost: true,
+    excerpt: "From minor cuts to choking, a few first-aid basics can make all the difference before you reach the clinic.",
+    content: "Emergencies happen fast, and knowing basic pet first aid can save precious time. For minor cuts, clean gently with saline and apply light pressure to stop bleeding. If your pet is choking, check the mouth for visible objects before attempting removal — never blindly reach in. For suspected fractures, limit movement and support the area with a splint of rolled towels. Heatstroke (heavy panting, drooling, weakness) requires immediate cooling with wet towels and a rush to the clinic. Always keep our emergency number saved, and consider a basic pet first-aid kit at home with gauze, saline and a muzzle.",
+    publishedAt: new Date("2026-02-26"),
+  },
+  {
+    title: "New Puppy Checklist: Vaccination Schedule & What to Buy",
+    slug: "new-puppy-checklist-vaccination-schedule",
+    author: "City Pet House Team",
+    isDoctorPost: false,
+    excerpt: "Bringing home a new puppy? Here's the essential first-month checklist every new owner needs.",
+    content: "Your puppy's first month is critical for building lifelong health and habits. Start vaccinations at 6-8 weeks and follow the full schedule through 16 weeks. Stock up on age-appropriate puppy food, a properly fitted collar, a crate for house-training, and safe chew toys. Schedule a first vet visit within the first week to establish a baseline and discuss deworming and microchipping. Socialization matters too — safe, controlled exposure to new people and environments builds a confident, well-adjusted dog.",
+    publishedAt: new Date("2026-02-12"),
+  },
+];
+
 const petListings = [
   { breed: "Pug", species: "Dog", sex: "Male", age: "8 wks", price: 30000, deliveryFee: 1500, tags: ["Vaccinated", "Dewormed"] },
   { breed: "Siberian Husky", species: "Dog", sex: "Male", age: "9 wks", price: 55000, deliveryFee: 2000, tags: ["Vaccinated", "Dewormed"] },
@@ -140,6 +185,24 @@ async function main() {
         update: {},
         create: { id: `seed-pet-${i}`, ...pet, images: [], videos: [] },
       }),
+    ),
+  );
+
+  await Promise.all(brands.map((name) => prisma.brand.upsert({ where: { name }, update: {}, create: { name } })));
+
+  await Promise.all(
+    testimonials.map((t, i) =>
+      prisma.testimonial.upsert({
+        where: { id: `seed-testimonial-${i}` },
+        update: {},
+        create: { id: `seed-testimonial-${i}`, ...t },
+      }),
+    ),
+  );
+
+  await Promise.all(
+    blogPosts.map((post) =>
+      prisma.blogPost.upsert({ where: { slug: post.slug }, update: {}, create: post }),
     ),
   );
 
