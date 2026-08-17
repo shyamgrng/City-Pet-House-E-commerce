@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { apiFetch } from "@/lib/api";
 
 const GENERAL_LINKS = [
   { href: "/about", label: "About Us" },
@@ -26,20 +27,18 @@ const QUICK_LINKS = [
   { href: "/vet", label: "Web Vet" },
 ];
 
-// Presentational only — no Services feature/detail pages exist yet, so
-// these aren't links (see the home-page grooming banner note on the same
-// gap). Keeping the column non-clickable is more honest than routing it
-// to pages that don't exist.
-const SERVICE_NAMES = [
-  "Dog & Cat Microchipping",
-  "Dog & Cat Vaccination",
-  "Pet Grooming",
-  "Surgery",
-  "Clinical Treatment",
-  "Home Treatment",
-];
+interface FooterService {
+  id: string;
+  name: string;
+}
 
-export function Footer() {
+async function getServices() {
+  return apiFetch<FooterService[]>("/services").catch(() => []);
+}
+
+export async function Footer() {
+  const services = (await getServices()).slice(0, 6);
+
   return (
     <footer className="mt-16 bg-text-dark text-[#C9CFD4]">
       <div className="mx-auto max-w-7xl px-6 pb-6 pt-11">
@@ -88,8 +87,12 @@ export function Footer() {
           <div>
             <p className="mb-3 text-[15px] font-bold text-white">Our Services</p>
             <ul className="flex flex-col gap-2 text-[14px]">
-              {SERVICE_NAMES.map((name) => (
-                <li key={name}>{name}</li>
+              {services.map((svc) => (
+                <li key={svc.id}>
+                  <Link href={`/services/${svc.id}`} className="hover:text-white">
+                    {svc.name}
+                  </Link>
+                </li>
               ))}
             </ul>
           </div>

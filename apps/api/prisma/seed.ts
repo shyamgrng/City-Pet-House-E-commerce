@@ -107,6 +107,135 @@ const blogPosts = [
   },
 ];
 
+const services = [
+  {
+    name: "Dog & Cat Microchipping",
+    shortDesc: "Quick, permanent ID for your pet’s safety.",
+    seoTitle: "Dog & Cat Microchipping in Kathmandu — Safe, Permanent Pet ID",
+    longDesc:
+      "Professional pet microchipping in Kathmandu for lasting peace of mind. A rice-grain-sized, ISO-certified chip is implanted under your pet’s skin in seconds — no anesthesia needed — giving your dog or cat permanent, scannable identification recognized by vets and shelters nationwide.",
+    benefits: [
+      "Lifelong ID protection, linked to your contact details",
+      "Required for pet passports & international travel",
+      "Quick, painless — done in under a minute",
+      "Affordable pricing, no hidden fees",
+    ],
+    duration: "10 mins",
+    price: "Rs. 680",
+  },
+  {
+    name: "Dog & Cat Vaccination",
+    shortDesc: "Routine shots to protect against serious illness.",
+    seoTitle: "Dog & Cat Vaccination in Kathmandu — Protect Your Pet from Day One",
+    longDesc:
+      "Core and non-core vaccines administered on schedule to protect your dog or cat against rabies, parvovirus, distemper and other serious illness, with a written record kept up to date for renewals, travel and boarding.",
+    benefits: [
+      "Protects against rabies, distemper & parvo",
+      "Required for boarding, grooming & travel",
+      "Vet-reviewed dosing schedule by age",
+      "Digital vaccination card, always up to date",
+    ],
+    duration: "20 mins",
+    price: null as string | null,
+    schedule: [
+      { age: "6–8 weeks", vaccine: "DHPPi (1st dose)" },
+      { age: "10–12 weeks", vaccine: "DHPPi (2nd dose) + Leptospirosis" },
+      { age: "14–16 weeks", vaccine: "DHPPi (3rd dose) + Rabies" },
+      { age: "Every 12 months", vaccine: "Annual booster (DHPPi + Rabies)" },
+    ],
+  },
+  {
+    name: "Pet Grooming",
+    shortDesc: "Bathing, trimming and coat care.",
+    seoTitle: "Pet Grooming in Kathmandu — Bath, Trim & Coat Care",
+    longDesc:
+      "A full grooming session for your dog or cat in Kathmandu — bath, blow-dry, brush-out, nail trim, ear cleaning and a breed-appropriate haircut from experienced, gentle groomers.",
+    benefits: [
+      "Reduces shedding, matting & odor",
+      "Early skin, ear & parasite checks",
+      "Breed-specific styling on request",
+      "Calm, experienced handling for nervous pets",
+    ],
+    duration: "60–90 mins",
+    price: "From Rs. 1,200",
+  },
+  {
+    name: "Surgery",
+    shortDesc: "Safe, professional veterinary surgery.",
+    seoTitle: "Pet Surgery in Kathmandu — Safe, Monitored Veterinary Care",
+    longDesc:
+      "Spay/neuter and soft-tissue surgeries performed under monitored anesthesia by our licensed veterinarians in Kathmandu, with clear post-op care instructions for a smooth recovery.",
+    benefits: [
+      "Licensed, experienced veterinary surgeons",
+      "Monitored anesthesia throughout",
+      "Spay/neuter & soft-tissue procedures",
+      "Post-op medication & care plan included",
+    ],
+    duration: "Varies",
+    price: "Consult for quote",
+  },
+  {
+    name: "Puppies Buying & Selling",
+    shortDesc: "Browse verified breeds available now.",
+    seoTitle: "Buy Puppies in Kathmandu — Verified, Vaccinated Breeds",
+    longDesc:
+      "Browse our current litter of health-checked, vaccinated puppies from verified breeders in Kathmandu, with home delivery available across the valley.",
+    benefits: [
+      "Health-checked & vaccinated puppies",
+      "Verified breeders, transparent records",
+      "Home delivery across Kathmandu Valley",
+      "Deworming record provided at pickup",
+    ],
+    duration: "—",
+    price: "See listings",
+  },
+  {
+    name: "Clinical Treatment",
+    shortDesc: "Diagnosis and treatment at the clinic.",
+    seoTitle: "Pet Clinical Treatment in Kathmandu — Diagnosis & Care",
+    longDesc:
+      "In-clinic examination and treatment for illness or injury in Kathmandu, backed by our own lab and pharmacy so most pets are diagnosed and treated in a single visit.",
+    benefits: [
+      "Same-day diagnosis for most conditions",
+      "On-site lab & pharmacy",
+      "Experienced veterinary team",
+      "Follow-up care included",
+    ],
+    duration: "30 mins",
+    price: "From Rs. 700",
+  },
+  {
+    name: "Home Treatment",
+    shortDesc: "We come to you for a calmer visit.",
+    seoTitle: "Home Visit Vet Service in Kathmandu Valley",
+    longDesc:
+      "A vet visits your home in Kathmandu Valley for checkups, vaccinations or minor treatment — a calmer option for anxious, elderly or injured pets.",
+    benefits: [
+      "Less stressful than a clinic visit",
+      "Available across Kathmandu Valley",
+      "Basic equipment brought on-site",
+      "Ideal for elderly or anxious pets",
+    ],
+    duration: "30–45 mins",
+    price: "From Rs. 1,500",
+  },
+  {
+    name: "Lab Test",
+    shortDesc: "Blood, urine and other diagnostic tests.",
+    seoTitle: "Pet Lab Tests in Kathmandu — Blood, Urine & Diagnostic Panels",
+    longDesc:
+      "In-house diagnostic testing in Kathmandu for faster results — blood panels, urinalysis, fecal tests and more to guide your vet’s treatment decisions the same day.",
+    benefits: [
+      "In-house results — no outside lab wait",
+      "Blood, urine & fecal testing available",
+      "Results explained by a vet",
+      "Guides faster, more accurate treatment",
+    ],
+    duration: "30–60 mins",
+    price: "From Rs. 600",
+  },
+];
+
 const petListings = [
   { breed: "Pug", species: "Dog", sex: "Male", age: "8 wks", price: 30000, deliveryFee: 1500, tags: ["Vaccinated", "Dewormed"] },
   { breed: "Siberian Husky", species: "Dog", sex: "Male", age: "9 wks", price: 55000, deliveryFee: 2000, tags: ["Vaccinated", "Dewormed"] },
@@ -204,6 +333,16 @@ async function main() {
   await Promise.all(
     blogPosts.map((post) =>
       prisma.blogPost.upsert({ where: { slug: post.slug }, update: {}, create: post }),
+    ),
+  );
+
+  await Promise.all(
+    services.map((s, i) =>
+      prisma.service.upsert({
+        where: { id: `seed-service-${i}` },
+        update: {},
+        create: { id: `seed-service-${i}`, order: i, ...s },
+      }),
     ),
   );
 

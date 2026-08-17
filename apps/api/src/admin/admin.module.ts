@@ -5,9 +5,11 @@ import { AdminProductsService } from "./admin-products.service";
 import { AdminProductsController } from "./admin-products.controller";
 import { AdminUsersService } from "./admin-users.service";
 import { AdminUsersController } from "./admin-users.controller";
+import { AdminServicesService } from "./admin-services.service";
+import { AdminServicesController } from "./admin-services.controller";
 
 @Module({
-  providers: [AdminOrdersService, AdminProductsService, AdminUsersService],
-  controllers: [AdminOrdersController, AdminProductsController, AdminUsersController],
+  providers: [AdminOrdersService, AdminProductsService, AdminUsersService, AdminServicesService],
+  controllers: [AdminOrdersController, AdminProductsController, AdminUsersController, AdminServicesController],
 })
 export class AdminModule {}

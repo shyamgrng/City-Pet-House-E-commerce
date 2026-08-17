@@ -31,6 +31,20 @@ export class UpsertProductDto {
   @IsOptional() @IsNumber() @Min(0) @Max(5) rating?: number;
 }
 
+export class UpsertServiceDto {
+  @IsString() @MinLength(1) name!: string;
+  @IsString() @MinLength(1) shortDesc!: string;
+  @IsString() @MinLength(1) seoTitle!: string;
+  @IsString() @MinLength(1) longDesc!: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) benefits?: string[];
+  @IsOptional() @IsString() duration?: string;
+  @IsOptional() @IsString() price?: string;
+  @IsOptional() @IsArray() schedule?: { age: string; vaccine: string }[];
+  @IsOptional() @IsString() photo?: string;
+  @IsOptional() @IsIn(["ACTIVE", "HIDDEN"]) status?: string;
+  @IsOptional() @IsInt() order?: number;
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;

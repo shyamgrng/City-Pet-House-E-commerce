@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from "@nestjs/common";
+import { Controller, Get, Param, Query } from "@nestjs/common";
 import { ContentService } from "./content.service";
 
 @Controller()
@@ -18,5 +18,15 @@ export class ContentController {
   @Get("blog-posts")
   blogPosts(@Query("limit") limit?: string) {
     return this.content.blogPosts(limit ? Number(limit) : undefined);
+  }
+
+  @Get("services")
+  services() {
+    return this.content.services();
+  }
+
+  @Get("services/:id")
+  service(@Param("id") id: string) {
+    return this.content.service(id);
   }
 }
