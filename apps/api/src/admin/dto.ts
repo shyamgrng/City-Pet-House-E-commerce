@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsEmail, IsIn, IsInt, IsObject, IsOptional, IsString, Min, MinLength } from "class-validator";
+import { IsArray, IsBoolean, IsEmail, IsIn, IsInt, IsNumber, IsObject, IsOptional, IsString, Max, Min, MinLength } from "class-validator";
 
 export class RejectPaymentDto {
   @IsString()
@@ -27,6 +27,8 @@ export class UpsertProductDto {
   @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsIn(["ACTIVE", "HIDDEN"]) status?: string;
+  @IsOptional() @IsString() badge?: string;
+  @IsOptional() @IsNumber() @Min(0) @Max(5) rating?: number;
 }
 
 export class CreateAdminUserDto {
