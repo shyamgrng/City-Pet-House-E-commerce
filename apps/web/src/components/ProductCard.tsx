@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatNPR } from "@cph/shared-types";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 
 export interface ProductCardData {
   id: string;
@@ -18,6 +19,8 @@ export interface ProductCardData {
 
 export function ProductCard({ product }: { product: ProductCardData }) {
   const { addItem } = useCart();
+  const { isWishlisted, toggle } = useWishlist();
+  const wishlisted = isWishlisted(product.id);
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-card border border-border bg-white transition hover:shadow-floating">
@@ -35,6 +38,18 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             {product.badge}
           </span>
         )}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            toggle(product.id);
+          }}
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          className={`absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-[14px] shadow-floating ${
+            wishlisted ? "text-error" : "text-text-muted"
+          }`}
+        >
+          {wishlisted ? "♥" : "♡"}
+        </button>
       </Link>
       <div className="flex flex-1 flex-col gap-1 p-3">
         {product.brand && <span className="text-[11px] uppercase tracking-wide text-text-muted">{product.brand}</span>}

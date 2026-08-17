@@ -1,28 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { useCart } from "@/context/CartContext";
-import { apiFetch } from "@/lib/api";
 
 export function ProductActions({ productId, outOfStock }: { productId: string; outOfStock: boolean }) {
-  const { user, accessToken } = useAuth();
   const { addItem } = useCart();
-  const router = useRouter();
-  const pathname = usePathname();
+  const { isWishlisted, toggle } = useWishlist();
   const [qty, setQty] = useState(1);
-  const [wishlisted, setWishlisted] = useState(false);
   const [adding, setAdding] = useState(false);
-
-  async function handleWishlist() {
-    if (!user) {
-      router.push(`/account/signin?next=${encodeURIComponent(pathname)}`);
-      return;
-    }
-    await apiFetch(`/wishlist/${productId}`, { method: "POST", accessToken });
-    setWishlisted(true);
-  }
+  const wishlisted = isWishlisted(productId);
 
   async function handleAddToCart() {
     setAdding(true);
@@ -54,7 +41,7 @@ export function ProductActions({ productId, outOfStock }: { productId: string; o
           {outOfStock ? "Out of stock" : adding ? "Adding…" : "Add to Cart"}
         </button>
         <button
-          onClick={handleWishlist}
+          onClick={() => toggle(productId)}
           className={`rounded-control border px-4 py-2.5 text-[13px] font-semibold ${
             wishlisted ? "border-error text-error" : "border-border text-text-secondary hover:border-primary hover:text-primary"
           }`}

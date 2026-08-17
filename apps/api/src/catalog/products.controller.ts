@@ -13,6 +13,7 @@ export class ProductsController {
     @Query("minPrice") minPrice?: string,
     @Query("maxPrice") maxPrice?: string,
     @Query("search") search?: string,
+    @Query("ids") ids?: string,
   ) {
     return this.products.list({
       category,
@@ -21,6 +22,7 @@ export class ProductsController {
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
       search,
+      ids: ids ? ids.split(",").filter(Boolean) : undefined,
     });
   }
 

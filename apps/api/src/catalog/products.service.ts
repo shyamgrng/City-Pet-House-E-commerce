@@ -9,6 +9,7 @@ export interface ProductQuery {
   minPrice?: number;
   maxPrice?: number;
   search?: string;
+  ids?: string[];
 }
 
 @Injectable()
@@ -16,6 +17,10 @@ export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(query: ProductQuery) {
+    if (query.ids?.length) {
+      return this.prisma.product.findMany({ where: { id: { in: query.ids }, status: "ACTIVE" } });
+    }
+
     const where: Prisma.ProductWhereInput = {
       status: "ACTIVE",
       ...(query.category && query.category !== "All" ? { category: query.category } : {}),
