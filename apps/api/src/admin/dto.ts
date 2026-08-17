@@ -45,6 +45,20 @@ export class UpsertServiceDto {
   @IsOptional() @IsInt() order?: number;
 }
 
+export class UpsertPetListingDto {
+  @IsString() @MinLength(1) breed!: string;
+  @IsIn(["Dog", "Cat", "Small Pets", "Birds", "Fish"]) species!: string;
+  @IsString() @MinLength(1) sex!: string;
+  @IsString() @MinLength(1) age!: string;
+  @IsInt() @Min(0) price!: number;
+  @IsOptional() @IsInt() @Min(0) deliveryFee?: number;
+  @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) videos?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
+  @IsOptional() @IsNumber() @Min(0) @Max(5) rating?: number;
+  @IsOptional() @IsIn(["AVAILABLE", "RESERVED", "SOLD"]) status?: "AVAILABLE" | "RESERVED" | "SOLD";
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;
