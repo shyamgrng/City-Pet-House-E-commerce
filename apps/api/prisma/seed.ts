@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import * as argon2 from "argon2";
+import { ADMIN_SECTIONS } from "../src/admin/admin-sections";
 
 const prisma = new PrismaClient();
 
@@ -260,7 +261,6 @@ async function main() {
 
   // Admin staff account — matches the prototype's usersData (admin@citypethouse.com / admin123).
   // No self-registration: staff accounts are provisioned, so this is seed-only.
-  const ADMIN_SECTIONS = ["dashboard", "deliveries", "vetconsults", "shop", "finance", "users"];
   const adminPassword = await argon2.hash("admin123");
   await prisma.user.upsert({
     where: { email: "admin@citypethouse.com" },
