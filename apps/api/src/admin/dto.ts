@@ -59,6 +59,10 @@ export class UpsertPetListingDto {
   @IsOptional() @IsIn(["AVAILABLE", "RESERVED", "SOLD"]) status?: "AVAILABLE" | "RESERVED" | "SOLD";
 }
 
+export class UpdateAdoptionStatusDto {
+  @IsIn(["ACTIVE", "ADOPTED", "REMOVED"]) status!: string;
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;

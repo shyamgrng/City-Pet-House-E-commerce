@@ -9,15 +9,25 @@ import { AdminServicesService } from "./admin-services.service";
 import { AdminServicesController } from "./admin-services.controller";
 import { AdminPetsService } from "./admin-pets.service";
 import { AdminPetsController } from "./admin-pets.controller";
+import { AdminAdoptionService } from "./admin-adoption.service";
+import { AdminAdoptionController } from "./admin-adoption.controller";
 
 @Module({
-  providers: [AdminOrdersService, AdminProductsService, AdminUsersService, AdminServicesService, AdminPetsService],
+  providers: [
+    AdminOrdersService,
+    AdminProductsService,
+    AdminUsersService,
+    AdminServicesService,
+    AdminPetsService,
+    AdminAdoptionService,
+  ],
   controllers: [
     AdminOrdersController,
     AdminProductsController,
     AdminUsersController,
     AdminServicesController,
     AdminPetsController,
+    AdminAdoptionController,
   ],
 })
 export class AdminModule {}

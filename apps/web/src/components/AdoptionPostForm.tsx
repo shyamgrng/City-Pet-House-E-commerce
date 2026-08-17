@@ -63,8 +63,11 @@ export function AdoptionPostForm({ onPosted }: { onPosted: () => void }) {
       <div className="grid gap-3 sm:grid-cols-2">
         {FIELDS.map((f) => (
           <div key={f.name} className="flex flex-col gap-1">
-            <label className="text-[12px] text-text-secondary">{f.label}</label>
+            <label htmlFor={`adoption-${f.name}`} className="text-[12px] text-text-secondary">
+              {f.label}
+            </label>
             <input
+              id={`adoption-${f.name}`}
               required
               value={form[f.name] ?? ""}
               onChange={(e) => setForm((s) => ({ ...s, [f.name]: e.target.value }))}
@@ -74,8 +77,11 @@ export function AdoptionPostForm({ onPosted }: { onPosted: () => void }) {
         ))}
       </div>
       <div className="mt-3 flex flex-col gap-1">
-        <label className="text-[12px] text-text-secondary">About this pet</label>
+        <label htmlFor="adoption-description" className="text-[12px] text-text-secondary">
+          About this pet
+        </label>
         <textarea
+          id="adoption-description"
           required
           value={description}
           onChange={(e) => setDescription(e.target.value)}

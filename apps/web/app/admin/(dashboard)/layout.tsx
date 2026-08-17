@@ -10,6 +10,7 @@ const NAV_SECTIONS = [
   { href: "/admin/vet-consults", label: "Vet Consults", key: "vetconsults" },
   { href: "/admin/shop", label: "Shop", key: "shop" },
   { href: "/admin/pets", label: "Pets Available", key: "shop" },
+  { href: "/admin/adoption", label: "Adoption Posts", key: "dashboard" },
   { href: "/admin/registrations", label: "Pending Registrations", key: "dashboard" },
   { href: "/admin/services", label: "Services", key: "dashboard" },
   { href: "/admin/finance", label: "Finance", key: "finance" },
