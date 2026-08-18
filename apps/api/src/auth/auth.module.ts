@@ -7,6 +7,9 @@ import { JwtStrategy } from "./jwt.strategy";
 import { AdminAuthService } from "./admin-auth.service";
 import { AdminAuthController } from "./admin-auth.controller";
 import { AdminJwtStrategy } from "./admin-jwt.strategy";
+import { DoctorAuthService } from "./doctor-auth.service";
+import { DoctorAuthController } from "./doctor-auth.controller";
+import { DoctorJwtStrategy } from "./doctor-jwt.strategy";
 import { CartModule } from "../cart/cart.module";
 
 @Module({
@@ -17,8 +20,8 @@ import { CartModule } from "../cart/cart.module";
     }),
     CartModule,
   ],
-  providers: [AuthService, JwtStrategy, AdminAuthService, AdminJwtStrategy],
-  controllers: [AuthController, AdminAuthController],
-  exports: [AuthService, AdminAuthService],
+  providers: [AuthService, JwtStrategy, AdminAuthService, AdminJwtStrategy, DoctorAuthService, DoctorJwtStrategy],
+  controllers: [AuthController, AdminAuthController, DoctorAuthController],
+  exports: [AuthService, AdminAuthService, DoctorAuthService],
 })
 export class AuthModule {}

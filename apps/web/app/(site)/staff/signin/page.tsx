@@ -1,11 +1,39 @@
+import Link from "next/link";
+
+const PORTALS = [
+  { href: "/admin/login", label: "Admin & Staff", available: true },
+  { href: "/doctor/login", label: "Doctor", available: true },
+  { href: "#", label: "B2B Supplier", available: false },
+  { href: "#", label: "Courier", available: false },
+];
+
 export default function StaffSignInPage() {
   return (
     <div className="mx-auto max-w-md px-6 py-20 text-center">
       <h1 className="mb-2 text-[20px]">Staff &amp; Portal Sign In</h1>
-      <p className="text-[13px] text-text-secondary">
-        Admin, Doctor, B2B Supplier, and Courier sign-in is a separate identity from Pet Owner accounts and ships in
-        a later phase of this build.
+      <p className="mb-8 text-[13px] text-text-secondary">
+        Each staff role signs in separately from Pet Owner accounts. Choose your portal below.
       </p>
+      <div className="flex flex-col gap-3">
+        {PORTALS.map((p) =>
+          p.available ? (
+            <Link
+              key={p.label}
+              href={p.href}
+              className="rounded-control bg-primary px-5 py-3 text-[14px] font-semibold text-white"
+            >
+              {p.label} Sign In
+            </Link>
+          ) : (
+            <span
+              key={p.label}
+              className="rounded-control border border-border px-5 py-3 text-[14px] font-medium text-text-muted"
+            >
+              {p.label} Sign In — coming soon
+            </span>
+          ),
+        )}
+      </div>
     </div>
   );
 }
