@@ -25,6 +25,16 @@ export interface AdminStatusEvent {
   at: string;
 }
 
+export interface AdminCourierAssignment {
+  id: string;
+  courierId: string;
+  receivedAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  cancellationReason: string | null;
+  courier: { companyName: string; contactName: string };
+}
+
 export interface AdminOrder {
   id: string;
   buyerId: string;
@@ -41,4 +51,5 @@ export interface AdminOrder {
   checklist: AdminChecklistItem[];
   statusHistory: AdminStatusEvent[];
   buyer: { name: string };
+  courierAssignment: AdminCourierAssignment | null;
 }

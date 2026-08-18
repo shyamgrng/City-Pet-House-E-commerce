@@ -6,6 +6,13 @@ import { apiFetch, ApiError } from "@/lib/api";
 import { AdminOrder } from "@/lib/admin-types";
 import { AdminOrderCard } from "@/components/admin/AdminOrderCard";
 
+interface Courier {
+  courierProfileId: string;
+  companyName: string;
+  verified: boolean;
+  status: string;
+}
+
 type Tab = "payment-queue" | "orders" | "dispatch" | "delivery" | "cancelled";
 
 const TABS: { key: Tab; label: string }[] = [
@@ -25,6 +32,15 @@ export default function DeliveriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [couriers, setCouriers] = useState<Courier[]>([]);
+  const [courierPicks, setCourierPicks] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!accessToken) return;
+    apiFetch<Courier[]>("/admin/couriers", { accessToken })
+      .then((all) => setCouriers(all.filter((c) => c.verified && c.status === "ACTIVE")))
+      .catch(() => undefined);
+  }, [accessToken]);
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -112,6 +128,14 @@ export default function DeliveriesPage() {
 
   const markOutForDelivery = (id: string) =>
     runAction(id, () => apiFetch(`/admin/orders/${id}/mark-out-for-delivery`, { method: "POST", accessToken }));
+
+  const assignCourier = (id: string) => {
+    const courierId = courierPicks[id];
+    if (!courierId) return;
+    return runAction(id, () =>
+      apiFetch(`/admin/orders/${id}/assign-courier`, { method: "POST", accessToken, body: { courierId } }),
+    );
+  };
 
   const markDelivered = (id: string) =>
     runAction(id, () => apiFetch(`/admin/orders/${id}/mark-delivered`, { method: "POST", accessToken }));
@@ -239,24 +263,54 @@ export default function DeliveriesPage() {
             (orders.length === 0 ? (
               <p className="text-[13px] text-text-muted">Nothing here.</p>
             ) : (
-              orders.map((order) => (
-                <AdminOrderCard key={order.id} order={order}>
-                  <button
-                    onClick={() => markOutForDelivery(order.id)}
-                    disabled={busyId === order.id}
-                    className="rounded-control bg-primary px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-60"
-                  >
-                    Mark Out for Delivery
-                  </button>
-                  <button
-                    onClick={() => cancelOrder(order.id)}
-                    disabled={busyId === order.id}
-                    className="rounded-control border border-error px-4 py-2 text-[12px] font-semibold text-error disabled:opacity-60"
-                  >
-                    Cancel
-                  </button>
-                </AdminOrderCard>
-              ))
+              orders.map((order) => {
+                const assignment = order.courierAssignment;
+                const activelyAssigned = assignment && !assignment.cancelledAt;
+                return (
+                  <AdminOrderCard key={order.id} order={order}>
+                    {activelyAssigned ? (
+                      <span className="rounded-full bg-primary/10 px-3 py-1.5 text-[12px] font-semibold text-primary">
+                        Courier: {assignment.courier.companyName}
+                        {assignment.receivedAt ? " (picked up)" : ""}
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={courierPicks[order.id] ?? ""}
+                          onChange={(e) => setCourierPicks((p) => ({ ...p, [order.id]: e.target.value }))}
+                          className="rounded-control border border-border px-2 py-1.5 text-[12px]"
+                        >
+                          <option value="">Select courier…</option>
+                          {couriers.map((c) => (
+                            <option key={c.courierProfileId} value={c.courierProfileId}>{c.companyName}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => assignCourier(order.id)}
+                          disabled={!courierPicks[order.id] || busyId === order.id}
+                          className="rounded-control bg-primary px-4 py-2 text-[12px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Assign Courier
+                        </button>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => markOutForDelivery(order.id)}
+                      disabled={busyId === order.id}
+                      className="rounded-control border border-border px-4 py-2 text-[12px] font-semibold text-text-secondary disabled:opacity-60"
+                    >
+                      Mark Out for Delivery Manually
+                    </button>
+                    <button
+                      onClick={() => cancelOrder(order.id)}
+                      disabled={busyId === order.id}
+                      className="rounded-control border border-error px-4 py-2 text-[12px] font-semibold text-error disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                  </AdminOrderCard>
+                );
+              })
             ))}
 
           {tab === "delivery" && (

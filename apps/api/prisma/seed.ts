@@ -504,6 +504,53 @@ async function main() {
     data: { supplierId: verifiedSupplier.b2bProfile!.id, commissionPct: 15 },
   });
 
+  // Demo courier accounts — same self-registration shape as B2B suppliers
+  // above (one verified/active, one still PENDING_VERIFICATION) so the
+  // admin Pending Registrations screen has a real courier approval to act
+  // on too.
+  const courierPassword = await argon2.hash("courier123");
+  await prisma.user.upsert({
+    where: { email: "courier@citypethouse.com" },
+    update: {},
+    create: {
+      email: "courier@citypethouse.com",
+      phone: "+977 9811223344",
+      passwordHash: courierPassword,
+      role: "COURIER",
+      status: "ACTIVE",
+      courierProfile: {
+        create: {
+          companyName: "Swift Kathmandu Couriers",
+          contactName: "Bikram Thapa",
+          phone: "+977 9811223344",
+          address: "Kalanki, Kathmandu",
+          verified: true,
+        },
+      },
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "pending.courier@citypethouse.com" },
+    update: {},
+    create: {
+      email: "pending.courier@citypethouse.com",
+      phone: "+977 9822334455",
+      passwordHash: courierPassword,
+      role: "COURIER",
+      status: "PENDING_VERIFICATION",
+      courierProfile: {
+        create: {
+          companyName: "Valley Express Logistics",
+          contactName: "Prakash Rai",
+          phone: "+977 9822334455",
+          address: "Koteshwor, Kathmandu",
+          verified: false,
+        },
+      },
+    },
+  });
+
   await prisma.vetBookingIdSequence.upsert({ where: { id: 1 }, update: {}, create: { id: 1, nextVal: 1 } });
 
   const doctorPassword = await argon2.hash("doctor123");
@@ -582,7 +629,7 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log(
-    "Seed complete. Pet-owner login: eva.gurung@gmail.com / password123 — Admin login: admin@citypethouse.com / admin123 — B2B login: supplier@citypethouse.com / supplier123",
+    "Seed complete. Pet-owner login: eva.gurung@gmail.com / password123 — Admin login: admin@citypethouse.com / admin123 — B2B login: supplier@citypethouse.com / supplier123 — Courier login: courier@citypethouse.com / courier123",
   );
 }
 

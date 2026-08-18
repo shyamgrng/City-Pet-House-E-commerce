@@ -7,6 +7,7 @@ const ORDER_INCLUDE = {
   checklist: true,
   statusHistory: { orderBy: { at: "asc" as const } },
   buyer: { select: { name: true } },
+  courierAssignment: { include: { courier: { select: { companyName: true, contactName: true } } } },
 };
 
 @Injectable()
@@ -83,6 +84,30 @@ export class AdminOrdersService {
     await this.prisma.order.update({
       where: { id: orderId },
       data: { stage: "DISPATCH", statusHistory: { create: { stage: "DISPATCH", actor: adminName } } },
+    });
+    return this.getOrThrow(orderId);
+  }
+
+  /** Upserts the assignment so re-assigning after a courier cancellation reuses the same 1:1 row rather than colliding on orderId's unique constraint. */
+  async assignCourier(orderId: string, courierId: string, adminName: string) {
+    const order = await this.getOrThrow(orderId);
+    if (order.stage !== "DISPATCH") {
+      throw new BadRequestException("Only orders in Dispatch can be assigned to a courier.");
+    }
+    const courier = await this.prisma.courierProfile.findUnique({ where: { id: courierId } });
+    if (!courier) throw new NotFoundException("Courier not found.");
+
+    await this.prisma.courierAssignment.upsert({
+      where: { orderId },
+      update: { courierId, receivedAt: null, deliveredAt: null, cancelledAt: null, cancellationReason: null },
+      create: { orderId, courierId },
+    });
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        courierId,
+        statusHistory: { create: { stage: "DISPATCH", actor: adminName, note: `Assigned to courier: ${courier.companyName}` } },
+      },
     });
     return this.getOrThrow(orderId);
   }

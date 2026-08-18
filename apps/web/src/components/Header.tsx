@@ -82,7 +82,7 @@ export function Header() {
           href="/staff/signin"
           className="ml-auto shrink-0 whitespace-nowrap rounded-full border border-border px-3 py-1 text-[12px] font-semibold text-text-secondary hover:border-primary hover:text-primary"
         >
-          Staff / B2B / Doctor Sign In
+          Staff &amp; Partner Sign In
         </Link>
       </nav>
     </header>

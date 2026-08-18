@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { OrderStage, PaymentStatus } from "@prisma/client";
 import { AdminOrdersService } from "./admin-orders.service";
-import { RejectPaymentDto, CancelOrderDto, ToggleChecklistDto } from "./dto";
+import { RejectPaymentDto, CancelOrderDto, ToggleChecklistDto, AssignCourierDto } from "./dto";
 import { AdminAuthGuard } from "../auth/admin-auth.guard";
 import { CurrentAdmin, requirePermission } from "../auth/current-admin.decorator";
 
@@ -47,6 +47,12 @@ export class AdminOrdersController {
   dispatch(@CurrentAdmin() admin: CurrentAdmin, @Param("id") id: string) {
     requirePermission(admin, "deliveries");
     return this.orders.dispatch(id, admin.staffRole);
+  }
+
+  @Post(":id/assign-courier")
+  assignCourier(@CurrentAdmin() admin: CurrentAdmin, @Param("id") id: string, @Body() dto: AssignCourierDto) {
+    requirePermission(admin, "deliveries");
+    return this.orders.assignCourier(id, dto.courierId, admin.staffRole);
   }
 
   @Post(":id/mark-out-for-delivery")

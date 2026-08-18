@@ -108,6 +108,19 @@ export class UpdateB2BSupplierDto {
   @IsOptional() @IsIn(["ACTIVE", "PENDING_VERIFICATION", "SUSPENDED"]) status?: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED";
 }
 
+export class UpdateCourierDto {
+  @IsOptional() @IsString() @MinLength(1) companyName?: string;
+  @IsOptional() @IsString() @MinLength(1) contactName?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsBoolean() verified?: boolean;
+  @IsOptional() @IsIn(["ACTIVE", "PENDING_VERIFICATION", "SUSPENDED"]) status?: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED";
+}
+
+export class AssignCourierDto {
+  @IsString() @MinLength(1) courierId!: string;
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;

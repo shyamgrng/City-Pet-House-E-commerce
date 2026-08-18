@@ -41,3 +41,13 @@ export class RegisterB2BDto {
   @IsOptional() @IsArray() @IsString({ each: true }) categories?: string[];
   @IsString() @MinLength(8) password!: string;
 }
+
+export class RegisterCourierDto {
+  @IsString() @MinLength(1) companyName!: string;
+  @IsString() @MinLength(1) contactName!: string;
+  @IsEmail() email!: string;
+  @IsString() @MinLength(7) phone!: string;
+  @IsOptional() @IsString() altPhone?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsString() @MinLength(8) password!: string;
+}

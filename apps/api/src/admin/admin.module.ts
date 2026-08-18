@@ -19,6 +19,8 @@ import { AdminDoctorsService } from "./admin-doctors.service";
 import { AdminDoctorsController } from "./admin-doctors.controller";
 import { AdminB2BService } from "./admin-b2b.service";
 import { AdminB2BController } from "./admin-b2b.controller";
+import { AdminCouriersService } from "./admin-couriers.service";
+import { AdminCouriersController } from "./admin-couriers.controller";
 
 @Module({
   providers: [
@@ -32,6 +34,7 @@ import { AdminB2BController } from "./admin-b2b.controller";
     AdminBlogService,
     AdminDoctorsService,
     AdminB2BService,
+    AdminCouriersService,
   ],
   controllers: [
     AdminOrdersController,
@@ -44,6 +47,7 @@ import { AdminB2BController } from "./admin-b2b.controller";
     AdminBlogController,
     AdminDoctorsController,
     AdminB2BController,
+    AdminCouriersController,
   ],
 })
 export class AdminModule {}

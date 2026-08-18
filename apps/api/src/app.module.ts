@@ -12,6 +12,7 @@ import { AdminModule } from "./admin/admin.module";
 import { VetModule } from "./vet/vet.module";
 import { DoctorModule } from "./doctor/doctor.module";
 import { B2BModule } from "./b2b/b2b.module";
+import { CourierModule } from "./courier/courier.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { B2BModule } from "./b2b/b2b.module";
     VetModule,
     DoctorModule,
     B2BModule,
+    CourierModule,
   ],
 })
 export class AppModule {}
