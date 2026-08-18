@@ -20,6 +20,11 @@ export class ContentController {
     return this.content.blogPosts(limit ? Number(limit) : undefined);
   }
 
+  @Get("blog-posts/:slug")
+  blogPost(@Param("slug") slug: string) {
+    return this.content.blogPost(slug);
+  }
+
   @Get("services")
   services() {
     return this.content.services();

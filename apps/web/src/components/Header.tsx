@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: "/pets", label: "Pets Available" },
   { href: "/adoption", label: "Adoption" },
   { href: "/services", label: "Services" },
+  { href: "/blog", label: "Blog" },
 ];
 
 export function Header() {

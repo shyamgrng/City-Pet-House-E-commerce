@@ -24,7 +24,9 @@ const QUICK_LINKS = [
   { href: "/shop", label: "Shop" },
   { href: "/pets", label: "Pets Available" },
   { href: "/adoption", label: "Adoption" },
+  { href: "/services", label: "Services" },
   { href: "/vet", label: "Web Vet" },
+  { href: "/blog", label: "Blog" },
 ];
 
 interface FooterService {

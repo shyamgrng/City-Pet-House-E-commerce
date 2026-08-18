@@ -15,9 +15,16 @@ export class ContentService {
 
   blogPosts(limit?: number) {
     return this.prisma.blogPost.findMany({
+      where: { status: "ACTIVE" },
       orderBy: { publishedAt: "desc" },
       take: limit,
     });
+  }
+
+  async blogPost(slug: string) {
+    const post = await this.prisma.blogPost.findUnique({ where: { slug } });
+    if (!post || post.status !== "ACTIVE") throw new NotFoundException("Blog post not found.");
+    return post;
   }
 
   services() {

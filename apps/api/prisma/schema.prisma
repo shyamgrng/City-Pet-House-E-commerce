@@ -638,6 +638,8 @@ model BlogPost {
   content   String
   author    String?
   isDoctorPost Boolean @default(false)
+  photo     String?
+  status    String   @default("ACTIVE")
   publishedAt DateTime @default(now())
 }
 

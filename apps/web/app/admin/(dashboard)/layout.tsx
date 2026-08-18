@@ -13,6 +13,7 @@ const NAV_SECTIONS = [
   { href: "/admin/adoption", label: "Adoption Posts", key: "dashboard" },
   { href: "/admin/registrations", label: "Pending Registrations", key: "dashboard" },
   { href: "/admin/services", label: "Services", key: "dashboard" },
+  { href: "/admin/blog", label: "Blog", key: "dashboard" },
   { href: "/admin/finance", label: "Finance", key: "finance" },
   { href: "/admin/users", label: "Users", key: "users" },
 ];

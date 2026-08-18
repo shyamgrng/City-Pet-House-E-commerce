@@ -67,6 +67,17 @@ export class SetWebVetActiveDto {
   @IsBoolean() active!: boolean;
 }
 
+export class UpsertBlogPostDto {
+  @IsString() @MinLength(1) title!: string;
+  @IsOptional() @IsString() slug?: string;
+  @IsOptional() @IsString() excerpt?: string;
+  @IsString() @MinLength(1) content!: string;
+  @IsOptional() @IsString() author?: string;
+  @IsOptional() @IsBoolean() isDoctorPost?: boolean;
+  @IsOptional() @IsString() photo?: string;
+  @IsOptional() @IsIn(["ACTIVE", "HIDDEN"]) status?: string;
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;
