@@ -78,6 +78,26 @@ export class UpsertBlogPostDto {
   @IsOptional() @IsIn(["ACTIVE", "HIDDEN"]) status?: string;
 }
 
+export class CreateDoctorDto {
+  @IsString() @MinLength(1) displayName!: string;
+  @IsEmail() email!: string;
+  @IsString() @MinLength(8) password!: string;
+  @IsOptional() @IsString() qualification?: string;
+  @IsOptional() @IsString() licenseNo?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsInt() @Min(0) consultFee!: number;
+}
+
+export class UpdateDoctorDto {
+  @IsOptional() @IsString() @MinLength(1) displayName?: string;
+  @IsOptional() @IsString() qualification?: string;
+  @IsOptional() @IsString() licenseNo?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsInt() @Min(0) consultFee?: number;
+  @IsOptional() @IsBoolean() verified?: boolean;
+  @IsOptional() @IsIn(["ACTIVE", "SUSPENDED"]) status?: "ACTIVE" | "SUSPENDED";
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;

@@ -15,6 +15,8 @@ import { AdminVetConsultsService } from "./admin-vet-consults.service";
 import { AdminVetConsultsController } from "./admin-vet-consults.controller";
 import { AdminBlogService } from "./admin-blog.service";
 import { AdminBlogController } from "./admin-blog.controller";
+import { AdminDoctorsService } from "./admin-doctors.service";
+import { AdminDoctorsController } from "./admin-doctors.controller";
 
 @Module({
   providers: [
@@ -26,6 +28,7 @@ import { AdminBlogController } from "./admin-blog.controller";
     AdminAdoptionService,
     AdminVetConsultsService,
     AdminBlogService,
+    AdminDoctorsService,
   ],
   controllers: [
     AdminOrdersController,
@@ -36,6 +39,7 @@ import { AdminBlogController } from "./admin-blog.controller";
     AdminAdoptionController,
     AdminVetConsultsController,
     AdminBlogController,
+    AdminDoctorsController,
   ],
 })
 export class AdminModule {}

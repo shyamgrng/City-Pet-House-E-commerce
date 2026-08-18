@@ -39,7 +39,7 @@ export class DoctorAuthService {
       where: { email: dto.email },
       include: { doctorProfile: true },
     });
-    if (!user || user.role !== "DOCTOR" || !user.doctorProfile || !user.doctorProfile.verified) {
+    if (!user || user.role !== "DOCTOR" || !user.doctorProfile || !user.doctorProfile.verified || user.status !== "ACTIVE") {
       throw new UnauthorizedException("Invalid email or password.");
     }
     const valid = await argon2.verify(user.passwordHash, dto.password);
@@ -58,7 +58,7 @@ export class DoctorAuthService {
     if (!stored || stored.revokedAt || stored.expiresAt < new Date() || stored.audience !== DOCTOR_AUDIENCE) {
       throw new UnauthorizedException("Session expired, please sign in again.");
     }
-    if (!stored.user.doctorProfile) {
+    if (!stored.user.doctorProfile || stored.user.status !== "ACTIVE") {
       throw new UnauthorizedException("Session expired, please sign in again.");
     }
 

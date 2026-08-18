@@ -38,7 +38,7 @@ export class AdminAuthService {
       where: { email: dto.email },
       include: { adminProfile: { include: { permissions: true } } },
     });
-    if (!user || user.role !== "ADMIN_STAFF" || !user.adminProfile) {
+    if (!user || user.role !== "ADMIN_STAFF" || !user.adminProfile || user.status !== "ACTIVE") {
       throw new UnauthorizedException("Invalid email or password.");
     }
     const valid = await argon2.verify(user.passwordHash, dto.password);
@@ -57,7 +57,7 @@ export class AdminAuthService {
     if (!stored || stored.revokedAt || stored.expiresAt < new Date() || stored.audience !== ADMIN_AUDIENCE) {
       throw new UnauthorizedException("Session expired, please sign in again.");
     }
-    if (!stored.user.adminProfile) {
+    if (!stored.user.adminProfile || stored.user.status !== "ACTIVE") {
       throw new UnauthorizedException("Session expired, please sign in again.");
     }
 
