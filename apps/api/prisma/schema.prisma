@@ -354,6 +354,11 @@ model OrderIdSequence {
   nextVal Int @default(1000)
 }
 
+model VetBookingIdSequence {
+  id      Int @id @default(1)
+  nextVal Int @default(0)
+}
+
 model OrderItem {
   id              String   @id @default(cuid())
   orderId         String

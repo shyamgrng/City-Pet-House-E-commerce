@@ -63,6 +63,10 @@ export class UpdateAdoptionStatusDto {
   @IsIn(["ACTIVE", "ADOPTED", "REMOVED"]) status!: string;
 }
 
+export class SetWebVetActiveDto {
+  @IsBoolean() active!: boolean;
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;

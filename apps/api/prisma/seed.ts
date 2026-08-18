@@ -236,6 +236,33 @@ const services = [
   },
 ];
 
+const doctors = [
+  {
+    email: "dr.rai@citypethouse.com",
+    displayName: "Dr. Sujata Rai",
+    qualification: "BVSc & AH, Tribhuvan University",
+    licenseNo: "NVC-2014-0412",
+    consultFee: 800,
+    isOnline: true,
+  },
+  {
+    email: "dr.shrestha@citypethouse.com",
+    displayName: "Dr. Bikash Shrestha",
+    qualification: "DVM, Purbanchal University",
+    licenseNo: "NVC-2011-0187",
+    consultFee: 900,
+    isOnline: true,
+  },
+  {
+    email: "dr.gurung@citypethouse.com",
+    displayName: "Dr. Anjali Gurung",
+    qualification: "BVSc & AH, Agriculture & Forestry University",
+    licenseNo: "NVC-2017-0733",
+    consultFee: 700,
+    isOnline: false,
+  },
+];
+
 const petListings = [
   { breed: "Pug", species: "Dog", sex: "Male", age: "8 wks", price: 30000, deliveryFee: 1500, tags: ["Vaccinated", "Dewormed"] },
   { breed: "Siberian Husky", species: "Dog", sex: "Male", age: "9 wks", price: 55000, deliveryFee: 2000, tags: ["Vaccinated", "Dewormed"] },
@@ -415,6 +442,82 @@ async function main() {
           permissions: { create: ADMIN_SECTIONS.map((section) => ({ section, granted: true })) },
         },
       },
+    },
+  });
+
+  await prisma.vetBookingIdSequence.upsert({ where: { id: 1 }, update: {}, create: { id: 1, nextVal: 1 } });
+
+  const doctorPassword = await argon2.hash("doctor123");
+  const doctorProfiles = await Promise.all(
+    doctors.map((doc) =>
+      prisma.user.upsert({
+        where: { email: doc.email },
+        update: {},
+        create: {
+          email: doc.email,
+          passwordHash: doctorPassword,
+          role: "DOCTOR",
+          doctorProfile: {
+            create: {
+              displayName: doc.displayName,
+              qualification: doc.qualification,
+              licenseNo: doc.licenseNo,
+              consultFee: doc.consultFee,
+              isOnline: doc.isOnline,
+              verified: true,
+            },
+          },
+        },
+        include: { doctorProfile: true },
+      }),
+    ),
+  );
+
+  const demoPet = await prisma.pet.upsert({
+    where: { id: "seed-pet-eva-bruno" },
+    update: {},
+    create: { id: "seed-pet-eva-bruno", ownerId: ownerProfileId, name: "Bruno", species: "Dog", breed: "Labrador" },
+  });
+
+  const firstDoctor = doctorProfiles[0].doctorProfile!;
+  const secondDoctor = doctorProfiles[1].doctorProfile!;
+
+  await prisma.vetBooking.upsert({
+    where: { id: "seed-vetbooking-1" },
+    update: {},
+    create: {
+      id: "seed-vetbooking-1",
+      ownerId: ownerProfileId,
+      petId: demoPet.id,
+      doctorId: firstDoctor.id,
+      isOnline: true,
+      scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      reason: "Recurring skin itching, mild hair loss on both flanks.",
+      amount: firstDoctor.consultFee,
+      paymentReceiptUrl: "/fonepay-qr.png",
+      status: "PENDING_PAYMENT",
+      roomChannel: "seed-room-1",
+    },
+  });
+
+  await prisma.vetBooking.upsert({
+    where: { id: "seed-vetbooking-2" },
+    update: {},
+    create: {
+      id: "seed-vetbooking-2",
+      ownerId: ownerProfileId,
+      petId: demoPet.id,
+      doctorId: secondDoctor.id,
+      isOnline: true,
+      scheduledAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      reason: "Annual booster due — DHPPi + Rabies.",
+      amount: secondDoctor.consultFee,
+      paymentReceiptUrl: "/fonepay-qr.png",
+      paymentApprovedAt: new Date(Date.now() - 20 * 60 * 60 * 1000),
+      doctorReconfirmedAt: new Date(Date.now() - 18 * 60 * 60 * 1000),
+      invoiceNumber: "VET-1",
+      status: "CONFIRMED",
+      roomChannel: "seed-room-2",
     },
   });
 
