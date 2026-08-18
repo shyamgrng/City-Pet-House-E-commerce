@@ -16,6 +16,7 @@ const NAV_SECTIONS = [
   { href: "/admin/services", label: "Services", key: "dashboard" },
   { href: "/admin/blog", label: "Blog", key: "dashboard" },
   { href: "/admin/finance", label: "Finance", key: "finance" },
+  { href: "/admin/customers", label: "Customers", key: "users" },
   { href: "/admin/users", label: "Users", key: "users" },
 ];
 

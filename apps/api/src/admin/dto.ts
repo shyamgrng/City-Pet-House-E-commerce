@@ -121,6 +121,10 @@ export class AssignCourierDto {
   @IsString() @MinLength(1) courierId!: string;
 }
 
+export class UpdatePetOwnerStatusDto {
+  @IsIn(["ACTIVE", "SUSPENDED"]) status!: "ACTIVE" | "SUSPENDED";
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;

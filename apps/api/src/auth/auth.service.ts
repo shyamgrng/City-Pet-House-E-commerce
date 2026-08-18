@@ -51,7 +51,7 @@ export class AuthService {
       where: { email: dto.email },
       include: { petOwnerProfile: true },
     });
-    if (!user || user.role !== "PET_OWNER" || !user.petOwnerProfile) {
+    if (!user || user.role !== "PET_OWNER" || !user.petOwnerProfile || user.status === "SUSPENDED") {
       throw new UnauthorizedException("Invalid email or password.");
     }
     const valid = await argon2.verify(user.passwordHash, dto.password);
@@ -70,7 +70,7 @@ export class AuthService {
     if (!stored || stored.revokedAt || stored.expiresAt < new Date() || stored.audience !== OWNER_AUDIENCE) {
       throw new UnauthorizedException("Session expired, please sign in again.");
     }
-    if (!stored.user.petOwnerProfile) {
+    if (!stored.user.petOwnerProfile || stored.user.status === "SUSPENDED") {
       throw new UnauthorizedException("Session expired, please sign in again.");
     }
 

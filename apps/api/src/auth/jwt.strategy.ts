@@ -23,12 +23,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, "jwt-owner") {
     if (payload.aud !== "owner" || payload.role !== "PET_OWNER") {
       throw new UnauthorizedException();
     }
-    const profile = await this.prisma.petOwnerProfile.findUnique({
-      where: { userId: payload.sub },
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      include: { petOwnerProfile: true },
     });
-    if (!profile) {
+    if (!user || !user.petOwnerProfile || user.status === "SUSPENDED") {
       throw new UnauthorizedException();
     }
-    return { userId: payload.sub, ownerProfileId: profile.id, role: payload.role };
+    return { userId: payload.sub, ownerProfileId: user.petOwnerProfile.id, role: payload.role };
   }
 }
