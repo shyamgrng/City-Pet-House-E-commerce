@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from "class-validator";
+import { IsArray, IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 
 export class RegisterOwnerDto {
   @IsString()
@@ -29,4 +29,15 @@ export class LoginDto {
 export class RefreshDto {
   @IsString()
   refreshToken!: string;
+}
+
+export class RegisterB2BDto {
+  @IsString() @MinLength(1) companyName!: string;
+  @IsString() @MinLength(1) contactName!: string;
+  @IsEmail() email!: string;
+  @IsString() @MinLength(7) phone!: string;
+  @IsOptional() @IsString() altPhone?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsArray() @IsString({ each: true }) categories?: string[];
+  @IsString() @MinLength(8) password!: string;
 }

@@ -445,6 +445,65 @@ async function main() {
     },
   });
 
+  // Demo B2B supplier accounts — one already verified/active, one still
+  // PENDING_VERIFICATION so the admin Pending Registrations screen has a
+  // real approval to act on out of the box (unlike doctors, B2B suppliers
+  // self-register via /b2b/register rather than being admin-provisioned).
+  const b2bPassword = await argon2.hash("supplier123");
+  const verifiedSupplier = await prisma.user.upsert({
+    where: { email: "supplier@citypethouse.com" },
+    update: {},
+    create: {
+      email: "supplier@citypethouse.com",
+      phone: "+977 9801234567",
+      passwordHash: b2bPassword,
+      role: "B2B_SUPPLIER",
+      status: "ACTIVE",
+      b2bProfile: {
+        create: {
+          companyName: "Furry Friends Wholesale",
+          contactName: "Rajesh Shrestha",
+          phone: "+977 9801234567",
+          address: "Balaju Industrial Area, Kathmandu",
+          categories: ["Pet Accessories", "Pet Toys"],
+          commissionPct: 15,
+          verified: true,
+        },
+      },
+    },
+    include: { b2bProfile: true },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "pending.supplier@citypethouse.com" },
+    update: {},
+    create: {
+      email: "pending.supplier@citypethouse.com",
+      phone: "+977 9807654321",
+      passwordHash: b2bPassword,
+      role: "B2B_SUPPLIER",
+      status: "PENDING_VERIFICATION",
+      b2bProfile: {
+        create: {
+          companyName: "Himalayan Pet Supplies Pvt. Ltd.",
+          contactName: "Sunita Tamang",
+          phone: "+977 9807654321",
+          address: "Bhaktapur Industrial Estate",
+          categories: ["Pet Supplement"],
+          commissionPct: 15,
+          verified: false,
+        },
+      },
+    },
+  });
+
+  // Scope two seed products to the verified supplier so the B2B and admin
+  // screens have real incoming-order data as soon as one of these is ordered.
+  await prisma.product.updateMany({
+    where: { sku: { in: ["SEED-000", "SEED-001"] } },
+    data: { supplierId: verifiedSupplier.b2bProfile!.id, commissionPct: 15 },
+  });
+
   await prisma.vetBookingIdSequence.upsert({ where: { id: 1 }, update: {}, create: { id: 1, nextVal: 1 } });
 
   const doctorPassword = await argon2.hash("doctor123");
@@ -522,7 +581,9 @@ async function main() {
   });
 
   // eslint-disable-next-line no-console
-  console.log("Seed complete. Pet-owner login: eva.gurung@gmail.com / password123 — Admin login: admin@citypethouse.com / admin123");
+  console.log(
+    "Seed complete. Pet-owner login: eva.gurung@gmail.com / password123 — Admin login: admin@citypethouse.com / admin123 — B2B login: supplier@citypethouse.com / supplier123",
+  );
 }
 
 main()

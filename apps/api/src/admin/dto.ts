@@ -98,6 +98,16 @@ export class UpdateDoctorDto {
   @IsOptional() @IsIn(["ACTIVE", "SUSPENDED"]) status?: "ACTIVE" | "SUSPENDED";
 }
 
+export class UpdateB2BSupplierDto {
+  @IsOptional() @IsString() @MinLength(1) companyName?: string;
+  @IsOptional() @IsString() @MinLength(1) contactName?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsInt() @Min(0) @Max(100) commissionPct?: number;
+  @IsOptional() @IsBoolean() verified?: boolean;
+  @IsOptional() @IsIn(["ACTIVE", "PENDING_VERIFICATION", "SUSPENDED"]) status?: "ACTIVE" | "PENDING_VERIFICATION" | "SUSPENDED";
+}
+
 export class CreateAdminUserDto {
   @IsString() @MinLength(1) name!: string;
   @IsEmail() email!: string;

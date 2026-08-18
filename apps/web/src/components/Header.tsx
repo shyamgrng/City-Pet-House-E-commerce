@@ -78,8 +78,11 @@ export function Header() {
             {link.label}
           </Link>
         ))}
-        <Link href="/staff/signin" className="ml-auto whitespace-nowrap text-text-muted hover:text-primary">
-          Sign In
+        <Link
+          href="/staff/signin"
+          className="ml-auto shrink-0 whitespace-nowrap rounded-full border border-border px-3 py-1 text-[12px] font-semibold text-text-secondary hover:border-primary hover:text-primary"
+        >
+          Staff / B2B / Doctor Sign In
         </Link>
       </nav>
     </header>

@@ -125,8 +125,11 @@ export async function Footer() {
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF0000] text-white">▶</span>
         </div>
 
-        <div className="border-t border-[#3A4652] pt-4 text-center text-[12px] text-text-muted">
-          Copyright © 2026 City Pet House &amp; Animal Clinic. All Rights Reserved.
+        <div className="flex flex-col items-center gap-2 border-t border-[#3A4652] pt-4 text-center text-[12px] text-text-muted">
+          <span>Copyright © 2026 City Pet House &amp; Animal Clinic. All Rights Reserved.</span>
+          <Link href="/staff/signin" className="hover:text-white">
+            Staff / B2B Supplier / Doctor Sign In
+          </Link>
         </div>
       </div>
     </footer>

@@ -11,6 +11,7 @@ import { ContentModule } from "./content/content.module";
 import { AdminModule } from "./admin/admin.module";
 import { VetModule } from "./vet/vet.module";
 import { DoctorModule } from "./doctor/doctor.module";
+import { B2BModule } from "./b2b/b2b.module";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { DoctorModule } from "./doctor/doctor.module";
     AdminModule,
     VetModule,
     DoctorModule,
+    B2BModule,
   ],
 })
 export class AppModule {}

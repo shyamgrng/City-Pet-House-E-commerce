@@ -3,7 +3,7 @@ import Link from "next/link";
 const PORTALS = [
   { href: "/admin/login", label: "Admin & Staff", available: true },
   { href: "/doctor/login", label: "Doctor", available: true },
-  { href: "#", label: "B2B Supplier", available: false },
+  { href: "/b2b/login", label: "B2B Supplier", available: true },
   { href: "#", label: "Courier", available: false },
 ];
 
@@ -34,6 +34,12 @@ export default function StaffSignInPage() {
           ),
         )}
       </div>
+      <p className="mt-6 text-[12px] text-text-secondary">
+        New B2B supplier?{" "}
+        <Link href="/b2b/register" className="font-semibold text-primary hover:underline">
+          Register your company
+        </Link>
+      </p>
     </div>
   );
 }
