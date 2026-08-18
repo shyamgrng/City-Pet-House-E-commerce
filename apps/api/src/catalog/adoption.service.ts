@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateAdoptionPostDto } from "./dto";
 
@@ -14,6 +14,21 @@ export class AdoptionService {
       where: { status: "ACTIVE", createdAt: { gte: cutoff } },
       orderBy: { createdAt: "desc" },
     });
+  }
+
+  async mine(ownerProfileId: string) {
+    return this.prisma.adoptionPost.findMany({
+      where: { postedById: ownerProfileId },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async updateOwnStatus(ownerProfileId: string, id: string, status: "ACTIVE" | "ADOPTED" | "REMOVED") {
+    const post = await this.prisma.adoptionPost.findUnique({ where: { id } });
+    if (!post) throw new NotFoundException("Adoption post not found.");
+    if (post.postedById !== ownerProfileId) throw new ForbiddenException("This isn't your adoption post.");
+    await this.prisma.adoptionPost.update({ where: { id }, data: { status } });
+    return this.mine(ownerProfileId).then((all) => all.find((p) => p.id === id));
   }
 
   async detail(id: string) {

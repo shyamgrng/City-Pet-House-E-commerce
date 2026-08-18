@@ -8,6 +8,8 @@ import { useAuth } from "@/context/AuthContext";
 const TABS = [
   { href: "/account/orders", label: "Orders" },
   { href: "/account/wishlist", label: "Wishlist" },
+  { href: "/account/vet-consults", label: "Web Vet" },
+  { href: "/account/adoption-posts", label: "Adoption Posts" },
   { href: "/account/addresses", label: "Addresses" },
   { href: "/account/profile", label: "Profile" },
 ];
