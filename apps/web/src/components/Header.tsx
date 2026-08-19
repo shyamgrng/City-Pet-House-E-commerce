@@ -34,13 +34,13 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 bg-white shadow-floating">
-      <div className="hidden flex-wrap items-center justify-center gap-4 border-b border-border bg-bg-surface px-6 py-1.5 text-[11px] text-text-secondary sm:flex">
+      <div className="hidden flex-wrap items-center justify-center gap-4 border-b border-border bg-bg-surface px-8 py-1.5 text-[11px] text-text-secondary sm:flex">
         <span>📞 {PHONE}</span>
         <span>📍 {ADDRESS}</span>
         <span>{HOURS}</span>
       </div>
 
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-6 py-3.5">
+      <div className="mx-auto flex max-w-7xl items-center gap-6 px-8 py-3.5">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <Image src="/cph-logo.jpeg" alt="City Pet House logo" width={34} height={34} className="rounded-control object-contain" />
           <span className="font-heading text-[15px] font-bold text-text-dark">City Pet House</span>
@@ -53,7 +53,7 @@ export function Header() {
             placeholder="Search for dog food, vet booking, puppies…"
             className="h-full flex-1 border-none bg-transparent text-[13px] text-text-dark outline-none"
           />
-          <button type="submit" className="shrink-0 rounded-control bg-primary px-4 py-2 text-[12px] font-semibold text-white">
+          <button type="submit" className="flex h-8 shrink-0 items-center rounded-control bg-primary px-[18px] text-[12px] font-semibold text-white">
             Search
           </button>
         </form>
@@ -64,7 +64,7 @@ export function Header() {
         >
           {user ? user.name.split(" ")[0] : "Pet Owner Sign In"}
         </Link>
-        <Link href="/account" className="hidden shrink-0 text-[13px] font-medium text-text-secondary hover:text-primary md:inline">
+        <Link href="/account" className="shrink-0 text-[13px] font-medium text-text-secondary hover:text-primary">
           Account
         </Link>
         <Link href="/cart" className="shrink-0 whitespace-nowrap text-[13px] font-semibold text-primary hover:opacity-80">
@@ -72,16 +72,13 @@ export function Header() {
         </Link>
       </div>
 
-      <nav className="hidden items-center gap-6 overflow-x-auto border-t border-border px-6 py-2.5 text-[13px] font-medium text-text-secondary md:flex">
+      <nav className="hidden items-center gap-6 overflow-x-auto border-t border-border px-8 py-2.5 text-[13px] font-medium text-text-secondary md:flex">
         {NAV_LINKS.map((link) => (
           <Link key={link.href} href={link.href} className="whitespace-nowrap hover:text-primary">
             {link.label}
           </Link>
         ))}
-        <Link
-          href="/staff/signin"
-          className="ml-auto shrink-0 whitespace-nowrap rounded-full border border-border px-3 py-1 text-[12px] font-semibold text-text-secondary hover:border-primary hover:text-primary"
-        >
+        <Link href="/staff/signin" className="ml-auto shrink-0 whitespace-nowrap hover:text-primary">
           Staff &amp; Partner Sign In
         </Link>
       </nav>
