@@ -1,10 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import { apiFetch } from "@/lib/api";
 import { Rail } from "@/components/Rail";
 import { ProductCard, ProductCardData } from "@/components/ProductCard";
+import { PetCard, PetCardData } from "@/components/PetCard";
 import { PromoBanner } from "@/components/PromoBanner";
 import { TestimonialCard, TestimonialData } from "@/components/TestimonialCard";
 import { BlogPostCard, BlogPostData } from "@/components/BlogPostCard";
+import { SignInNotice } from "@/components/SignInNotice";
 
 const CATEGORIES = [
   { label: "Dog", species: "Dog" },
@@ -14,10 +17,23 @@ const CATEGORIES = [
   { label: "Fish", species: "Fish" },
 ];
 
+const WELLNESS_CARE = [
+  { label: "Microchipping", icon: "/service-icons/icon-microchipping.png", match: "Microchip", desc: "Ensure your contact details are always with your pet." },
+  { label: "Vaccinations", icon: "/service-icons/icon-vaccinations.png", match: "Vaccination", desc: "Protect your pet from common infectious diseases." },
+  { label: "Desexing", icon: "/service-icons/icon-desexing.png", match: "Desexing", desc: "Prevent unwanted pregnancies and reduce health risks." },
+  { label: "Clinical Surgery", icon: "/service-icons/icon-surgery.png", match: "Surgery", desc: "Expert surgical care backed by experienced vets." },
+  { label: "Pet Grooming", icon: "/service-icons/icon-grooming.png", match: "Grooming", desc: "Keep your pet looking and feeling their very best." },
+];
+
 interface Brand {
   id: string;
   name: string;
   logo: string | null;
+}
+
+interface ServiceRef {
+  id: string;
+  name: string;
 }
 
 async function getDeals() {
@@ -40,19 +56,33 @@ async function getLatestBlogPosts() {
   return apiFetch<BlogPostData[]>("/blog-posts?limit=3").catch(() => []);
 }
 
+async function getPuppies() {
+  return apiFetch<PetCardData[]>("/pets").catch(() => []);
+}
+
+async function getServices() {
+  return apiFetch<ServiceRef[]>("/services").catch(() => []);
+}
+
 export default async function HomePage() {
-  const [deals, petFood, fashionWear, groomingAccessories, brands, testimonials, blogPosts] = await Promise.all([
-    getDeals(),
-    getByCategory("Pet Food"),
-    getByCategory("Fashion Wear"),
-    getByCategory("Grooming Supplies"),
-    getBrands(),
-    getTestimonials(),
-    getLatestBlogPosts(),
-  ]);
+  const [deals, petFood, fashionWear, groomingAccessories, brands, testimonials, blogPosts, puppies, services] =
+    await Promise.all([
+      getDeals(),
+      getByCategory("Pet Food"),
+      getByCategory("Fashion Wear"),
+      getByCategory("Grooming Supplies"),
+      getBrands(),
+      getTestimonials(),
+      getLatestBlogPosts(),
+      getPuppies(),
+      getServices(),
+    ]);
+  const featuredPuppies = puppies.slice(0, 6);
 
   return (
     <div>
+      <SignInNotice />
+
       <section className="px-6 py-6">
         <div className="mx-auto flex max-w-7xl gap-3.5">
           <div className="relative h-[300px] flex-[2.2] overflow-hidden rounded-card bg-gradient-to-br from-primary to-[#0f6d94] text-white">
@@ -103,6 +133,54 @@ export default async function HomePage() {
               {cat.label}
             </Link>
           ))}
+        </div>
+      </section>
+
+      {featuredPuppies.length > 0 && (
+        <section className="bg-[#F3F9FC] px-6 py-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-[20px]">Available Puppies</h2>
+              <Link href="/pets" className="text-[12px] font-semibold text-primary hover:underline">
+                See all →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {featuredPuppies.map((pet) => (
+                <PetCard key={pet.id} pet={pet} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <PromoBanner
+        title="Get Your Pet Microchipped Today"
+        ctaLabel="Book Now"
+        ctaHref="/services"
+        height="140px"
+        accent="primary"
+      />
+
+      <section className="mx-auto max-w-7xl px-6 py-8">
+        <h2 className="mb-6 text-center text-[18px]">City Pet Health &amp; Wellness Care</h2>
+        <div className="flex flex-wrap gap-6">
+          {WELLNESS_CARE.map((item) => {
+            const service = services.find((s) => s.name.includes(item.match));
+            return (
+              <Link
+                key={item.label}
+                href={service ? `/services/${service.id}` : "/services"}
+                className="flex min-w-[150px] flex-1 flex-col items-center text-center"
+              >
+                <span className="mb-4 flex h-[104px] w-[104px] items-center justify-center overflow-hidden rounded-full bg-[#E7EFEC]">
+                  <Image src={item.icon} alt={item.label} width={70} height={70} className="object-contain" />
+                </span>
+                <span className="mb-2 font-heading text-[16px] font-bold text-text-dark">{item.label}</span>
+                <span className="text-[13px] leading-relaxed text-text-secondary">{item.desc}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 

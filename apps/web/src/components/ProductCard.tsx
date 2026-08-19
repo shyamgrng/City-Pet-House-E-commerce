@@ -33,10 +33,16 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             Photo coming soon
           </div>
         )}
-        {product.badge && (
-          <span className="absolute left-2 top-2 rounded-control bg-primary px-2 py-0.5 text-[11px] font-semibold text-white">
-            {product.badge}
+        {product.badge === "Sale" ? (
+          <span className="absolute right-2 top-2 rounded-control bg-error px-2 py-0.5 text-[11px] font-bold text-white">
+            Hot Sale
           </span>
+        ) : (
+          product.badge && (
+            <span className="absolute left-2 top-2 rounded-control bg-primary px-2 py-0.5 text-[11px] font-semibold text-white">
+              {product.badge}
+            </span>
+          )
         )}
         <button
           onClick={(e) => {
@@ -60,7 +66,9 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <span className="text-[12px] text-text-muted">★ {product.rating.toFixed(1)}</span>
         )}
         <div className="mt-auto flex items-center justify-between pt-2">
-          <span className="font-heading text-[14px] font-bold text-text-dark">{formatNPR(product.price)}</span>
+          <span className={`font-heading text-[14px] font-bold ${product.badge === "Sale" ? "text-error" : "text-text-dark"}`}>
+            {formatNPR(product.price)}
+          </span>
           <button
             onClick={() => addItem(product.id, 1)}
             disabled={product.outOfStock}
