@@ -54,13 +54,22 @@ export default function CartPage() {
               <p className="text-[12px] text-text-muted">{formatNPR(item.unitPrice)} each</p>
               {item.outOfStock && <p className="text-[12px] font-medium text-error">Currently out of stock</p>}
             </div>
-            <input
-              type="number"
-              min={1}
-              value={item.qty}
-              onChange={(e) => cart.updateItem(item.productId, Math.max(1, Number(e.target.value)))}
-              className="w-16 rounded-control border border-border px-2 py-1.5 text-center text-[13px]"
-            />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => cart.updateItem(item.productId, item.qty - 1)}
+                disabled={item.qty <= 1}
+                className="flex h-6 w-6 items-center justify-center rounded-control border border-border text-[14px] font-bold text-text-secondary disabled:opacity-40"
+              >
+                −
+              </button>
+              <span className="min-w-[16px] text-center text-[12px] font-semibold text-text-dark">{item.qty}</span>
+              <button
+                onClick={() => cart.updateItem(item.productId, item.qty + 1)}
+                className="flex h-6 w-6 items-center justify-center rounded-control border border-border text-[14px] font-bold text-text-secondary"
+              >
+                +
+              </button>
+            </div>
             <span className="w-24 text-right font-heading text-[14px] font-semibold text-text-dark">
               {formatNPR(item.unitPrice * item.qty)}
             </span>
