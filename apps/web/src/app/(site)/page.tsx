@@ -1,6 +1,5 @@
 import Image from "next/image";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
-import ProductCard from "@/components/ProductCard";
 import ProductRail from "@/components/ProductRail";
 import {
   availablePuppies,
@@ -14,6 +13,7 @@ import {
   petFood,
   petToys,
   testimonials,
+  todaysDeals,
 } from "@/lib/home-data";
 
 const heroHeadline = "Pet products, puppies, adoption & vet care";
@@ -137,14 +137,44 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Hot Sales Banner */}
+      <div className="mx-8 mt-[22px] mb-3.5 h-[110px] rounded-xl overflow-hidden relative">
+        <ImagePlaceholder label="banner" className="absolute inset-0 w-full h-full" />
+      </div>
+
       {/* Today's Deals */}
-      <div className="px-8 pt-4 pb-2.5 flex justify-between items-center">
+      <div className="px-8 pb-2.5 flex justify-between items-center">
         <div className="font-heading font-bold text-base text-[#1A2027]">Today&apos;s Deals</div>
         <div className="text-xs text-primary font-semibold cursor-pointer">See all →</div>
       </div>
-      <div className="mx-8 mb-8 h-[110px] rounded-xl overflow-hidden relative">
-        <ImagePlaceholder label="banner" className="absolute inset-0 w-full h-full" />
-      </div>
+      {todaysDeals.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-8 pb-8">
+          {todaysDeals.map((p) => (
+            <div key={p.name} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
+              <div className="h-[100px] relative">
+                <ImagePlaceholder label="product photo" className="absolute inset-0 w-full h-full" />
+                <div className="absolute top-1.5 right-1.5 bg-[#D64545] text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                  Hot Sale
+                </div>
+              </div>
+              <div className="p-2.5">
+                <div className="text-[13px] text-[#1A2027] font-medium">{p.name}</div>
+                <div className="flex justify-between items-center mt-1">
+                  <div>
+                    <div className="text-[9px] text-[#8A96A3] line-through">{p.originalPrice}</div>
+                    <div className="text-sm font-bold text-[#D64545]">{p.salePrice}</div>
+                  </div>
+                  <div className="text-sm cursor-pointer text-[#C7CDD2]">♥</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mx-8 mb-8 p-[22px] border border-dashed border-[#E4E9EC] rounded-[10px] text-center text-xs text-[#8A96A3]">
+          No deals running right now — tick &quot;Today&apos;s Deal&quot; on a product in Admin → Shop to feature it here.
+        </div>
+      )}
 
       {/* Pet Food / Pet Accessories / Fashion Wear (cream section) */}
       <div className="bg-[#F7F4EF] pt-1">

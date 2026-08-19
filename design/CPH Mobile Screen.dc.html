@@ -121,28 +121,37 @@
           </sc-for>
         </div>
 
+        <div style="margin:6px 16px 14px;height:80px;borderRadius:12px;overflow:hidden">
+          <image-slot id="home-hotsale-banner" shape="rect" placeholder="Hot Sales Banner"></image-slot>
+        </div>
+
         <div style="display:flex;alignItems:center;justifyContent:space-between;padding:0 16px 8px">
           <div style="fontFamily:Poppins,sans-serif;fontWeight:600;fontSize:15px;color:#1A2027">Today's Deals</div>
           <div onClick="{{ goShop }}" style="fontSize:12px;color:#1996C8;fontWeight:600;cursor:pointer">See all</div>
         </div>
         <div style="display:grid;gridTemplateColumns:1fr 1fr;gap:12px;padding:0 16px 20px">
-          <sc-for list="{{ featured }}" as="p" hint-placeholder-count="4">
+          <sc-for list="{{ featured }}" as="p" hint-placeholder-count="6">
             <div onClick="{{ p.open }}" style="background:#fff;border:1px solid #E4E9EC;borderRadius:12px;overflow:hidden;cursor:pointer">
-              <div style="height:90px;position:relative"><image-slot id="{{ p.slotId }}-1" shape="rect" placeholder="product photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot></div>
+              <div style="height:90px;position:relative">
+                <image-slot id="{{ p.slotId }}-1" shape="rect" placeholder="product photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot>
+                <sc-if value="{{ p.hotSale }}"><div style="position:absolute;top:6px;right:6px;background:#D64545;color:#fff;fontSize:9px;fontWeight:700;padding:2px 7px;borderRadius:5px">Hot Sale</div></sc-if>
+              </div>
               <div style="padding:8px 10px">
                 <div style="fontSize:12px;fontWeight:500;color:#1A2027">{{ p.name }}</div>
                 <div style="display:flex;justifyContent:space-between;alignItems:center;marginTop:2px">
-                  <div style="fontSize:12px;fontWeight:700;color:#1996C8">{{ p.price }}</div>
+                  <div>
+                    <sc-if value="{{ p.originalPriceLabel }}"><div style="fontSize:9px;color:#8A96A3;textDecoration:line-through">{{ p.originalPriceLabel }}</div></sc-if>
+                    <div style="fontSize:12px;fontWeight:700;color:{{ p.priceColor }}">{{ p.salePriceLabel }}</div>
+                  </div>
                   <div onClick="{{ p.toggleWishlist }}" style="fontSize:15px;cursor:pointer;color:{{ p.wishlistColor }}">♥</div>
                 </div>
               </div>
             </div>
           </sc-for>
         </div>
-
-        <div style="margin:0 16px 20px;height:80px;borderRadius:12px;overflow:hidden">
-          <image-slot id="home-hotsale-banner" shape="rect" placeholder="Hot Sales Banner"></image-slot>
-        </div>
+        <sc-if value="{{ noFeaturedDeals }}">
+          <div style="margin:0 16px 20px;padding:18px;border:1px dashed #E4E9EC;borderRadius:12px;textAlign:center;fontSize:11px;color:#8A96A3">No deals running — tick “Today's Deal” on a product in Admin → Shop.</div>
+        </sc-if>
 
         <div style="padding:0 16px 8px"><div style="fontFamily:Poppins,sans-serif;fontWeight:600;fontSize:15px;color:#1A2027">Pet Food</div></div>
         <div style="display:grid;gridTemplateColumns:1fr 1fr;gap:12px;padding:0 16px 20px">
@@ -4261,25 +4270,25 @@ class Component extends DCLogic {
   _withSlug(list) { return list.map(p => ({ ...p, slotId: this._slug(p.name) })); }
   products() {
     return this._withSlug([
-      { name: 'Adjustable Dog Collar', price: 'Rs. 450', badge: 'New', badgeColor: '#1996C8' },
-      { name: 'Retractable Leash 5m', price: 'Rs. 890', badge: '', badgeColor: '#1996C8' },
+      { name: 'Adjustable Dog Collar', price: 'Rs. 450', badge: 'New', badgeColor: '#1996C8', todaysDeal: true, hotSale: true, hotDiscount: 10 },
+      { name: 'Retractable Leash 5m', price: 'Rs. 890', badge: '', badgeColor: '#1996C8', todaysDeal: true, hotSale: true, hotDiscount: 25 },
       { name: 'Travel Carrier Bag', price: 'Rs. 2,300', badge: '', badgeColor: '#1996C8' },
       { name: 'Stainless Steel Feeding Bowl', price: 'Rs. 380', badge: 'Sale', badgeColor: '#D64545' },
       { name: 'Puppy Training Pads (30pc)', price: 'Rs. 990', badge: '', badgeColor: '#1996C8' },
       { name: 'Pet ID Tag', price: 'Rs. 180', badge: '', badgeColor: '#1996C8' },
       { name: 'Elevated Pet Bed', price: 'Rs. 1,850', badge: '', badgeColor: '#1996C8' },
       { name: 'Cat Litter Box', price: 'Rs. 1,450', badge: '', badgeColor: '#1996C8' },
-      { name: 'Dog Knit Sweater', price: 'Rs. 950', badge: 'New', badgeColor: '#1996C8' },
-      { name: 'Pet Raincoat', price: 'Rs. 1,150', badge: '', badgeColor: '#1996C8' },
+      { name: 'Dog Knit Sweater', price: 'Rs. 950', badge: 'New', badgeColor: '#1996C8', todaysDeal: true, hotSale: true, hotDiscount: 20 },
+      { name: 'Pet Raincoat', price: 'Rs. 1,150', badge: '', badgeColor: '#1996C8', todaysDeal: true, hotSale: true, hotDiscount: 15 },
       { name: 'Cat Bandana Set', price: 'Rs. 320', badge: '', badgeColor: '#1996C8' },
       { name: 'Winter Puppy Hoodie', price: 'Rs. 1,050', badge: 'Sale', badgeColor: '#D64545' },
       { name: 'Festive Bowtie Collar', price: 'Rs. 380', badge: '', badgeColor: '#1996C8' },
       { name: 'Dog Denim Jacket', price: 'Rs. 1,300', badge: '', badgeColor: '#1996C8' },
       { name: 'Pet Party Costume', price: 'Rs. 780', badge: '', badgeColor: '#1996C8' },
       { name: 'Cooling Vest for Dogs', price: 'Rs. 1,600', badge: '', badgeColor: '#1996C8' },
-      { name: 'Rope Tug Toy', price: 'Rs. 350', badge: 'New', badgeColor: '#1996C8' },
+      { name: 'Rope Tug Toy', price: 'Rs. 350', badge: 'New', badgeColor: '#1996C8', todaysDeal: true, hotSale: true, hotDiscount: 15 },
       { name: 'Cat Feather Wand', price: 'Rs. 240', badge: '', badgeColor: '#1996C8' },
-      { name: 'Interactive Ball Feeder', price: 'Rs. 720', badge: '', badgeColor: '#1996C8' },
+      { name: 'Interactive Ball Feeder', price: 'Rs. 720', badge: '', badgeColor: '#1996C8', todaysDeal: true, hotSale: true, hotDiscount: 20 },
       { name: 'Squeaky Plush Toy', price: 'Rs. 290', badge: 'Sale', badgeColor: '#D64545' },
       { name: 'Catnip Mouse Toy Set', price: 'Rs. 260', badge: '', badgeColor: '#1996C8' },
       { name: 'Puzzle Treat Dispenser', price: 'Rs. 850', badge: '', badgeColor: '#1996C8' },
@@ -5457,7 +5466,17 @@ class Component extends DCLogic {
       isContact: screen === 'contactform',
       categories: ['cat-dog','cat-cat','cat-small-pets','cat-birds','cat-fish'].map(id => { const canon = { 'cat-dog':'Dog','cat-cat':'Cat','cat-small-pets':'Small Pets','cat-birds':'Birds','cat-fish':'Fish' }[id]; return { name: (this.state.pageHomeCategoryNames||{})[id] || canon, slotId: id, goToPets: () => { this.setState({ screen: 'pets', petSpecies: canon }); if (this._contentScrollEl) this._contentScrollEl.scrollTop = 0; } }; }),
       shopCategories: this.shopCategories(),
-      featured: products.filter(p => p.todaysDeal).slice(0, 4).map(p => ({ ...p, ...this._wl(p.name), open: () => this.setState({ screen: 'product', selectedProductName: p.name }) })),
+      featured: products.filter(p => p.todaysDeal).slice(0, 6).map(p => {
+        const priceNum = Number(String(p.price).replace(/[^0-9]/g, '')) || 0;
+        const disc = p.hotSale ? (p.hotDiscount || 0) : 0;
+        const sale = Math.round(priceNum * (1 - disc / 100));
+        return { ...p, ...this._wl(p.name),
+          originalPriceLabel: disc ? p.price : '',
+          salePriceLabel: disc ? ('Rs. ' + sale.toLocaleString()) : p.price,
+          priceColor: disc ? '#D64545' : '#1996C8',
+          open: () => this.setState({ screen: 'product', selectedProductName: p.name }) };
+      }),
+      noFeaturedDeals: products.filter(p => p.todaysDeal).length === 0,
       products: products.map(p => ({ ...p, ...this._wl(p.name) })),
       puppies: this.puppies().filter(p => p.status !== 'Sold').slice(0, 6).map(pup => {
         const match = this.petsForSale().find(p => p.breed === pup.breed) || pup;

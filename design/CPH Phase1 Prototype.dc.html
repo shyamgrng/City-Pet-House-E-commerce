@@ -215,6 +215,9 @@
                   </div>
                 </div>
               </div>
+              <div style="margin:22px 32px 14px;height:110px;borderRadius:12px;position:relative;overflow:hidden">
+                <image-slot id="home-hotsale-banner" shape="rect" placeholder="banner"></image-slot>
+              </div>
               <div style="padding:0 32px 10px;display:flex;justifyContent:space-between;alignItems:center">
                 <div style="fontFamily:Poppins,sans-serif;fontWeight:700;fontSize:16px;color:#1A2027">Today's Deals</div>
                 <div onClick="{{ goWebShop }}" style="fontSize:12px;color:#1996C8;fontWeight:600;cursor:pointer">See all →</div>
@@ -237,9 +240,9 @@
                   </div>
                 </sc-for>
               </div>
-              <div style="margin:0 32px 32px;height:110px;borderRadius:12px;position:relative;overflow:hidden">
-                <image-slot id="home-hotsale-banner" shape="rect" placeholder="banner"></image-slot>
-              </div>
+              <sc-if value="{{ noFeaturedDeals }}">
+                <div style="margin:0 32px 32px;padding:22px;border:1px dashed #E4E9EC;borderRadius:10px;textAlign:center;fontSize:12px;color:#8A96A3">No deals running right now — tick “Today's Deal” on a product in Admin → Shop to feature it here.</div>
+              </sc-if>
               <div style="background:#F7F4EF;padding-top:4px">
               <div style="padding:0 32px 10px;display:flex;justifyContent:space-between;alignItems:center">
                 <div style="fontFamily:Poppins,sans-serif;fontWeight:700;fontSize:16px;color:#1A2027">Pet Food</div>
@@ -11214,25 +11217,25 @@ City Pet House is committed to providing safe, reliable, and quality pet product
   }
   products() {
     return [
-      { name: 'Adjustable Dog Collar', price: 'Rs. 450', badge: 'New', badgeColor: '#1996C8', category: 'Pet Accessories' },
-      { name: 'Retractable Leash 5m', price: 'Rs. 890', badge: '', badgeColor: '#1996C8', category: 'Pet Accessories' },
+      { name: 'Adjustable Dog Collar', price: 'Rs. 450', badge: 'New', badgeColor: '#1996C8', category: 'Pet Accessories', todaysDeal: true, hotSale: true, hotDiscount: 10 },
+      { name: 'Retractable Leash 5m', price: 'Rs. 890', badge: '', badgeColor: '#1996C8', category: 'Pet Accessories', todaysDeal: true, hotSale: true, hotDiscount: 25 },
       { name: 'Travel Carrier Bag', price: 'Rs. 2,300', badge: '', badgeColor: '#1996C8', category: 'Pet Accessories' },
       { name: 'Stainless Steel Feeding Bowl', price: 'Rs. 380', badge: 'Sale', badgeColor: '#D64545', category: 'Pet Accessories' },
       { name: 'Puppy Training Pads (30pc)', price: 'Rs. 990', badge: '', badgeColor: '#1996C8', category: 'Pet Accessories' },
       { name: 'Pet ID Tag', price: 'Rs. 180', badge: '', badgeColor: '#1996C8', category: 'Pet Accessories' },
       { name: 'Elevated Pet Bed', price: 'Rs. 1,850', badge: '', badgeColor: '#1996C8', category: 'Pet Accessories' },
       { name: 'Cat Litter Box', price: 'Rs. 1,450', badge: '', badgeColor: '#1996C8', category: 'Pet Accessories' },
-      { name: 'Dog Knit Sweater', price: 'Rs. 950', badge: 'New', badgeColor: '#1996C8', category: 'Fashion Wear' },
-      { name: 'Pet Raincoat', price: 'Rs. 1,150', badge: '', badgeColor: '#1996C8', category: 'Fashion Wear' },
+      { name: 'Dog Knit Sweater', price: 'Rs. 950', badge: 'New', badgeColor: '#1996C8', category: 'Fashion Wear', todaysDeal: true, hotSale: true, hotDiscount: 20 },
+      { name: 'Pet Raincoat', price: 'Rs. 1,150', badge: '', badgeColor: '#1996C8', category: 'Fashion Wear', todaysDeal: true, hotSale: true, hotDiscount: 15 },
       { name: 'Cat Bandana Set', price: 'Rs. 320', badge: '', badgeColor: '#1996C8', category: 'Fashion Wear' },
       { name: 'Winter Puppy Hoodie', price: 'Rs. 1,050', badge: 'Sale', badgeColor: '#D64545', category: 'Fashion Wear' },
       { name: 'Festive Bowtie Collar', price: 'Rs. 380', badge: '', badgeColor: '#1996C8', category: 'Fashion Wear' },
       { name: 'Dog Denim Jacket', price: 'Rs. 1,300', badge: '', badgeColor: '#1996C8', category: 'Fashion Wear' },
       { name: 'Pet Party Costume', price: 'Rs. 780', badge: '', badgeColor: '#1996C8', category: 'Fashion Wear' },
       { name: 'Cooling Vest for Dogs', price: 'Rs. 1,600', badge: '', badgeColor: '#1996C8', category: 'Fashion Wear' },
-      { name: 'Rope Tug Toy', price: 'Rs. 350', badge: 'New', badgeColor: '#1996C8', category: 'Pet Toys' },
+      { name: 'Rope Tug Toy', price: 'Rs. 350', badge: 'New', badgeColor: '#1996C8', category: 'Pet Toys', todaysDeal: true, hotSale: true, hotDiscount: 15 },
       { name: 'Cat Feather Wand', price: 'Rs. 240', badge: '', badgeColor: '#1996C8', category: 'Pet Toys' },
-      { name: 'Interactive Ball Feeder', price: 'Rs. 720', badge: '', badgeColor: '#1996C8', category: 'Pet Toys' },
+      { name: 'Interactive Ball Feeder', price: 'Rs. 720', badge: '', badgeColor: '#1996C8', category: 'Pet Toys', todaysDeal: true, hotSale: true, hotDiscount: 20 },
       { name: 'Squeaky Plush Toy', price: 'Rs. 290', badge: 'Sale', badgeColor: '#D64545', category: 'Pet Toys' },
       { name: 'Catnip Mouse Toy Set', price: 'Rs. 260', badge: '', badgeColor: '#1996C8', category: 'Pet Toys' },
       { name: 'Puzzle Treat Dispenser', price: 'Rs. 850', badge: '', badgeColor: '#1996C8', category: 'Pet Toys' },
@@ -12890,8 +12893,11 @@ City Pet House is committed to providing safe, reliable, and quality pet product
           return true;
         };
         const deals = products.filter(inWindow);
+        this._dealCount = deals.length;
         return deals.slice(0,6).map(p => ({ ...p, ...this._wish(p.name), openProduct: () => this.setState({ webScreen: 'product', selectedProductName: p.name }) }));
       })(),
+      hasFeaturedDeals: (this._dealCount || 0) > 0,
+      noFeaturedDeals: (this._dealCount || 0) === 0,
       products,
       productSlotSeeds: this.state.newProducts.flatMap(p => p.slotId ? [p.slotId+'-1', p.slotId+'-2', p.slotId+'-3'] : []),
       shopProductsList: (this.state.aiShopSearchResultNames ? products.filter(p => this.state.aiShopSearchResultNames.includes(p.name)) : products.filter(p => (this.state.webShopBrandFilter === 'All' || p.brand === this.state.webShopBrandFilter) && (!this.state.webShopCategoryFilter || this.state.webShopCategoryFilter === 'All' || p.category === this.state.webShopCategoryFilter) && (!this.state.webShopRatingFilter || (p.rating||0) >= this.state.webShopRatingFilter) && (!this.state.webShopPriceFilter || (this._parsePrice(p.price) >= this.state.webShopPriceFilter[0] && this._parsePrice(p.price) < this.state.webShopPriceFilter[1])) && (!this.state.webShopSearch.trim() || (p.name + ' ' + p.category + ' ' + p.brand + ' ' + (p.tags||[]).join(' ')).toLowerCase().includes(this.state.webShopSearch.trim().toLowerCase())))).map(p => ({ ...p,

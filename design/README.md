@@ -29,7 +29,7 @@ The prototype uses in-memory React-like state (via a `DCLogic` class) to fake: c
 The single file renders many screens behind a top switcher (Website / Mobile App / Admin Panel) and, within Website, a `webScreen` router. Major areas:
 
 ### Public Website
-- **Home** — hero banner, category shortcuts (Dog/Cat/Small Pets/Birds/Fish), "Today's Deals"/"Pet Food"/"Fashion Wear" etc. product rails (including B2B-supplied products), promo tiles.
+- **Home** — hero banner, category shortcuts (Dog/Cat/Small Pets/Birds/Fish), Hot Sales Banner followed by an admin-driven **"Today's Deals"** row (up to 6 products flagged `todaysDeal`, with Hot Sale badge, struck-through original price and optional countdown), then "Pet Food"/"Fashion Wear" etc. product rails (including B2B-supplied products), promo tiles. Mobile home mirrors the same order and behaviour.
 - **Shop** — product grid with brand/category/rating/price filters, keyword search (instant client-side filter) and an AI-assisted "Ask AI" search (natural-language/typo-tolerant matching over the catalog).
 - **Product detail** — gallery, price, wishlist, add-to-cart, "Similar Products" (same-category recommendations).
 - **Cart → Checkout → Payment receipt upload (QR/Fonepay) → Order placed.**

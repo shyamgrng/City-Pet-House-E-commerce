@@ -5,6 +5,21 @@ export type HomeProduct = {
   badgeColor?: string;
 };
 
+export type DealProduct = {
+  name: string;
+  originalPrice: string;
+  salePrice: string;
+};
+
+export const todaysDeals: DealProduct[] = [
+  { name: "Adjustable Dog Collar", originalPrice: "Rs. 450", salePrice: "Rs. 405" },
+  { name: "Retractable Leash 5m", originalPrice: "Rs. 890", salePrice: "Rs. 668" },
+  { name: "Dog Knit Sweater", originalPrice: "Rs. 950", salePrice: "Rs. 760" },
+  { name: "Pet Raincoat", originalPrice: "Rs. 1,150", salePrice: "Rs. 978" },
+  { name: "Rope Tug Toy", originalPrice: "Rs. 350", salePrice: "Rs. 298" },
+  { name: "Interactive Ball Feeder", originalPrice: "Rs. 720", salePrice: "Rs. 576" },
+];
+
 export const categories = [
   { name: "Dog", bg: "#1996C8", slug: "dog" },
   { name: "Cat", bg: "#1F7A4D", slug: "cat" },
