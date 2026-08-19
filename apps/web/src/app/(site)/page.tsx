@@ -128,7 +128,7 @@ export default function HomePage() {
           {healthCareItems.map((item) => (
             <div key={item.title} className="flex-1 min-w-[150px] text-center cursor-pointer">
               <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center mx-auto mb-4 bg-[#E7EFEC] overflow-hidden">
-                <Image src={item.icon} alt={item.title} width={104} height={104} className="object-contain" />
+                <Image src={item.icon} alt={item.title} width={104} height={104} className="object-contain w-full h-full" />
               </div>
               <div className="font-heading font-bold text-[17px] text-[#12181D] mb-2">{item.title}</div>
               <div className="text-[13px] text-[#3A4450] leading-relaxed mb-3.5">{item.desc}</div>
