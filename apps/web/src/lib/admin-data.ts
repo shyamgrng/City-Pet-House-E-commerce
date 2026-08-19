@@ -234,22 +234,9 @@ export const microchipRecords = [
   { chip: "981098254321098", pet: "Uni · Male, 5 years, 10 months", breed: "Japanese Spitz", color: "White", owner: "Sabita Thapa", phone: "+977 9842760300", location: "Kathmandu Metropolitan, Ward 3, Kathmandu" },
 ];
 
-// ---- Pet Available (admin) ----
-export const petAvailableSummary = { total: 10, available: 10, reserved: 0, sold: 0 };
-export const petAvailableCategories = [
-  { label: "Dog", count: 2, color: "#1996C8" },
-  { label: "Cat", count: 2, color: "#C9962B" },
-  { label: "Small Pets", count: 2, color: "#7A56C8" },
-  { label: "Birds", count: 2, color: "#1F7A4D" },
-  { label: "Fish", count: 2, color: "#17A2A0" },
-];
-export const petAvailablePosts: Record<string, { name: string; info: string }[]> = {
-  Dog: [{ name: "Pug", info: "Dog · Male · 8 wks" }, { name: "Siberian Husky", info: "Dog · Male · 9 wks" }],
-  Cat: [{ name: "Persian Kitten", info: "Cat · Female · 10 wks" }, { name: "Siamese Kitten", info: "Cat · Male · 9 wks" }],
-  "Small Pets": [{ name: "Holland Lop Rabbit", info: "Small Pets · Female · 3 months" }, { name: "Syrian Hamster", info: "Small Pets · Male · 2 months" }],
-  Birds: [{ name: "Sun Conure", info: "Birds · Male · 4 months" }, { name: "Lovebird Pair", info: "Birds · Pair · 6 months" }],
-  Fish: [{ name: "Koi Fish (Set of 5)", info: "Fish · — · 6 months" }, { name: "Betta Fish", info: "Fish · Male · 3 months" }],
-};
+// Pet Available now reads live from PetContext (src/context/PetContext.tsx) — see
+// src/app/admin/(dashboard)/pet-available/page.tsx, shared with the public /pets page
+// and the Home page's Available Puppies rail.
 
 // ---- Career ----
 export const careerFolders = [

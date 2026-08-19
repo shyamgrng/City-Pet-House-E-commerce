@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import { CatalogProvider } from "@/context/CatalogContext";
+import { PetProvider } from "@/context/PetContext";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${poppins.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <CatalogProvider>{children}</CatalogProvider>
+        <CatalogProvider>
+          <PetProvider>{children}</PetProvider>
+        </CatalogProvider>
       </body>
     </html>
   );

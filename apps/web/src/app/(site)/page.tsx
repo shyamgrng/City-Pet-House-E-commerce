@@ -1,8 +1,9 @@
 import Image from "next/image";
+import Link from "next/link";
+import AvailablePuppiesRail from "@/components/AvailablePuppiesRail";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import ProductRail from "@/components/ProductRail";
 import {
-  availablePuppies,
   blogPosts,
   brands,
   categories,
@@ -78,30 +79,11 @@ export default function HomePage() {
       <div className="bg-[#F3F9FC] pt-1">
         <div className="px-8 pb-2.5 flex justify-between items-center">
           <div className="font-heading font-bold text-base text-[#1A2027]">Available Puppies</div>
-          <div className="text-xs text-primary font-semibold cursor-pointer">See all →</div>
+          <Link href="/pets" className="text-xs text-primary font-semibold cursor-pointer">
+            See all →
+          </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-8 pb-8">
-          {availablePuppies.map((p) => (
-            <div key={p.breed} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-              <div className="h-[100px] relative">
-                <ImagePlaceholder label="product photo" className="absolute inset-0 w-full h-full" />
-                <div className="absolute top-1.5 left-1.5 bg-[#1F7A4D] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
-                  Available
-                </div>
-              </div>
-              <div className="p-2.5">
-                <div className="text-xs text-[#1A2027] font-semibold">{p.breed}</div>
-                <div className="text-[11px] text-[#8A96A3] mt-0.5">
-                  {p.sex} · {p.age}
-                </div>
-                <div className="flex justify-between items-center mt-1">
-                  <div className="text-[13px] font-bold text-primary">{p.price}</div>
-                  <div className="text-sm cursor-pointer text-[#C7CDD2]">♥</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <AvailablePuppiesRail />
 
         {/* Microchip banner */}
         <div className="mx-8 mb-7 h-[140px] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-8 gap-3">

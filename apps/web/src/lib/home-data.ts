@@ -28,18 +28,9 @@ export const categories = [
   { name: "Fish", bg: "#5B6773", slug: "fish" },
 ];
 
-export const availablePuppies = [
-  { breed: "Pug", sex: "Male", age: "8 wks", price: "Rs. 30,000" },
-  { breed: "Siberian Husky", sex: "Male", age: "9 wks", price: "Rs. 55,000" },
-  { breed: "Persian Kitten", sex: "Female", age: "10 wks", price: "Rs. 18,000" },
-  { breed: "Siamese Kitten", sex: "Male", age: "9 wks", price: "Rs. 15,000" },
-  { breed: "Holland Lop Rabbit", sex: "Female", age: "3 months", price: "Rs. 4,500" },
-  { breed: "Syrian Hamster", sex: "Male", age: "2 months", price: "Rs. 1,200" },
-  { breed: "Sun Conure", sex: "Male", age: "4 months", price: "Rs. 12,000" },
-  { breed: "Lovebird Pair", sex: "Pair", age: "6 months", price: "Rs. 6,500" },
-  { breed: "Koi Fish (Set of 5)", sex: "—", age: "6 months", price: "Rs. 3,500" },
-  { breed: "Betta Fish", sex: "Male", age: "3 months", price: "Rs. 600" },
-];
+// Available Puppies now reads live from PetContext (src/context/PetContext.tsx) via
+// src/components/AvailablePuppiesRail.tsx, shared with the public /pets page and
+// Admin → Pet Available.
 
 export const healthCareItems = [
   {
