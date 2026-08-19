@@ -53,18 +53,42 @@ export default async function HomePage() {
 
   return (
     <div>
-      <section className="bg-gradient-to-br from-primary to-[#0f6d94] px-6 py-14 text-white">
-        <div className="mx-auto max-w-7xl">
-          <h1 className="max-w-xl text-[28px] leading-tight">Pet products, puppies, adoption &amp; vet care</h1>
-          <p className="mt-3 max-w-lg text-[14px] text-white/90">
-            Order online, pay by receipt upload — shop, puppies, adoption or vet consults.
-          </p>
-          <Link
-            href="/shop"
-            className="mt-6 inline-block rounded-control bg-white px-5 py-2.5 text-[13px] font-semibold text-primary hover:opacity-90"
-          >
-            Shop now
-          </Link>
+      <section className="px-6 py-6">
+        <div className="mx-auto flex max-w-7xl gap-3.5">
+          <div className="relative h-[300px] flex-[2.2] overflow-hidden rounded-card bg-gradient-to-br from-primary to-[#0f6d94] text-white">
+            <div className="relative flex h-full max-w-[460px] flex-col justify-center px-7">
+              <h1 className="text-[26px] leading-tight">Pet products, puppies, adoption &amp; vet care</h1>
+              <p className="mt-2.5 max-w-[400px] text-[14px] text-white/90">
+                Order online, pay by receipt upload — shop, puppies, adoption or vet consults.
+              </p>
+              <div className="mt-4 flex gap-2.5">
+                <Link href="/shop" className="rounded-control bg-white px-4 py-2.5 text-[12px] font-semibold text-primary hover:opacity-90">
+                  Shop Now
+                </Link>
+                <Link href="/vet" className="rounded-control bg-white px-4 py-2.5 text-[12px] font-semibold text-text-dark hover:opacity-90">
+                  Book a Vet
+                </Link>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col gap-3.5">
+            <Link
+              href="/shop"
+              className="relative flex-1 overflow-hidden rounded-card bg-gradient-to-br from-error to-[#8f2e2e]"
+            >
+              <span className="absolute inset-x-3.5 bottom-3.5 text-[13px] font-bold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]">
+                Hot Sale — Shop Today&rsquo;s Deals
+              </span>
+            </Link>
+            <Link
+              href="/vet"
+              className="relative flex-1 overflow-hidden rounded-card bg-gradient-to-br from-success to-[#178f4f]"
+            >
+              <span className="absolute inset-x-3.5 bottom-3.5 text-[13px] font-bold text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.5)]">
+                Book Your Vet Consult
+              </span>
+            </Link>
+          </div>
         </div>
       </section>
 
