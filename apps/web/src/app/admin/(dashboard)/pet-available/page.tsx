@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
+import AdoptionFormModal from "@/components/admin/AdoptionFormModal";
 import PetFormModal from "@/components/admin/PetFormModal";
+import { useAdoption } from "@/context/AdoptionContext";
 import { usePets } from "@/context/PetContext";
+import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
 import { formatRs, petSpeciesList, type Pet } from "@/lib/pet-types";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -22,9 +25,12 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function PetAvailablePage() {
   const { pets, addPet, updatePet, deletePet } = usePets();
+  const { posts, addPost, updatePost, deletePost } = useAdoption();
   const [tab, setTab] = useState("Overview");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Pet | null>(null);
+  const [adoptionModalOpen, setAdoptionModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<AdoptionPost | null>(null);
 
   const total = pets.length;
   const available = pets.filter((p) => p.status === "Available").length;
@@ -48,6 +54,21 @@ export default function PetAvailablePage() {
   };
   const markSold = (p: Pet) => updatePet(p.id, { ...p, status: p.status === "Sold" ? "Available" : "Sold" });
 
+  const openAddPost = () => {
+    setEditingPost(null);
+    setAdoptionModalOpen(true);
+  };
+  const openEditPost = (p: AdoptionPost) => {
+    setEditingPost(p);
+    setAdoptionModalOpen(true);
+  };
+  const handleSavePost = (draft: Omit<AdoptionPost, "id">) => {
+    if (editingPost) updatePost(editingPost.id, draft);
+    else addPost(draft);
+    setAdoptionModalOpen(false);
+  };
+  const toggleAdopted = (p: AdoptionPost) => updatePost(p.id, { ...p, adopted: !p.adopted });
+
   return (
     <div>
       <div className="flex justify-between items-start mb-1">
@@ -60,10 +81,15 @@ export default function PetAvailablePage() {
             + Add Pet
           </button>
         )}
+        {tab === "Adoption Posts" && (
+          <button onClick={openAddPost} className="bg-primary text-white text-xs font-semibold px-4 py-2.5 rounded-lg cursor-pointer whitespace-nowrap">
+            + Add Notice
+          </button>
+        )}
       </div>
 
       <div className="flex gap-2 my-5">
-        {["Overview", "Manage Pets"].map((t) => (
+        {["Overview", "Manage Pets", "Adoption Posts"].map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -75,7 +101,7 @@ export default function PetAvailablePage() {
         ))}
       </div>
 
-      {tab === "Manage Pets" ? (
+      {tab === "Manage Pets" && (
         <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
           <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.9fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
             <div>Pet</div>
@@ -112,7 +138,53 @@ export default function PetAvailablePage() {
             ))
           )}
         </div>
-      ) : (
+      )}
+
+      {tab === "Adoption Posts" && (
+        <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+          <div className="grid grid-cols-[1.2fr_1fr_0.9fr_0.9fr_1fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+            <div>Dog</div>
+            <div>Contact</div>
+            <div>Days Left</div>
+            <div>Status</div>
+            <div>Actions</div>
+          </div>
+          {posts.length === 0 ? (
+            <div className="px-4 py-6 text-xs text-[#8A96A3] text-center">No adoption notices yet.</div>
+          ) : (
+            posts.map((p) => (
+              <div key={p.id} className="grid grid-cols-[1.2fr_1fr_0.9fr_0.9fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                <div>
+                  <div className="font-semibold text-[#1A2027]">
+                    {p.name} · {p.breed}
+                  </div>
+                  <div className="text-[11px] text-[#8A96A3] mt-0.5">
+                    {p.sex} · {p.age}
+                  </div>
+                </div>
+                <div className="text-[#5B6773]">{p.contact}</div>
+                <div className="font-semibold">{daysLeft(p)} days</div>
+                <div className="text-[11px] font-semibold" style={{ color: p.adopted ? "#1F7A4D" : "#C9962B" }}>
+                  {p.adopted ? "Adopted" : "Active"}
+                </div>
+                <div className="flex gap-2.5 text-[11px] font-semibold">
+                  <span onClick={() => openEditPost(p)} className="text-primary cursor-pointer">
+                    Edit
+                  </span>
+                  <span onClick={() => toggleAdopted(p)} className="text-[#1F7A4D] cursor-pointer">
+                    {p.adopted ? "Mark Active" : "Mark Adopted"}
+                  </span>
+                  <span onClick={() => deletePost(p.id)} className="text-[#D64545] cursor-pointer">
+                    Delete
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {tab === "Overview" && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-4">
             <Stat label="Total Pets Listed" value={total} />
@@ -186,6 +258,9 @@ export default function PetAvailablePage() {
       )}
 
       {modalOpen && <PetFormModal initial={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
+      {adoptionModalOpen && (
+        <AdoptionFormModal initial={editingPost} onClose={() => setAdoptionModalOpen(false)} onSave={handleSavePost} />
+      )}
     </div>
   );
 }
