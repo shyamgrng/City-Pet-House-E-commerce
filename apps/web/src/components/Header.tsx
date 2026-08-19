@@ -40,7 +40,7 @@ export function Header() {
         <span>{HOURS}</span>
       </div>
 
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-8 py-3.5">
+      <div className="flex items-center gap-6 px-8 py-3.5">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <Image src="/cph-logo.jpeg" alt="City Pet House logo" width={34} height={34} className="rounded-control object-contain" />
           <span className="font-heading text-[15px] font-bold text-text-dark">City Pet House</span>
@@ -73,7 +73,7 @@ export function Header() {
       </div>
 
       <nav className="hidden border-t border-border md:flex">
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-6 overflow-x-auto px-8 py-2.5 text-[13px] font-medium text-text-secondary">
+        <div className="flex w-full items-center gap-6 overflow-x-auto px-8 py-2.5 text-[13px] font-medium text-text-secondary">
           {NAV_LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="whitespace-nowrap hover:text-primary">
               {link.label}
