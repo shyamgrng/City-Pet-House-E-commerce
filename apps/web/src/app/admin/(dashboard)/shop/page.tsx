@@ -1,19 +1,71 @@
 "use client";
 
-import { useState } from "react";
-import {
-  categoryShare,
-  lowStockAndOut,
-  stockByCategory,
-  stockSummary,
-  unitsByCategory,
-} from "@/lib/admin-data";
+import { useMemo, useState } from "react";
+import ProductFormModal from "@/components/admin/ProductFormModal";
+import { useCatalog } from "@/context/CatalogContext";
+import { formatRs, salePrice, shopCategories, type Product } from "@/lib/catalog-types";
 
 const subTabs = ["Overview", "Product", "Category Setting", "Brand Setting", "Delivery Setting", "Setting"];
 
-export default function ShopPage() {
-  const [tab, setTab] = useState("Overview");
+const BAR_COLORS: Record<string, string> = {
+  "Pet Accessories": "#1996C8",
+  "Fashion Wear": "#7A56C8",
+  "Pet Toys": "#1F7A4D",
+  "Pet Supplement": "#C9962B",
+  "Grooming Supplies": "#D64545",
+};
 
+const PIE_COLORS: Record<string, string> = {
+  "Pet Accessories": "#D64545",
+  "Fashion Wear": "#1996C8",
+  "Pet Toys": "#1F7A4D",
+  "Pet Supplement": "#C9962B",
+  "Grooming Supplies": "#7A56C8",
+};
+
+function stockStatus(p: Product) {
+  if (p.outOfStock || p.qty === 0) return { label: "Out of Stock", color: "#D64545" };
+  if (p.qty <= 5) return { label: "Low Stock", color: "#C9962B" };
+  return { label: "In Stock", color: "#1F7A4D" };
+}
+
+export default function ShopPage() {
+  const { products, addProduct, updateProduct, deleteProduct } = useCatalog();
+  const [tab, setTab] = useState("Overview");
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+
+  const byCategory = useMemo(() => {
+    const map = new Map<string, Product[]>();
+    for (const p of products) {
+      if (!map.has(p.category)) map.set(p.category, []);
+      map.get(p.category)!.push(p);
+    }
+    return map;
+  }, [products]);
+
+  const trackedCategories = Object.keys(BAR_COLORS).filter((c) => byCategory.has(c));
+
+  const totalSkus = products.length;
+  const totalUnits = products.reduce((s, p) => s + p.qty, 0);
+  const lowStockCount = products.filter((p) => !p.outOfStock && p.qty > 0 && p.qty <= 5).length;
+  const outOfStockCount = products.filter((p) => p.outOfStock || p.qty === 0).length;
+
+  const unitsByCategory = trackedCategories.map((cat) => ({
+    label: cat,
+    units: byCategory.get(cat)!.reduce((s, p) => s + p.qty, 0),
+    color: BAR_COLORS[cat],
+  }));
+  const maxUnits = Math.max(1, ...unitsByCategory.map((u) => u.units));
+
+  const totalTrackedUnits = unitsByCategory.reduce((s, u) => s + u.units, 0) || 1;
+  const categoryShare = trackedCategories.map((cat) => ({
+    label: cat,
+    pct: Math.round((byCategory.get(cat)!.reduce((s, p) => s + p.qty, 0) / totalTrackedUnits) * 100),
+    color: PIE_COLORS[cat],
+  }));
   const gradientStops = categoryShare
     .reduce<{ start: number; stops: string[] }>(
       (acc, c) => {
@@ -24,6 +76,31 @@ export default function ShopPage() {
       { start: 0, stops: [] }
     )
     .stops.join(", ");
+
+  const lowStockAndOut = products
+    .filter((p) => p.outOfStock || p.qty === 0 || p.qty <= 5)
+    .map((p) => ({ name: p.name, status: p.outOfStock || p.qty === 0 ? "Out of stock" : `${p.qty} left`, level: p.outOfStock || p.qty === 0 ? "out" : "low" }));
+
+  const filteredProducts = products.filter((p) => {
+    if (categoryFilter !== "All" && p.category !== categoryFilter) return false;
+    if (search.trim() && !p.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
+    return true;
+  });
+
+  const openAdd = () => {
+    setEditing(null);
+    setModalOpen(true);
+  };
+  const openEdit = (p: Product) => {
+    setEditing(p);
+    setModalOpen(true);
+  };
+  const closeModal = () => setModalOpen(false);
+  const handleSave = (draft: Omit<Product, "id">) => {
+    if (editing) updateProduct(editing.id, draft);
+    else addProduct(draft);
+    setModalOpen(false);
+  };
 
   return (
     <div>
@@ -40,10 +117,90 @@ export default function ShopPage() {
         ))}
       </div>
 
-      {tab !== "Overview" && (
+      {tab !== "Overview" && tab !== "Product" && (
         <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
           {tab} — coming soon
         </div>
+      )}
+
+      {tab === "Product" && (
+        <>
+          <div className="flex justify-between items-center mb-[18px]">
+            <div className="font-heading font-bold text-[19px] text-[#1A2027]">Catalog</div>
+            <button onClick={openAdd} className="bg-primary text-white text-xs font-semibold px-4 py-2.5 rounded-lg cursor-pointer whitespace-nowrap">
+              + Add Product
+            </button>
+          </div>
+
+          <div className="flex gap-2.5 mb-4 flex-wrap">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search products…"
+              className="flex-1 min-w-[220px] border border-[#E4E9EC] rounded-lg px-3.5 py-2.5 text-[13px]"
+            />
+            {["All", ...shopCategories].map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategoryFilter(c)}
+                className="px-4 py-2 rounded-full text-xs font-semibold cursor-pointer whitespace-nowrap"
+                style={{ background: categoryFilter === c ? "#1996C8" : "#F0F2F4", color: categoryFilter === c ? "#fff" : "#5B6773" }}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+            <div className="grid grid-cols-[88px_1.6fr_1fr_0.8fr_1fr_0.9fr_0.9fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+              <div />
+              <div>Product</div>
+              <div>Category</div>
+              <div>Qty</div>
+              <div>Price</div>
+              <div>Status</div>
+              <div>Actions</div>
+            </div>
+            {filteredProducts.length === 0 ? (
+              <div className="px-4 py-6 text-xs text-[#8A96A3] text-center">No products match.</div>
+            ) : (
+              filteredProducts.map((p) => {
+                const status = stockStatus(p);
+                return (
+                  <div key={p.id} className="grid grid-cols-[88px_1.6fr_1fr_0.8fr_1fr_0.9fr_0.9fr] px-4 py-2.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                    <div className="w-[72px] h-[72px] rounded-lg bg-[#EEF1F3]" />
+                    <div>
+                      <div className="font-semibold text-[#1A2027]">{p.name}</div>
+                    </div>
+                    <div className="text-[#5B6773]">{p.category}</div>
+                    <div className="font-semibold" style={{ color: p.qty <= 5 ? "#C9962B" : "#1A2027" }}>
+                      {p.qty}
+                    </div>
+                    <div>
+                      <div className="font-semibold">{formatRs(p.price)}</div>
+                      {p.hotSale && (
+                        <div className="text-[10px] text-[#D64545] font-bold mt-0.5">
+                          🔥 -{p.hotDiscount}% · now {formatRs(salePrice(p))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-[11px] font-semibold" style={{ color: status.color }}>
+                      {status.label}
+                    </div>
+                    <div className="flex gap-2.5 text-[11px] font-semibold">
+                      <span onClick={() => openEdit(p)} className="text-primary cursor-pointer">
+                        Edit
+                      </span>
+                      <span onClick={() => deleteProduct(p.id)} className="text-[#D64545] cursor-pointer">
+                        Delete
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>
       )}
 
       {tab === "Overview" && (
@@ -51,36 +208,30 @@ export default function ShopPage() {
           <div className="font-heading font-bold text-[19px] text-[#1A2027] mb-4">Stock Dashboard</div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-4">
-            <StatCard label="Total SKUs" value={stockSummary.totalSkus} />
-            <StatCard label="Total Units in Stock" value={stockSummary.totalUnits} color="#1996C8" />
-            <StatCard label="Low Stock Items" value={stockSummary.lowStock} color="#C9962B" />
-            <StatCard label="Out of Stock" value={stockSummary.outOfStock} color="#D64545" />
+            <StatCard label="Total SKUs" value={totalSkus} />
+            <StatCard label="Total Units in Stock" value={totalUnits} color="#1996C8" />
+            <StatCard label="Low Stock Items" value={lowStockCount} color="#C9962B" />
+            <StatCard label="Out of Stock" value={outOfStockCount} color="#D64545" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-3.5 mb-4">
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5">
               <div className="text-[13px] font-bold text-[#1A2027] mb-4">Units in Stock by Category</div>
-              {unitsByCategory.map((c) => {
-                const max = Math.max(...unitsByCategory.map((u) => u.units));
-                return (
-                  <div key={c.label} className="mb-3.5 last:mb-0">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="font-medium text-[#1A2027]">{c.label}</span>
-                      <span className="text-[#5B6773]">{c.units} units</span>
-                    </div>
-                    <div className="h-1.5 bg-[#EEF1F3] rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${(c.units / max) * 100}%`, background: c.color }} />
-                    </div>
+              {unitsByCategory.map((c) => (
+                <div key={c.label} className="mb-3.5 last:mb-0">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-medium text-[#1A2027]">{c.label}</span>
+                    <span className="text-[#5B6773]">{c.units} units</span>
                   </div>
-                );
-              })}
+                  <div className="h-1.5 bg-[#EEF1F3] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${(c.units / maxUnits) * 100}%`, background: c.color }} />
+                  </div>
+                </div>
+              ))}
             </div>
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5">
               <div className="text-[13px] font-bold text-[#1A2027] mb-4">Category Share</div>
-              <div
-                className="w-36 h-36 rounded-full mx-auto mb-4"
-                style={{ background: `conic-gradient(${gradientStops})` }}
-              />
+              <div className="w-36 h-36 rounded-full mx-auto mb-4" style={{ background: `conic-gradient(${gradientStops})` }} />
               {categoryShare.map((c) => (
                 <div key={c.label} className="flex items-center justify-between text-xs mb-1.5">
                   <div className="flex items-center gap-1.5">
@@ -96,47 +247,59 @@ export default function ShopPage() {
           <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
             <div className="text-[13px] font-bold text-[#1A2027]">Low Stock &amp; Out of Stock</div>
             <div className="text-[11px] text-[#8A96A3] mb-3">Items at or below their reorder threshold</div>
-            {lowStockAndOut.map((it) => (
-              <div key={it.name} className="flex justify-between py-2 border-b border-[#F0F2F4] text-xs last:border-0">
-                <span className="font-semibold text-[#1A2027]">{it.name}</span>
-                <span
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                  style={
-                    it.level === "out"
-                      ? { background: "#FCEAEA", color: "#D64545" }
-                      : { background: "#FBF1DD", color: "#C9962B" }
-                  }
-                >
-                  {it.status}
-                </span>
-              </div>
-            ))}
+            {lowStockAndOut.length === 0 ? (
+              <div className="text-xs text-[#8A96A3] py-2">Nothing low or out of stock right now.</div>
+            ) : (
+              lowStockAndOut.map((it) => (
+                <div key={it.name} className="flex justify-between py-2 border-b border-[#F0F2F4] text-xs last:border-0">
+                  <span className="font-semibold text-[#1A2027]">{it.name}</span>
+                  <span
+                    className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={it.level === "out" ? { background: "#FCEAEA", color: "#D64545" } : { background: "#FBF1DD", color: "#C9962B" }}
+                  >
+                    {it.status}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
 
-          {Object.entries(stockByCategory).map(([cat, items]) => (
-            <div key={cat} className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <div className="text-[13px] font-bold text-[#1A2027]">{cat}</div>
-                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm cursor-pointer">+</div>
-              </div>
-              <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-                {items.map((p) => (
-                  <div key={p.name} className="grid grid-cols-3 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-                    <div className="font-medium text-[#1A2027]">{p.name}</div>
-                    <div className="text-[#5B6773]">{p.qty}</div>
-                    <div
-                      className="font-semibold"
-                      style={{ color: p.status === "In Stock" ? "#1F7A4D" : p.status === "Low Stock" ? "#C9962B" : "#D64545" }}
-                    >
-                      {p.status}
-                    </div>
+          {trackedCategories.map((cat) => {
+            const items = byCategory.get(cat)!;
+            return (
+              <div key={cat} className="mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-[13px] font-bold text-[#1A2027]">
+                    {cat} ({items.length})
                   </div>
-                ))}
+                  <button
+                    onClick={openAdd}
+                    className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-sm cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+                  {items.map((p) => {
+                    const status = stockStatus(p);
+                    return (
+                      <div key={p.id} className="grid grid-cols-3 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                        <div className="font-medium text-[#1A2027]">{p.name}</div>
+                        <div className="text-[#5B6773]">{p.qty}</div>
+                        <div className="font-semibold" style={{ color: status.color }}>
+                          {status.label}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </>
       )}
+
+      {modalOpen && <ProductFormModal initial={editing} onClose={closeModal} onSave={handleSave} />}
     </div>
   );
 }

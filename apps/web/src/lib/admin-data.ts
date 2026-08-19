@@ -175,82 +175,9 @@ export const vetActivityLog = [
   { date: "Jul 18, 2026", time: "Just now", activity: "Dr. Sujata Rai, BVSc & AH ended the session with Eva Gurung", type: "Call" },
 ];
 
-// ---- Shop / Stock ----
-export const stockSummary = { totalSkus: 41, totalUnits: 674, lowStock: 4, outOfStock: 1 };
-export const unitsByCategory = [
-  { label: "Pet Accessories", units: 126, color: "#1996C8" },
-  { label: "Fashion Wear", units: 100, color: "#7A56C8" },
-  { label: "Pet Toys", units: 128, color: "#1F7A4D" },
-  { label: "Pet Supplement", units: 160, color: "#C9962B" },
-  { label: "Grooming Supplies", units: 160, color: "#D64545" },
-];
-export const categoryShare = [
-  { label: "Pet Accessories", pct: 19, color: "#D64545" },
-  { label: "Fashion Wear", pct: 15, color: "#1996C8" },
-  { label: "Pet Toys", pct: 19, color: "#1F7A4D" },
-  { label: "Pet Supplement", pct: 24, color: "#C9962B" },
-  { label: "Grooming Supplies", pct: 24, color: "#7A56C8" },
-];
-export const lowStockAndOut = [
-  { name: "Adjustable Dog Collar", status: "3 left", level: "low" },
-  { name: "Travel Carrier Bag", status: "5 left", level: "low" },
-  { name: "Puppy Training Pads (30pc)", status: "2 left", level: "low" },
-  { name: "Cat Bandana Set", status: "Out of stock", level: "out" },
-  { name: "Rope Tug Toy", status: "4 left", level: "low" },
-];
-export const stockByCategory: Record<string, { name: string; qty: number; status: string }[]> = {
-  "Pet Accessories (9)": [
-    { name: "Clumping Bentonite Cat Litter 10L", qty: 24, status: "In Stock" },
-    { name: "Adjustable Dog Collar", qty: 3, status: "Low Stock" },
-    { name: "Retractable Leash 5m", qty: 18, status: "In Stock" },
-    { name: "Travel Carrier Bag", qty: 5, status: "Low Stock" },
-    { name: "Stainless Steel Feeding Bowl", qty: 24, status: "In Stock" },
-    { name: "Puppy Training Pads (30pc)", qty: 2, status: "Low Stock" },
-    { name: "Pet ID Tag", qty: 12, status: "In Stock" },
-    { name: "Elevated Pet Bed", qty: 30, status: "In Stock" },
-    { name: "Cat Litter Box", qty: 8, status: "In Stock" },
-  ],
-  "Fashion Wear (8)": [
-    { name: "Dog Knit Sweater", qty: 15, status: "In Stock" },
-    { name: "Pet Raincoat", qty: 6, status: "In Stock" },
-    { name: "Cat Bandana Set", qty: 0, status: "Out of Stock" },
-    { name: "Winter Puppy Hoodie", qty: 22, status: "In Stock" },
-    { name: "Festive Bowtie Collar", qty: 7, status: "In Stock" },
-    { name: "Dog Denim Jacket", qty: 16, status: "In Stock" },
-    { name: "Pet Party Costume", qty: 9, status: "In Stock" },
-    { name: "Cooling Vest for Dogs", qty: 25, status: "In Stock" },
-  ],
-  "Pet Toys (8)": [
-    { name: "Rope Tug Toy", qty: 4, status: "Low Stock" },
-    { name: "Cat Feather Wand", qty: 19, status: "In Stock" },
-    { name: "Interactive Ball Feeder", qty: 11, status: "In Stock" },
-    { name: "Squeaky Plush Toy", qty: 14, status: "In Stock" },
-    { name: "Catnip Mouse Toy Set", qty: 20, status: "In Stock" },
-    { name: "Puzzle Treat Dispenser", qty: 20, status: "In Stock" },
-    { name: "Chew Bone Toy", qty: 20, status: "In Stock" },
-    { name: "Laser Pointer Toy", qty: 20, status: "In Stock" },
-  ],
-  "Pet Supplement (8)": [
-    { name: "Himalaya Nefrotec Tablets", qty: 20, status: "In Stock" },
-    { name: "Joint Care Chewables", qty: 20, status: "In Stock" },
-    { name: "Omega-3 Skin & Coat Oil", qty: 20, status: "In Stock" },
-    { name: "Multivitamin Syrup", qty: 20, status: "In Stock" },
-    { name: "Probiotic Digestive Aid", qty: 20, status: "In Stock" },
-    { name: "Calcium Bone Booster", qty: 20, status: "In Stock" },
-    { name: "Deworming Tablets", qty: 20, status: "In Stock" },
-    { name: "Immunity Boost Powder", qty: 20, status: "In Stock" },
-  ],
-  "Grooming Supplies (8)": [
-    { name: "Pet Shampoo 250ml", qty: 20, status: "In Stock" },
-    { name: "Deshedding Tool", qty: 20, status: "In Stock" },
-    { name: "Nail Clipper Set", qty: 20, status: "In Stock" },
-    { name: "Slicker Brush", qty: 20, status: "In Stock" },
-    { name: "Pet Cologne Spray", qty: 20, status: "In Stock" },
-    { name: "Ear Cleaning Solution", qty: 20, status: "In Stock" },
-    { name: "Grooming Comb", qty: 20, status: "In Stock" },
-    { name: "Pet Wipes (80pc)", qty: 20, status: "In Stock" },
-  ],
-};
+// Shop / Stock now reads live from CatalogContext (src/context/CatalogContext.tsx) — see
+// src/app/admin/(dashboard)/shop/page.tsx, which is wired to the same product data the
+// public /shop page renders.
 
 // ---- Accounts ----
 export const accountsSummary = { clients: 4, doctors: 3, couriers: 1, staff: 2 };
