@@ -107,7 +107,7 @@ export const testimonials = [
 export const footerGeneralLinks = [
   { label: "About Us", href: "/about" },
   { label: "Career", href: "/career" },
-  { label: "Pet Tag Archive" },
+  { label: "Pet Tag Archive", href: "/pet-tag-archive" },
   { label: "Microchipping Archive" },
   { label: "Dog Breed Archive" },
   { label: "Terms & Conditions" },

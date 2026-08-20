@@ -127,13 +127,10 @@ export const rolePerms = [
 export const roleColumns = ["Dashboard", "Deliveries", "Vet Consults", "Shop", "Finance", "Users"];
 
 // ---- Pet Tag Archive ----
-export const petTagRecords = [
-  { name: "Cooki", info: "Male · 4 months", breed: "German Shepard", color: "Black & Tan", owner: "Shyam Gurung", phone: "+977 9851313717", tag: "9ZG36R6B", scans: 10 },
-  { name: "Uni", info: "Male · 5 years, 10 months", breed: "Japanese Spitz", color: "White", owner: "Sabita Thapa", phone: "+977 9842760300", tag: "79VHFBPM", scans: 6 },
-  { name: "Maggie", info: "Female · 6 years, 7 months", breed: "Golden Retriever", color: "Golden", owner: "Shyam Gurung", phone: "+977 9851313717", tag: "T1EHDCF", scans: 0 },
-  { name: "Molly", info: "Female · 6 years, 7 months", breed: "Golden Retriever", color: "Golden", owner: "Shyam Gurung", phone: "+977 9851313717", tag: "52D0FPCO", scans: 13 },
-  { name: "Shree", info: "Female · 6 years, 7 months", breed: "Doberman", color: "Black & Tan", owner: "Shyam Gurung", phone: "+977 9851313717", tag: "95CC9CK5", scans: 2 },
-];
+// Pet QR tag registry + public page content now read live from PetTagContext (see
+// src/context/PetTagContext.tsx) — src/app/admin/(dashboard)/pet-tag-archive/page.tsx,
+// src/app/admin/(dashboard)/pages/pet-tag-archive/page.tsx, and the public
+// src/app/(site)/pet-tag-archive/page.tsx (which also doubles as the QR-scan landing page).
 
 // ---- Microchipping Records ----
 export const microchipRecords = [
@@ -199,7 +196,7 @@ export const pageEditorList = [
   { title: "How to Buy", desc: "Step-by-step buying guide shown on the public How to Buy page" },
   { title: "FAQ", desc: "Questions & answers shown on the public FAQ page" },
   { title: "Microchipping Archive", desc: "Banner, content sections & FAQs on the public Microchipping Archive page" },
-  { title: "Pet Tag Archive", desc: "Banner, content sections & FAQs on the public Pet Tag Archive page" },
+  { title: "Pet Tag Archive", desc: "Banner, content sections & FAQs on the public Pet Tag Archive page", href: "/admin/pages/pet-tag-archive" },
 ];
 
 // ---- Settings ----
