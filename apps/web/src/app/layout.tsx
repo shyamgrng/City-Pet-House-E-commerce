@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import { AdoptionProvider } from "@/context/AdoptionContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { CatalogProvider } from "@/context/CatalogContext";
 import { PetProvider } from "@/context/PetContext";
 import "./globals.css";
@@ -27,11 +28,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${poppins.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <CatalogProvider>
-          <PetProvider>
-            <AdoptionProvider>{children}</AdoptionProvider>
-          </PetProvider>
-        </CatalogProvider>
+        <AuthProvider>
+          <CatalogProvider>
+            <PetProvider>
+              <AdoptionProvider>{children}</AdoptionProvider>
+            </PetProvider>
+          </CatalogProvider>
+        </AuthProvider>
       </body>
     </html>
   );

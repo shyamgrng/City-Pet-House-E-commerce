@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { siteSettings } from "@/lib/site-settings";
 
 const navLinks = [
@@ -13,6 +17,20 @@ const navLinks = [
 ];
 
 export default function SiteHeader() {
+  const { user, ready, signOut } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const isSignedIn = ready && !!user;
+
+  const handleTopSignInClick = () => {
+    if (isSignedIn) {
+      signOut();
+      router.push("/");
+      return;
+    }
+    router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
+  };
+
   return (
     <div className="sticky top-0 z-10 bg-white">
       <div className="flex items-center justify-center gap-4 px-8 py-1.5 bg-[#F7F9FA] text-[11px] text-[#5B6773] border-b border-[#E4E9EC]">
@@ -43,9 +61,9 @@ export default function SiteHeader() {
           </button>
         </div>
 
-        <Link href="/account" className="text-[13px] font-semibold text-primary shrink-0 whitespace-nowrap">
-          Pet Owner Sign In
-        </Link>
+        <button onClick={handleTopSignInClick} className="text-[13px] font-semibold text-primary shrink-0 whitespace-nowrap cursor-pointer">
+          {isSignedIn ? "Sign Out" : "Pet Owner Sign In"}
+        </button>
         <Link href="/account" className="text-[13px] font-medium text-[#3A4652] shrink-0">
           Account
         </Link>
@@ -60,9 +78,9 @@ export default function SiteHeader() {
             {l.label}
           </Link>
         ))}
-        <Link href="/staff/login" className="cursor-pointer whitespace-nowrap hover:text-primary">
-          Sign In
-        </Link>
+        <button onClick={handleTopSignInClick} className="cursor-pointer whitespace-nowrap hover:text-primary">
+          {isSignedIn ? "Sign Out" : "Sign In"}
+        </button>
       </nav>
     </div>
   );

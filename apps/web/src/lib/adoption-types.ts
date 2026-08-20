@@ -10,6 +10,7 @@ export type AdoptionPost = {
   contact: string;
   postedDaysAgo: number;
   adopted: boolean;
+  ownerId?: string;
 };
 
 export function daysLeft(post: AdoptionPost) {

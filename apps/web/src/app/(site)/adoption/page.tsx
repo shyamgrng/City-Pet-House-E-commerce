@@ -1,10 +1,14 @@
 "use client";
 
+import Link from "next/link";
+import { useState } from "react";
 import { useAdoption } from "@/context/AdoptionContext";
+import { useAuth } from "@/context/AuthContext";
 import { daysLeft } from "@/lib/adoption-types";
 
 export default function AdoptionPage() {
   const { posts } = useAdoption();
+  const { user, ready } = useAuth();
 
   return (
     <div>
@@ -76,14 +80,109 @@ export default function AdoptionPage() {
 
         <div className="flex-1 min-w-[320px] border border-[#E4E9EC] rounded-2xl p-6 h-fit">
           <div className="font-heading font-bold text-base text-[#1A2027] mb-2">Post an Adoption Notice</div>
-          <div className="text-[13px] text-[#5B6773] leading-relaxed mb-[18px]">
-            You need a free account to post an adoption notice — this helps us verify listings and follow up with you.
-          </div>
-          <button className="w-full bg-primary text-white text-center py-3 rounded-[9px] text-sm font-semibold cursor-pointer">
-            Sign In or Create Account
-          </button>
+          {!ready ? null : user ? (
+            <PostAdoptionForm ownerId={user.id} defaultContact={user.phone} />
+          ) : (
+            <>
+              <div className="text-[13px] text-[#5B6773] leading-relaxed mb-[18px]">
+                You need a free account to post an adoption notice — this helps us verify listings and follow up with you.
+              </div>
+              <Link
+                href="/signin?redirect=/adoption"
+                className="block w-full bg-primary text-white text-center py-3 rounded-[9px] text-sm font-semibold cursor-pointer"
+              >
+                Sign In or Create Account
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaultContact: string }) {
+  const { addPost } = useAdoption();
+  const [name, setName] = useState("");
+  const [breed, setBreed] = useState("");
+  const [age, setAge] = useState("");
+  const [sex, setSex] = useState<"Male" | "Female">("Male");
+  const [vaccination, setVaccination] = useState("");
+  const [address, setAddress] = useState("");
+  const [desc, setDesc] = useState("");
+  const [contact, setContact] = useState(defaultContact);
+  const [posted, setPosted] = useState(false);
+
+  const canSave = name.trim().length > 0 && breed.trim().length > 0;
+
+  const submit = () => {
+    if (!canSave) return;
+    addPost({ name, breed, age, sex, vaccination, address, desc, contact, postedDaysAgo: 0, adopted: false, ownerId });
+    setName("");
+    setBreed("");
+    setAge("");
+    setVaccination("");
+    setAddress("");
+    setDesc("");
+    setPosted(true);
+    setTimeout(() => setPosted(false), 3000);
+  };
+
+  return (
+    <div>
+      <FormLabel>Dog&apos;s Name *</FormLabel>
+      <FormInput value={name} onChange={setName} />
+      <FormLabel>Breed *</FormLabel>
+      <FormInput value={breed} onChange={setBreed} />
+      <FormLabel>Age</FormLabel>
+      <FormInput value={age} onChange={setAge} placeholder="e.g. 1.5 years" />
+
+      <FormLabel>Sex</FormLabel>
+      <div className="flex gap-2 mb-3">
+        {(["Male", "Female"] as const).map((s) => (
+          <button
+            key={s}
+            onClick={() => setSex(s)}
+            className="px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer"
+            style={{ background: sex === s ? "#1996C8" : "#F0F2F4", color: sex === s ? "#fff" : "#5B6773" }}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      <FormLabel>Vaccination</FormLabel>
+      <FormInput value={vaccination} onChange={setVaccination} placeholder="e.g. Up to date" />
+      <FormLabel>Description</FormLabel>
+      <FormInput value={desc} onChange={setDesc} />
+      <FormLabel>Contact Number</FormLabel>
+      <FormInput value={contact} onChange={setContact} />
+      <FormLabel>Address</FormLabel>
+      <FormInput value={address} onChange={setAddress} />
+
+      {posted && <div className="text-xs text-[#1F7A4D] mb-2.5">✓ Your adoption notice is live.</div>}
+      <button
+        disabled={!canSave}
+        onClick={submit}
+        className="w-full bg-primary text-white text-center py-3 rounded-[9px] text-sm font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Post Notice
+      </button>
+    </div>
+  );
+}
+
+function FormLabel({ children }: { children: React.ReactNode }) {
+  return <div className="text-xs font-semibold text-[#3A4652] mb-1.5">{children}</div>;
+}
+
+function FormInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <input
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 box-border"
+    />
   );
 }
