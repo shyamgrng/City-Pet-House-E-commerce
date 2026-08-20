@@ -20,11 +20,17 @@ export default function SiteFooter() {
         <div>
           <div className="text-[15px] font-bold text-white mb-3">General</div>
           <div className="text-sm leading-[2.2]">
-            {footerGeneralLinks.map((l) => (
-              <div key={l} className="cursor-pointer hover:text-white">
-                {l}
-              </div>
-            ))}
+            {footerGeneralLinks.map((l) =>
+              l.href ? (
+                <Link key={l.label} href={l.href} className="block cursor-pointer hover:text-white">
+                  {l.label}
+                </Link>
+              ) : (
+                <div key={l.label} className="cursor-pointer hover:text-white">
+                  {l.label}
+                </div>
+              )
+            )}
           </div>
         </div>
         <div>
@@ -40,9 +46,9 @@ export default function SiteFooter() {
           <div className="text-[15px] font-bold text-white mb-3">Quick Links</div>
           <div className="text-sm leading-[2.2]">
             {footerQuickLinks.map((l) => (
-              <div key={l} className="cursor-pointer hover:text-white">
-                {l}
-              </div>
+              <Link key={l.label} href={l.href} className="block cursor-pointer hover:text-white">
+                {l.label}
+              </Link>
             ))}
           </div>
         </div>

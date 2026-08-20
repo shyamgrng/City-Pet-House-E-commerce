@@ -105,13 +105,19 @@ export const testimonials = [
 // via src/components/SiteFooter.tsx, linking into the public /services detail pages.
 
 export const footerGeneralLinks = [
-  "About Us",
-  "Career",
-  "Pet Tag Archive",
-  "Microchipping Archive",
-  "Dog Breed Archive",
-  "Terms & Conditions",
-  "Privacy Policy",
+  { label: "About Us", href: "/about" },
+  { label: "Career" },
+  { label: "Pet Tag Archive" },
+  { label: "Microchipping Archive" },
+  { label: "Dog Breed Archive" },
+  { label: "Terms & Conditions" },
+  { label: "Privacy Policy" },
 ];
 
-export const footerQuickLinks = ["Home", "Shop", "Pets Available", "Adoption", "Web Vet"];
+export const footerQuickLinks = [
+  { label: "Home", href: "/" },
+  { label: "Shop", href: "/shop" },
+  { label: "Pets Available", href: "/pets" },
+  { label: "Adoption", href: "/adoption" },
+  { label: "Web Vet", href: "/vet" },
+];

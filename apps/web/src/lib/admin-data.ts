@@ -196,7 +196,7 @@ export const pageEditorList = [
   { title: "Testimonials", desc: "Customer quotes shown on Home" },
   { title: "Services", desc: "Add, edit & image services shown site-wide", href: "/admin/pages/services" },
   { title: "Blog", desc: "Add, edit & image blog articles", href: "/admin/pages/blog" },
-  { title: "About Us", desc: "Page title & body shown on the public About Us page" },
+  { title: "About Us", desc: "Page title & body shown on the public About Us page", href: "/admin/pages/about" },
   { title: "Vet Consults", desc: "Walkthrough video/banner, headline & content on the public Vet Consults page" },
   { title: "Career", desc: "Intro text, headline & CTA on the public Career page" },
   { title: "Dog Breed Archive", desc: "Add, edit & remove breed entries shown on the public Dog Breed Archive page" },

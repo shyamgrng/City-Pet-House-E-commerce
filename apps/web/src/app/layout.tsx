@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
+import { AboutProvider } from "@/context/AboutContext";
 import { AdoptionProvider } from "@/context/AdoptionContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { B2BAuthProvider } from "@/context/B2BAuthContext";
@@ -51,7 +52,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                             <OrderProvider>
                               <PetProvider>
                                 <AdoptionProvider>
-                                  <BlogProvider>{children}</BlogProvider>
+                                  <BlogProvider>
+                                    <AboutProvider>{children}</AboutProvider>
+                                  </BlogProvider>
                                 </AdoptionProvider>
                               </PetProvider>
                             </OrderProvider>
