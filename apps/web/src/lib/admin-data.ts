@@ -146,18 +146,10 @@ export const microchipRecords = [
 // and the Home page's Available Puppies rail.
 
 // ---- Career ----
-export const careerFolders = [
-  { key: "inbox", label: "Inbox", badge: 3 },
-  { key: "clinic", label: "Vet Technician (Clinic)", badge: 0 },
-  { key: "field", label: "Vet Technician (Field)", badge: 0 },
-  { key: "grooming", label: "Dog Grooming (Grooming Ghar)", badge: 0 },
-  { key: "rejected", label: "Rejected", badge: 0 },
-];
-export const careerApplications = [
-  { name: "Sushant Karki", email: "sushant.karki@gmail.com", phone: "+977 9801234567", role: "Vet Technician (Clinic)" },
-  { name: "Nisha Maharjan", email: "nisha.mhrj@gmail.com", phone: "+977 9812345678", role: "Vet Technician (Field)" },
-  { name: "Roshani Tamang", email: "roshani.tmg@gmail.com", phone: "+977 9841234567", role: "Dog Grooming (Grooming Ghar)" },
-];
+// Career page content (headline, CTA, open positions) and applications now read live from
+// CareerContext (src/context/CareerContext.tsx) — see src/app/(site)/career/page.tsx,
+// src/app/(site)/career/apply/page.tsx, src/app/admin/(dashboard)/pages/career/page.tsx and
+// src/app/admin/(dashboard)/career/page.tsx.
 
 // ---- Notifications ----
 export const notificationTabs = [
@@ -198,7 +190,7 @@ export const pageEditorList = [
   { title: "Blog", desc: "Add, edit & image blog articles", href: "/admin/pages/blog" },
   { title: "About Us", desc: "Page title & body shown on the public About Us page", href: "/admin/pages/about" },
   { title: "Vet Consults", desc: "Walkthrough video/banner, headline & content on the public Vet Consults page" },
-  { title: "Career", desc: "Intro text, headline & CTA on the public Career page" },
+  { title: "Career", desc: "Intro text, headline & CTA on the public Career page", href: "/admin/pages/career" },
   { title: "Dog Breed Archive", desc: "Add, edit & remove breed entries shown on the public Dog Breed Archive page" },
   { title: "Contact Us", desc: "Intro text, info cards, map & form on the Contact page" },
   { title: "Terms & Conditions", desc: "Legal content shown on the public Terms & Conditions page" },

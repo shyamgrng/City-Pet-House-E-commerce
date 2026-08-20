@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminAuth } from "@/context/AdminAuthContext";
+import { useCareer } from "@/context/CareerContext";
 import { sidebarBadges, sidebarDefs } from "@/lib/admin-data";
 
 function slugFor(key: string) {
@@ -18,8 +19,10 @@ function slugFor(key: string) {
 
 export default function AdminSidebar() {
   const { user, logout } = useAdminAuth();
+  const { applications } = useCareer();
   const pathname = usePathname();
   const router = useRouter();
+  const newApplicationsCount = applications.filter((a) => a.status === "New").length;
 
   return (
     <div className="w-[200px] shrink-0 bg-[#1A2027] text-white p-5 px-3.5 flex flex-col min-h-screen">
@@ -32,7 +35,7 @@ export default function AdminSidebar() {
           const slug = slugFor(s.key);
           const href = `/admin/${slug}`;
           const active = pathname === href;
-          const badge = sidebarBadges[s.key];
+          const badge = s.key === "career" ? { count: newApplicationsCount, color: "#C9962B" } : sidebarBadges[s.key];
           return (
             <Link
               key={s.key}
@@ -41,7 +44,7 @@ export default function AdminSidebar() {
               style={{ background: active ? "#1996C8" : "transparent", color: active ? "#fff" : "#C7CDD3" }}
             >
               <span>{s.label}</span>
-              {badge && (
+              {badge && badge.count > 0 && (
                 <span
                   className="min-w-[18px] h-[18px] px-1.5 rounded-full text-white text-[10px] font-bold flex items-center justify-center"
                   style={{ background: badge.color }}
