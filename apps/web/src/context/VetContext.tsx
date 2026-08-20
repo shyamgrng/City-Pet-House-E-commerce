@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { notifyEvent } from "@/lib/notify-client";
 import { availabilitySeed, doctorSeed, vetBookingSeed } from "@/lib/vet-seed";
 import { nowTime, type AvailabilityMap, type ChatMessage, type Doctor, type VetBooking, type VetStatus } from "@/lib/vet-types";
 
@@ -135,6 +136,14 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       persistBookings(bookings);
       return { ...s, bookings };
     });
+    notifyEvent("vet_booked", booking.ownerEmail, booking.ownerName, {
+      bookingId: booking.id,
+      ownerName: booking.ownerName,
+      petName: booking.petName,
+      doctorName: booking.doctorName,
+      scheduledDate: booking.scheduledDate,
+      scheduledTime: booking.scheduledTime,
+    });
     return booking;
   };
 
@@ -144,6 +153,17 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
 
   const approvePayment = (bookingId: string) => {
     updateBooking(bookingId, { status: "Confirmed" as VetStatus });
+    const booking = state.bookings.find((b) => b.id === bookingId);
+    if (booking) {
+      notifyEvent("vet_confirmed", booking.ownerEmail, booking.ownerName, {
+        bookingId: booking.id,
+        ownerName: booking.ownerName,
+        petName: booking.petName,
+        doctorName: booking.doctorName,
+        scheduledDate: booking.scheduledDate,
+        scheduledTime: booking.scheduledTime,
+      });
+    }
   };
 
   const startCall = (bookingId: string) => {
@@ -152,6 +172,15 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
 
   const endCall = (bookingId: string) => {
     updateBooking(bookingId, { status: "Completed" as VetStatus });
+    const booking = state.bookings.find((b) => b.id === bookingId);
+    if (booking) {
+      notifyEvent("vet_completed", booking.ownerEmail, booking.ownerName, {
+        bookingId: booking.id,
+        ownerName: booking.ownerName,
+        petName: booking.petName,
+        doctorName: booking.doctorName,
+      });
+    }
   };
 
   const sendMessage = (bookingId: string, from: ChatMessage["from"], text: string) => {

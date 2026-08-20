@@ -119,6 +119,7 @@ function CheckoutSection({
       ownerId: user.id,
       ownerName: user.name,
       ownerPhone: phone.trim(),
+      ownerEmail: user.email,
       address: address.trim(),
       items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, qty: i.qty })),
       subtotal,

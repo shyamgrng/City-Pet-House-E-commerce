@@ -2,12 +2,16 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { accountSeed } from "@/lib/account-seed";
+import { notifyEvent } from "@/lib/notify-client";
 import type { Account, RegisterInput } from "@/lib/auth-types";
 
 const ACCOUNTS_KEY = "cph_accounts";
 const SESSION_KEY = "cph_current_account_id";
+const RESETS_KEY = "cph_password_resets";
+const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 
 type Result = { ok: true } | { ok: false; error: string };
+type ResetRecord = { code: string; expiresAt: number };
 
 type AuthValue = {
   user: Account | null;
@@ -18,6 +22,8 @@ type AuthValue = {
   signOut: () => void;
   updateProfile: (patch: Partial<Pick<Account, "name" | "email" | "phone" | "address">>) => void;
   changePassword: (newPassword: string) => void;
+  requestPasswordReset: (email: string) => Result;
+  resetPassword: (email: string, code: string, newPassword: string) => Result;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -35,6 +41,19 @@ function loadSession(accounts: Account[]): Account | null {
   const id = window.localStorage.getItem(SESSION_KEY);
   if (!id) return null;
   return accounts.find((a) => a.id === id) ?? null;
+}
+
+function loadResets(): Record<string, ResetRecord> {
+  try {
+    const raw = window.localStorage.getItem(RESETS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, ResetRecord>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistResets(resets: Record<string, ResetRecord>) {
+  window.localStorage.setItem(RESETS_KEY, JSON.stringify(resets));
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -63,6 +82,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     persistAccounts(accounts);
     window.localStorage.setItem(SESSION_KEY, account.id);
     setState({ accounts, user: account, ready: true });
+    notifyEvent("account_created", account.email, account.name, { name: account.name });
+    return { ok: true };
+  };
+
+  const requestPasswordReset = (email: string): Result => {
+    const account = state.accounts.find((a) => a.email.toLowerCase() === email.toLowerCase());
+    if (!account) return { ok: false, error: "No account found with that email." };
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const resets = loadResets();
+    resets[account.email.toLowerCase()] = { code, expiresAt: Date.now() + RESET_CODE_TTL_MS };
+    persistResets(resets);
+    notifyEvent("forgot_password", account.email, account.name, { name: account.name, code });
+    return { ok: true };
+  };
+
+  const resetPassword = (email: string, code: string, newPassword: string): Result => {
+    const resets = loadResets();
+    const key = email.toLowerCase();
+    const record = resets[key];
+    if (!record || record.code !== code.trim()) return { ok: false, error: "Incorrect or expired code." };
+    if (Date.now() > record.expiresAt) return { ok: false, error: "This code has expired — request a new one." };
+    const account = state.accounts.find((a) => a.email.toLowerCase() === key);
+    if (!account) return { ok: false, error: "No account found with that email." };
+    const updated = { ...account, password: newPassword };
+    const accounts = state.accounts.map((a) => (a.id === updated.id ? updated : a));
+    persistAccounts(accounts);
+    delete resets[key];
+    persistResets(resets);
+    setState((s) => ({ ...s, accounts }));
     return { ok: true };
   };
 
@@ -103,7 +151,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user: state.user, accounts: state.accounts, ready: state.ready, signUp, signIn, signOut, updateProfile, changePassword }}
+      value={{
+        user: state.user,
+        accounts: state.accounts,
+        ready: state.ready,
+        signUp,
+        signIn,
+        signOut,
+        updateProfile,
+        changePassword,
+        requestPasswordReset,
+        resetPassword,
+      }}
     >
       {children}
     </AuthContext.Provider>

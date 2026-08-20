@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -78,7 +79,9 @@ function SigninInner() {
             <Input value={email} onChange={setEmail} placeholder="you@example.com" />
             <Label>Password</Label>
             <Input value={password} onChange={setPassword} type="password" />
-            <div className="text-xs text-primary font-semibold text-right mb-5">Forgot Password?</div>
+            <Link href="/forgot-password" className="text-xs text-primary font-semibold text-right mb-5 block">
+              Forgot Password?
+            </Link>
           </>
         )}
 

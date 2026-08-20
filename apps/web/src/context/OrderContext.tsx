@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import type { EmailEvent } from "@/lib/email-templates";
+import { notifyEvent } from "@/lib/notify-client";
 import { orderSeed } from "@/lib/order-seed";
 import type { Order, OrderItem } from "@/lib/order-types";
 
@@ -10,6 +12,7 @@ type PlaceOrderInput = {
   ownerId: string;
   ownerName: string;
   ownerPhone: string;
+  ownerEmail: string;
   address: string;
   items: OrderItem[];
   subtotal: number;
@@ -62,7 +65,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
     const id = "ORD-" + Math.floor(2000 + Math.random() * 8000);
     const order: Order = { ...input, id, status: "Receipt Uploaded", createdAt: Date.now() };
     persist([order, ...state.orders]);
+    notifyEvent("order_placed", order.ownerEmail, order.ownerName, { orderId: id, ownerName: order.ownerName, items: order.items, total: order.total });
     return id;
+  };
+
+  const notifyForOrder = (id: string, event: EmailEvent) => {
+    const order = state.orders.find((o) => o.id === id);
+    if (!order) return;
+    notifyEvent(event, order.ownerEmail, order.ownerName, { orderId: order.id, ownerName: order.ownerName, total: order.total });
   };
 
   return (
@@ -71,10 +81,19 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         orders: state.orders,
         ready: state.ready,
         placeOrder,
-        approveOrder: (id) => update(id, { status: "Payment Approved", approvedAt: Date.now() }),
+        approveOrder: (id) => {
+          update(id, { status: "Payment Approved", approvedAt: Date.now() });
+          notifyForOrder(id, "payment_approved");
+        },
         rejectOrder: (id, reason) => update(id, { status: "Payment Rejected", rejectReason: reason }),
-        markOnTheWay: (id) => update(id, { status: "On the Way" }),
-        markDelivered: (id) => update(id, { status: "Delivered", deliveredAt: Date.now() }),
+        markOnTheWay: (id) => {
+          update(id, { status: "On the Way" });
+          notifyForOrder(id, "order_dispatched");
+        },
+        markDelivered: (id) => {
+          update(id, { status: "Delivered", deliveredAt: Date.now() });
+          notifyForOrder(id, "order_delivered");
+        },
         submitReview: (id, productId, rating, comment) => {
           const order = state.orders.find((o) => o.id === id);
           if (!order) return;

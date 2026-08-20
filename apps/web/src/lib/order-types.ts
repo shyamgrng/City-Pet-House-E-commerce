@@ -14,6 +14,7 @@ export type Order = {
   ownerId: string;
   ownerName: string;
   ownerPhone: string;
+  ownerEmail: string;
   address: string;
   items: OrderItem[];
   subtotal: number;
