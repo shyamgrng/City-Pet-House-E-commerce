@@ -5,24 +5,26 @@ import type { BlogPost } from "@/lib/blog-types";
 
 type Draft = Omit<BlogPost, "id">;
 
-const emptyDraft: Draft = {
-  title: "",
-  date: "",
-  author: "City Pet House Team",
-  isDoctorPost: false,
-  excerpt: "",
-  content: "",
-};
-
 export default function BlogFormModal({
   initial,
   onClose,
   onSave,
+  lockAuthorAs,
 }: {
   initial?: BlogPost | null;
   onClose: () => void;
   onSave: (draft: Draft) => void;
+  /** When set (doctor portal), author is fixed to this doctor and the post is always a Doctor Post. */
+  lockAuthorAs?: string;
 }) {
+  const emptyDraft: Draft = {
+    title: "",
+    date: "",
+    author: lockAuthorAs ?? "City Pet House Team",
+    isDoctorPost: !!lockAuthorAs,
+    excerpt: "",
+    content: "",
+  };
   const [draft, setDraft] = useState<Draft>(initial ? { ...initial } : emptyDraft);
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }));
 
@@ -42,7 +44,13 @@ export default function BlogFormModal({
         <div className="grid grid-cols-2 gap-2.5 mb-3">
           <div>
             <Label>Author *</Label>
-            <Input value={draft.author} onChange={(v) => set("author", v)} />
+            {lockAuthorAs ? (
+              <div className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] bg-[#F7F9FA] text-[13px] text-[#5B6773] box-border">
+                {draft.author}
+              </div>
+            ) : (
+              <Input value={draft.author} onChange={(v) => set("author", v)} />
+            )}
           </div>
           <div>
             <Label>Date</Label>
@@ -50,19 +58,21 @@ export default function BlogFormModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-between py-2.5 border-t border-b border-[#F0F2F4] mb-3.5">
-          <span className="text-[13px] text-[#1A2027]">Doctor Post</span>
-          <button
-            onClick={() => set("isDoctorPost", !draft.isDoctorPost)}
-            className="w-10 h-6 rounded-full relative cursor-pointer transition-colors shrink-0"
-            style={{ background: draft.isDoctorPost ? "#25D366" : "#D8DCE0" }}
-          >
-            <span
-              className="absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all"
-              style={{ left: draft.isDoctorPost ? "18px" : "2px" }}
-            />
-          </button>
-        </div>
+        {!lockAuthorAs && (
+          <div className="flex items-center justify-between py-2.5 border-t border-b border-[#F0F2F4] mb-3.5">
+            <span className="text-[13px] text-[#1A2027]">Doctor Post</span>
+            <button
+              onClick={() => set("isDoctorPost", !draft.isDoctorPost)}
+              className="w-10 h-6 rounded-full relative cursor-pointer transition-colors shrink-0"
+              style={{ background: draft.isDoctorPost ? "#25D366" : "#D8DCE0" }}
+            >
+              <span
+                className="absolute top-0.5 w-5 h-5 bg-white rounded-full transition-all"
+                style={{ left: draft.isDoctorPost ? "18px" : "2px" }}
+              />
+            </button>
+          </div>
+        )}
 
         <Label>Excerpt (shown on Blog list &amp; Home cards)</Label>
         <Input value={draft.excerpt} onChange={(v) => set("excerpt", v)} />

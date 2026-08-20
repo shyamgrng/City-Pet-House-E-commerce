@@ -4,18 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import BlogFormModal from "@/components/blog/BlogFormModal";
+import { useBlog } from "@/context/BlogContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
+import { isAuthoredBy, type BlogPost } from "@/lib/blog-types";
 import { STATUS_COLORS } from "@/lib/vet-types";
 
-const TABS = ["Overview", "Bookings", "Upcoming"] as const;
+const TABS = ["Overview", "Bookings", "Upcoming", "Blog"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function DoctorPortalPage() {
   const { doctor, ready, signOut } = useDoctorAuth();
   const { doctors, bookings, toggleDoctorOnline } = useVet();
+  const { posts, addPost, updatePost, deletePost } = useBlog();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("Overview");
+  const [blogModalOpen, setBlogModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
 
   useEffect(() => {
     if (ready && !doctor) router.replace("/doctor/login");
@@ -30,6 +36,21 @@ export default function DoctorPortalPage() {
   const readyForCall = mine.filter((b) => b.status === "In Progress" || (b.status === "Confirmed" && b.instant));
   const received = completed.reduce((sum, b) => sum + b.amount, 0);
   const remaining = upcoming.reduce((sum, b) => sum + b.amount, 0);
+  const ownPosts = posts.filter((p) => isAuthoredBy(p.author, doctor.name));
+
+  const openAddPost = () => {
+    setEditingPost(null);
+    setBlogModalOpen(true);
+  };
+  const openEditPost = (p: BlogPost) => {
+    setEditingPost(p);
+    setBlogModalOpen(true);
+  };
+  const handleSavePost = (draft: Omit<BlogPost, "id">) => {
+    if (editingPost) updatePost(editingPost.id, draft);
+    else addPost(draft);
+    setBlogModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
@@ -117,7 +138,44 @@ export default function DoctorPortalPage() {
 
         {tab === "Bookings" && <BookingList bookings={mine} />}
         {tab === "Upcoming" && <BookingList bookings={upcoming} />}
+
+        {tab === "Blog" && (
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-[13px] font-bold text-[#1A2027]">My Blog Posts</div>
+              <button onClick={openAddPost} className="bg-primary text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
+                + New Article
+              </button>
+            </div>
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+              {ownPosts.length === 0 ? (
+                <div className="px-4 py-4 text-xs text-[#8A96A3] text-center">You haven&apos;t published any articles yet</div>
+              ) : (
+                ownPosts.map((post) => (
+                  <div key={post.id} className="flex justify-between items-center px-4 py-3 border-b border-[#F0F2F4] last:border-0">
+                    <div onClick={() => openEditPost(post)} className="text-[13px] font-semibold text-[#1A2027] cursor-pointer flex-1">
+                      {post.title}
+                    </div>
+                    <div className="flex gap-3.5 items-center shrink-0 ml-2">
+                      <div className="text-[11px] text-[#8A96A3]">{post.date}</div>
+                      <div onClick={() => openEditPost(post)} className="text-xs font-semibold text-primary cursor-pointer">
+                        Edit
+                      </div>
+                      <div onClick={() => deletePost(post.id)} className="text-xs font-semibold text-[#D64545] cursor-pointer">
+                        Delete
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {blogModalOpen && (
+        <BlogFormModal initial={editingPost} lockAuthorAs={doctor.name} onClose={() => setBlogModalOpen(false)} onSave={handleSavePost} />
+      )}
     </div>
   );
 }

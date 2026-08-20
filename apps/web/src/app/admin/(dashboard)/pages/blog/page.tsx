@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import BlogFormModal from "@/components/admin/BlogFormModal";
+import BlogFormModal from "@/components/blog/BlogFormModal";
 import { useBlog } from "@/context/BlogContext";
 import type { BlogPost } from "@/lib/blog-types";
 
