@@ -1,0 +1,46 @@
+import type { Delivery } from "@/lib/delivery-types";
+
+export const deliverySeed: Delivery[] = [
+  {
+    id: "ORD-1038",
+    client: "Bikram Shahi",
+    phone: "+977 98XXXXXX21",
+    address: "Chabahil, Kathmandu",
+    amount: 1950,
+    checklist: ["Focus Puppy Food 1.2kg ×1", "Retractable Leash 5m ×1"],
+    status: "Awaiting Courier",
+  },
+  {
+    id: "ORD-1036",
+    client: "Nisha Karki",
+    phone: "+977 98XXXXXX45",
+    address: "Jawalakhel, Lalitpur",
+    amount: 3100,
+    checklist: ["Himalaya Nefrotec Tablets ×2", "Clumping Bentonite Cat Litter 10L ×1"],
+    status: "Awaiting Courier",
+  },
+  {
+    id: "ORD-1034",
+    client: "Suresh Maharjan",
+    phone: "+977 98XXXXXX09",
+    address: "Suryabinayak, Bhaktapur",
+    amount: 900,
+    checklist: ["Bairo Adult Dog Food 1.2kg ×1"],
+    status: "Awaiting Courier",
+  },
+  {
+    id: "ORD-1030",
+    client: "Nisha Karki",
+    phone: "+977 98XXXXXX45",
+    address: "Jawalakhel, Lalitpur",
+    amount: 2400,
+    checklist: ["Pedigree Adult Dog Food 3kg ×1"],
+    status: "Delivered",
+    courierId: "CR-1001",
+    courierName: "Valley Express Logistics",
+    dpName: "Ramesh Tamang",
+    dpPhone: "+977 9812345678",
+    dispatchedAt: Date.now() - 6 * 24 * 60 * 60 * 1000,
+    deliveredAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
+  },
+];

@@ -2,6 +2,20 @@ export type CourierAccount = {
   courierId: string;
   companyName: string;
   password: string;
+  email: string;
+  phone: string;
+  altPhone: string;
+  address: string;
 };
 
-export const courierAccountSeed: CourierAccount[] = [{ courierId: "CR-1001", companyName: "Valley Express Logistics", password: "courier123" }];
+export const courierAccountSeed: CourierAccount[] = [
+  {
+    courierId: "CR-1001",
+    companyName: "Valley Express Logistics",
+    password: "courier123",
+    email: "dispatch@valleyexpress.com.np",
+    phone: "+977 9801122334",
+    altPhone: "+977 015545566",
+    address: "Kalanki, Kathmandu",
+  },
+];

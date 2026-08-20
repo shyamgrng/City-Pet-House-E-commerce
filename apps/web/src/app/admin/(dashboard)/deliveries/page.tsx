@@ -3,34 +3,44 @@
 import { useState } from "react";
 import {
   adminOrdersData,
-  cancelledOrdersData,
-  deliveredOrdersData,
   deliveryActivityLog,
   deliveryActivityStats,
   deliveryTabDefs,
-  dispatchOrdersData,
   paymentQueueData,
   refundedOrdersData,
   rejectedPaymentsData,
   revenueByCategory,
   topProducts,
 } from "@/lib/admin-data";
+import { useDelivery } from "@/context/DeliveryContext";
+import { STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
+import { courierAccountSeed } from "@/lib/courier-auth-types";
 
 const activityFilters = ["All", "Payment", "Refund", "Rejected", "Dispatch", "Delivered"];
 const rangeFilters = ["Today", "Yesterday", "Last 7 days", "All time"];
+const IN_PROGRESS_STATUSES = ["Dispatched", "Received", "Processing"];
 
 export default function DeliveriesPage() {
   const [tab, setTab] = useState("payments");
   const [typeFilter, setTypeFilter] = useState("All");
   const [rangeFilter, setRangeFilter] = useState("All time");
+  const { deliveries, assignCourier } = useDelivery();
 
   const filteredLog = deliveryActivityLog.filter((a) => typeFilter === "All" || a.type === typeFilter);
+
+  const awaitingCourier = deliveries.filter((d) => d.status === "Awaiting Courier");
+  const inProgress = deliveries.filter((d) => IN_PROGRESS_STATUSES.includes(d.status));
+  const deliveredLive = deliveries.filter((d) => d.status === "Delivered");
+  const cancelledLive = deliveries.filter((d) => d.status === "Cancelled");
+
+  const liveBadges: Record<string, number> = { dispatch: awaitingCourier.length, delivery: inProgress.length, cancelled: cancelledLive.length };
 
   return (
     <div>
       <div className="flex gap-2 mb-5 flex-wrap">
         {deliveryTabDefs.map((t) => {
           const active = tab === t.key;
+          const badge = t.key in liveBadges ? liveBadges[t.key] : t.badge;
           return (
             <button
               key={t.key}
@@ -39,12 +49,12 @@ export default function DeliveriesPage() {
               style={{ background: active ? "#1996C8" : "#fff", color: active ? "#fff" : "#3A4652", border: active ? "none" : "1px solid #E4E9EC" }}
             >
               <span>{t.label}</span>
-              {t.badge > 0 && (
+              {badge > 0 && (
                 <span
                   className="min-w-[17px] h-[17px] px-1.5 rounded-full text-white text-[10px] font-bold flex items-center justify-center"
                   style={{ background: t.badgeColor }}
                 >
-                  {t.badge}
+                  {badge}
                 </span>
               )}
             </button>
@@ -94,57 +104,74 @@ export default function DeliveriesPage() {
 
       {tab === "dispatch" && (
         <Section title="Dispatch Board" subtitle="Approved orders awaiting courier handoff">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {dispatchOrdersData.map((o) => (
-              <div key={o.id} className="bg-white border border-[#E4E9EC] rounded-[10px] p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-bold text-sm text-[#1A2027]">{o.id}</div>
-                  <span className="bg-[#E7F3EC] text-[#1F7A4D] text-[10px] font-bold px-2 py-0.5 rounded">Paid</span>
-                </div>
-                <div className="text-[13px] font-semibold text-[#1A2027]">{o.client}</div>
-                <div className="text-xs text-[#5B6773] mt-1">📞 {o.phone}</div>
-                <div className="text-xs text-[#5B6773] mt-0.5">📍 {o.address}</div>
-                <div className="text-[10px] text-[#8A96A3] font-bold uppercase mt-3 mb-1">Order Checklist</div>
-                {o.checklist.map((c) => (
-                  <div key={c} className="text-xs text-[#3A4652] py-0.5">
-                    ☑ {c}
-                  </div>
-                ))}
-                <div className="flex justify-between text-xs text-[#8A96A3] mt-3 pt-3 border-t border-[#F0F2F4]">
-                  <span>Amount</span>
-                  <span className="font-bold text-sm text-[#1A2027]">{o.amount}</span>
-                </div>
-                <select className="w-full mt-3 border border-[#E4E9EC] rounded-md px-3 py-2 text-xs text-[#5B6773]">
-                  <option>Select courier…</option>
-                </select>
-                <button className="w-full mt-2 bg-primary text-white rounded-md py-2.5 text-[13px] font-semibold cursor-pointer">
-                  Mark Dispatched
-                </button>
-              </div>
-            ))}
-          </div>
+          {awaitingCourier.length === 0 ? (
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">
+              No orders awaiting courier handoff
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {awaitingCourier.map((o) => (
+                <DispatchCard key={o.id} delivery={o} onDispatch={assignCourier} />
+              ))}
+            </div>
+          )}
         </Section>
       )}
 
       {tab === "delivery" && (
         <Section title="Delivery" subtitle="Dispatched orders — confirm once handed to the customer">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2 mt-2">Delivered</div>
-          <div className="bg-white border border-[#E4E9EC] rounded-[10px] divide-y divide-[#F0F2F4]">
-            {deliveredOrdersData.map((o) => (
-              <div key={o.id} className="flex justify-between px-4 py-3 text-xs">
-                <div>
-                  <span className="font-bold">{o.id}</span> · {o.client}
+          <div className="text-[13px] font-bold text-[#1A2027] mb-2 mt-2">In Progress</div>
+          <div className="bg-white border border-[#E4E9EC] rounded-[10px] divide-y divide-[#F0F2F4] mb-5">
+            {inProgress.length === 0 ? (
+              <div className="px-4 py-4 text-xs text-[#8A96A3] text-center">Nothing in progress</div>
+            ) : (
+              inProgress.map((o) => (
+                <div key={o.id} className="flex justify-between px-4 py-3 text-xs">
+                  <div>
+                    <span className="font-bold">{o.id}</span> · {o.client} · {o.courierName}
+                  </div>
+                  <div className="font-semibold" style={{ color: STATUS_COLORS[o.status] }}>
+                    {o.status}
+                  </div>
                 </div>
-                <div className="text-[#8A96A3]">{o.deliveredAt}</div>
-              </div>
-            ))}
+              ))
+            )}
+          </div>
+
+          <div className="text-[13px] font-bold text-[#1A2027] mb-2">Delivered</div>
+          <div className="bg-white border border-[#E4E9EC] rounded-[10px] divide-y divide-[#F0F2F4]">
+            {deliveredLive.length === 0 ? (
+              <div className="px-4 py-4 text-xs text-[#8A96A3] text-center">No deliveries completed yet</div>
+            ) : (
+              deliveredLive.map((o) => (
+                <div key={o.id} className="flex justify-between px-4 py-3 text-xs">
+                  <div>
+                    <span className="font-bold">{o.id}</span> · {o.client}
+                  </div>
+                  <div className="text-[#8A96A3]">{o.deliveredAt ? new Date(o.deliveredAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—"}</div>
+                </div>
+              ))
+            )}
           </div>
         </Section>
       )}
 
       {tab === "cancelled" && (
         <Section title="Cancelled Deliveries" subtitle="Deliveries cancelled by Admin or a courier, with reason">
-          <EmptyRow show={cancelledOrdersData.length === 0} />
+          {cancelledLive.length === 0 ? (
+            <EmptyRow show />
+          ) : (
+            <Table headers={["Order", "Client", "Courier", "Reason"]}>
+              {cancelledLive.map((o) => (
+                <Row key={o.id} cols={4}>
+                  <div className="font-semibold">{o.id}</div>
+                  <div>{o.client}</div>
+                  <div>{o.courierName ?? "—"}</div>
+                  <div className="text-[#D64545]">{o.cancelReason}</div>
+                </Row>
+              ))}
+            </Table>
+          )}
         </Section>
       )}
 
@@ -307,6 +334,57 @@ function ActionBtn({ children, color, subtle }: { children: React.ReactNode; col
 function EmptyRow({ show }: { show: boolean }) {
   if (!show) return null;
   return <div className="bg-white border-t border-[#E4E9EC] pt-0" />;
+}
+
+function DispatchCard({ delivery, onDispatch }: { delivery: Delivery; onDispatch: (id: string, courierId: string, courierName: string) => void }) {
+  const [courierId, setCourierId] = useState("");
+
+  const dispatch = () => {
+    const courier = courierAccountSeed.find((c) => c.courierId === courierId);
+    if (!courier) return;
+    onDispatch(delivery.id, courier.courierId, courier.companyName);
+  };
+
+  return (
+    <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-4">
+      <div className="flex justify-between items-start mb-2">
+        <div className="font-bold text-sm text-[#1A2027]">{delivery.id}</div>
+        <span className="bg-[#E7F3EC] text-[#1F7A4D] text-[10px] font-bold px-2 py-0.5 rounded">Paid</span>
+      </div>
+      <div className="text-[13px] font-semibold text-[#1A2027]">{delivery.client}</div>
+      <div className="text-xs text-[#5B6773] mt-1">📞 {delivery.phone}</div>
+      <div className="text-xs text-[#5B6773] mt-0.5">📍 {delivery.address}</div>
+      <div className="text-[10px] text-[#8A96A3] font-bold uppercase mt-3 mb-1">Order Checklist</div>
+      {delivery.checklist.map((c) => (
+        <div key={c} className="text-xs text-[#3A4652] py-0.5">
+          ☑ {c}
+        </div>
+      ))}
+      <div className="flex justify-between text-xs text-[#8A96A3] mt-3 pt-3 border-t border-[#F0F2F4]">
+        <span>Amount</span>
+        <span className="font-bold text-sm text-[#1A2027]">Rs. {delivery.amount.toLocaleString("en-IN")}</span>
+      </div>
+      <select
+        value={courierId}
+        onChange={(e) => setCourierId(e.target.value)}
+        className="w-full mt-3 border border-[#E4E9EC] rounded-md px-3 py-2 text-xs text-[#5B6773]"
+      >
+        <option value="">Select courier…</option>
+        {courierAccountSeed.map((c) => (
+          <option key={c.courierId} value={c.courierId}>
+            {c.companyName}
+          </option>
+        ))}
+      </select>
+      <button
+        onClick={dispatch}
+        disabled={!courierId}
+        className="w-full mt-2 bg-primary text-white rounded-md py-2.5 text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Mark Dispatched
+      </button>
+    </div>
+  );
 }
 
 function FilterPill({

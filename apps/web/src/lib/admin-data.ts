@@ -99,23 +99,9 @@ export const adminOrdersData = [
   { id: "ORD-1042", client: "Lin Hollywood", date: "Jul 12, 2026", amount: "Rs. 2,700", status: "Payment Approved" },
 ];
 
-export const dispatchOrdersData = [
-  {
-    id: "ORD-1038", client: "Bikram Shahi", phone: "+977 98XXXXXX21", address: "Chabahil, Kathmandu", paid: true,
-    checklist: ["Focus Puppy Food 1.2kg ×1", "Retractable Leash 5m ×1"], amount: "Rs. 1,950",
-  },
-  {
-    id: "ORD-1036", client: "Nisha Karki", phone: "+977 98XXXXXX45", address: "Jawalakhel, Lalitpur", paid: true,
-    checklist: ["Himalaya Nefrotec Tablets ×2", "Clumping Bentonite Cat Litter 10L ×1"], amount: "Rs. 3,100",
-  },
-  {
-    id: "ORD-1034", client: "Suresh Maharjan", phone: "+977 98XXXXXX09", address: "Suryabinayak, Bhaktapur", paid: true,
-    checklist: ["Bairo Adult Dog Food 1.2kg ×1"], amount: "Rs. 900",
-  },
-];
+// Dispatch/Delivery/Cancelled are now live in DeliveryContext (lib/delivery-seed.ts) — Admin's
+// Dispatch, Delivery, and Cancelled tabs read directly from there instead of static data.
 
-export const deliveredOrdersData = [{ id: "ORD-1030", client: "Nisha Karki", deliveredAt: "Jul 15, 2026" }];
-export const cancelledOrdersData: { id: string; client: string; reason: string }[] = [];
 export const rejectedPaymentsData = [{ id: "ORD-1040", client: "Krishna B.", amount: "Rs. 1,600", reason: "Receipt unreadable" }];
 export const refundedOrdersData: { id: string; client: string; amount: string; type: string }[] = [];
 
