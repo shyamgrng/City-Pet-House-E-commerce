@@ -7,7 +7,26 @@ export type Doctor = {
   verified: boolean;
   consults: number;
   completed: number;
+  feeRs: number;
 };
+
+/** doctorId -> date label -> list of open time slots for that date */
+export type AvailabilityMap = Record<string, Record<string, string[]>>;
+
+export const AVAILABILITY_SLOTS = ["9:00 AM", "11:00 AM", "1:00 PM", "3:00 PM", "5:00 PM"];
+
+export function next14Days(): string[] {
+  const days: string[] = [];
+  const base = new Date();
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    if (i === 0) days.push("Today");
+    else if (i === 1) days.push("Tomorrow");
+    else days.push(d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }));
+  }
+  return days;
+}
 
 export type VetStatus = "Pending Payment" | "Payment Review" | "Confirmed" | "In Progress" | "Completed" | "Cancelled";
 

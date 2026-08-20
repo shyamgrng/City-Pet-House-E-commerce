@@ -2,24 +2,31 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useVet } from "@/context/VetContext";
-
-const DATE_CHIPS = ["Today", "Tomorrow", "Wed, Jul 20", "Thu, Jul 21", "Fri, Jul 22"];
-const TIME_CHIPS = ["10:00 AM", "11:30 AM", "1:00 PM", "3:00 PM", "5:00 PM"];
+import { next14Days } from "@/lib/vet-types";
 
 function BookInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, ready } = useAuth();
-  const { doctors, bookConsult } = useVet();
+  const { doctors, availability, bookConsult } = useVet();
 
   const doctorId = searchParams.get("doctor") || doctors[0]?.id || "";
   const doctor = doctors.find((d) => d.id === doctorId) ?? doctors[0];
 
-  const [date, setDate] = useState(DATE_CHIPS[0]);
-  const [time, setTime] = useState(TIME_CHIPS[0]);
+  const openDates = useMemo(() => {
+    if (!doctor) return [];
+    const forDoctor = availability[doctor.id] ?? {};
+    return next14Days().filter((d) => (forDoctor[d] ?? []).length > 0);
+  }, [availability, doctor]);
+
+  const [date, setDate] = useState(openDates[0] ?? "");
+  const [timeChoice, setTimeChoice] = useState("");
+  const timeChips = doctor ? (availability[doctor.id]?.[date] ?? []) : [];
+  const time = timeChips.includes(timeChoice) ? timeChoice : (timeChips[0] ?? "");
+
   const [ownerName, setOwnerName] = useState(user?.name ?? "");
   const [ownerPhone, setOwnerPhone] = useState(user?.phone ?? "");
   const [ownerEmail, setOwnerEmail] = useState(user?.email ?? "");
@@ -53,6 +60,10 @@ function BookInner() {
   if (!doctor) return null;
 
   const submit = () => {
+    if (!doctor.online && !date) {
+      setError("This doctor has no open slots right now — please choose another doctor.");
+      return;
+    }
     if (!ownerName.trim() || !ownerPhone.trim() || !ownerEmail.trim() || !petName.trim() || !petSpecies.trim() || !petAge.trim() || !reason.trim()) {
       setError("Please fill in all required fields.");
       return;
@@ -71,7 +82,7 @@ function BookInner() {
       instant: doctor.online,
       scheduledDate: doctor.online ? "" : date,
       scheduledTime: doctor.online ? "" : time,
-      amount: 800,
+      amount: doctor.feeRs,
     });
     router.push(`/vet/payment/${booking.id}`);
   };
@@ -90,18 +101,26 @@ function BookInner() {
         <div className="text-[13px] text-[#1F7A4D] font-semibold bg-[#EAF6EE] px-3.5 py-2.5 rounded-[9px] mb-5">
           This doctor is online now — your consult starts as soon as payment is approved.
         </div>
+      ) : openDates.length === 0 ? (
+        <div className="text-[13px] text-[#5B6773] bg-[#F7F9FA] border border-[#E4E9EC] px-3.5 py-2.5 rounded-[9px] mb-5">
+          This doctor has no open slots right now — please choose another doctor from{" "}
+          <Link href="/vet" className="text-primary font-semibold">
+            Web Vet
+          </Link>
+          .
+        </div>
       ) : (
         <>
           <div className="text-xs font-semibold text-[#3A4652] mb-2">Preferred Date</div>
           <div className="flex gap-2 mb-4 flex-wrap">
-            {DATE_CHIPS.map((d) => (
+            {openDates.map((d) => (
               <Chip key={d} active={date === d} onClick={() => setDate(d)} label={d} />
             ))}
           </div>
           <div className="text-xs font-semibold text-[#3A4652] mb-2">Preferred Time</div>
           <div className="flex gap-2 mb-5 flex-wrap">
-            {TIME_CHIPS.map((t) => (
-              <Chip key={t} active={time === t} onClick={() => setTime(t)} label={t} />
+            {timeChips.map((t) => (
+              <Chip key={t} active={time === t} onClick={() => setTimeChoice(t)} label={t} />
             ))}
           </div>
         </>

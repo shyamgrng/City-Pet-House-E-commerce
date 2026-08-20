@@ -1,10 +1,32 @@
-import type { Doctor, VetBooking } from "@/lib/vet-types";
+import type { AvailabilityMap, Doctor, VetBooking } from "@/lib/vet-types";
+import { AVAILABILITY_SLOTS, next14Days } from "@/lib/vet-types";
 
 export const doctorSeed: Doctor[] = [
-  { id: "DR-1042", name: "Dr. Sujata Rai, BVSc & AH", qualification: "BVSc & AH, Tribhuvan University", nvcNumber: "NVC-1042", online: true, verified: true, consults: 4, completed: 3 },
-  { id: "DR-0876", name: "Dr. Bikash Shrestha, DVM", qualification: "DVM, Nepal Agriculture & Forestry University", nvcNumber: "NVC-0876", online: false, verified: true, consults: 1, completed: 0 },
-  { id: "DR-1213", name: "Dr. Anjali Gurung, BVSc & AH", qualification: "BVSc & AH, Tribhuvan University", nvcNumber: "NVC-1213", online: true, verified: true, consults: 0, completed: 0 },
+  { id: "DR-1042", name: "Dr. Sujata Rai, BVSc & AH", qualification: "BVSc & AH, Tribhuvan University", nvcNumber: "NVC-1042", online: true, verified: true, consults: 4, completed: 3, feeRs: 800 },
+  { id: "DR-0876", name: "Dr. Bikash Shrestha, DVM", qualification: "DVM, Nepal Agriculture & Forestry University", nvcNumber: "NVC-0876", online: false, verified: true, consults: 1, completed: 0, feeRs: 800 },
+  { id: "DR-1213", name: "Dr. Anjali Gurung, BVSc & AH", qualification: "BVSc & AH, Tribhuvan University", nvcNumber: "NVC-1213", online: true, verified: false, consults: 0, completed: 0, feeRs: 750 },
 ];
+
+function seedAvailability(): AvailabilityMap {
+  const days = next14Days();
+  const map: AvailabilityMap = {};
+  // A realistic starting spread: the offline doctor keeps a few advance slots open,
+  // the two online doctors have some daytime slots open on the next few days too.
+  const pattern: Record<string, number[]> = {
+    "DR-1042": [2, 3, 5],
+    "DR-0876": [1, 2, 3, 4, 6],
+    "DR-1213": [2, 4],
+  };
+  for (const [doctorId, dayIndices] of Object.entries(pattern)) {
+    map[doctorId] = {};
+    for (const i of dayIndices) {
+      map[doctorId][days[i]] = [AVAILABILITY_SLOTS[0], AVAILABILITY_SLOTS[2]];
+    }
+  }
+  return map;
+}
+
+export const availabilitySeed: AvailabilityMap = seedAvailability();
 
 export const vetBookingSeed: VetBooking[] = [
   {

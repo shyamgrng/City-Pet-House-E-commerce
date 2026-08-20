@@ -5,13 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import BlogFormModal from "@/components/blog/BlogFormModal";
+import AvailabilityTab from "@/components/doctor/AvailabilityTab";
+import FinanceTab from "@/components/doctor/FinanceTab";
+import ProfileTab from "@/components/doctor/ProfileTab";
 import { useBlog } from "@/context/BlogContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
 import { isAuthoredBy, type BlogPost } from "@/lib/blog-types";
 import { STATUS_COLORS } from "@/lib/vet-types";
 
-const TABS = ["Overview", "Bookings", "Upcoming", "Blog"] as const;
+const TABS = ["Overview", "Bookings", "Upcoming", "Availability", "Finance", "Blog", "Profile"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function DoctorPortalPage() {
@@ -138,6 +141,9 @@ export default function DoctorPortalPage() {
 
         {tab === "Bookings" && <BookingList bookings={mine} />}
         {tab === "Upcoming" && <BookingList bookings={upcoming} />}
+        {tab === "Availability" && <AvailabilityTab doctorId={doctor.doctorId} />}
+        {tab === "Finance" && <FinanceTab bookings={mine} />}
+        {tab === "Profile" && <ProfileTab doctorRecord={doctorRecord} />}
 
         {tab === "Blog" && (
           <div>

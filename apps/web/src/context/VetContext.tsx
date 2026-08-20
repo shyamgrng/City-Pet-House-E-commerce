@@ -1,11 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { doctorSeed, vetBookingSeed } from "@/lib/vet-seed";
-import { nowTime, type ChatMessage, type Doctor, type VetBooking, type VetStatus } from "@/lib/vet-types";
+import { availabilitySeed, doctorSeed, vetBookingSeed } from "@/lib/vet-seed";
+import { nowTime, type AvailabilityMap, type ChatMessage, type Doctor, type VetBooking, type VetStatus } from "@/lib/vet-types";
 
 const DOCTORS_KEY = "cph_vet_doctors";
 const BOOKINGS_KEY = "cph_vet_bookings";
+const AVAILABILITY_KEY = "cph_vet_availability";
 
 type NewBookingInput = Omit<
   VetBooking,
@@ -15,8 +16,11 @@ type NewBookingInput = Omit<
 type VetValue = {
   doctors: Doctor[];
   bookings: VetBooking[];
+  availability: AvailabilityMap;
   ready: boolean;
   toggleDoctorOnline: (doctorId: string) => void;
+  setDoctorFee: (doctorId: string, feeRs: number) => void;
+  toggleAvailabilitySlot: (doctorId: string, date: string, time: string) => void;
   bookConsult: (input: NewBookingInput) => VetBooking;
   submitPayment: (bookingId: string) => void;
   approvePayment: (bookingId: string) => void;
@@ -49,20 +53,31 @@ function loadBookings(): VetBooking[] {
   }
 }
 
+function loadAvailability(): AvailabilityMap {
+  try {
+    const raw = window.localStorage.getItem(AVAILABILITY_KEY);
+    return raw ? (JSON.parse(raw) as AvailabilityMap) : availabilitySeed;
+  } catch {
+    return availabilitySeed;
+  }
+}
+
 export function VetProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ doctors: Doctor[]; bookings: VetBooking[]; ready: boolean }>({
+  const [state, setState] = useState<{ doctors: Doctor[]; bookings: VetBooking[]; availability: AvailabilityMap; ready: boolean }>({
     doctors: doctorSeed,
     bookings: vetBookingSeed,
+    availability: availabilitySeed,
     ready: false,
   });
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ doctors: loadDoctors(), bookings: loadBookings(), ready: true });
+    setState({ doctors: loadDoctors(), bookings: loadBookings(), availability: loadAvailability(), ready: true });
   }, []);
 
   const persistDoctors = (doctors: Doctor[]) => window.localStorage.setItem(DOCTORS_KEY, JSON.stringify(doctors));
   const persistBookings = (bookings: VetBooking[]) => window.localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
+  const persistAvailability = (availability: AvailabilityMap) => window.localStorage.setItem(AVAILABILITY_KEY, JSON.stringify(availability));
 
   const updateBooking = (bookingId: string, patch: Partial<VetBooking> | ((b: VetBooking) => Partial<VetBooking>)) => {
     setState((s) => {
@@ -77,6 +92,25 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       const doctors = s.doctors.map((d) => (d.id === doctorId ? { ...d, online: !d.online } : d));
       persistDoctors(doctors);
       return { ...s, doctors };
+    });
+  };
+
+  const setDoctorFee = (doctorId: string, feeRs: number) => {
+    setState((s) => {
+      const doctors = s.doctors.map((d) => (d.id === doctorId ? { ...d, feeRs } : d));
+      persistDoctors(doctors);
+      return { ...s, doctors };
+    });
+  };
+
+  const toggleAvailabilitySlot = (doctorId: string, date: string, time: string) => {
+    setState((s) => {
+      const forDoctor = s.availability[doctorId] ?? {};
+      const openTimes = forDoctor[date] ?? [];
+      const nextTimes = openTimes.includes(time) ? openTimes.filter((t) => t !== time) : [...openTimes, time];
+      const availability: AvailabilityMap = { ...s.availability, [doctorId]: { ...forDoctor, [date]: nextTimes } };
+      persistAvailability(availability);
+      return { ...s, availability };
     });
   };
 
@@ -149,8 +183,11 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       value={{
         doctors: state.doctors,
         bookings: state.bookings,
+        availability: state.availability,
         ready: state.ready,
         toggleDoctorOnline,
+        setDoctorFee,
+        toggleAvailabilitySlot,
         bookConsult,
         submitPayment,
         approvePayment,
