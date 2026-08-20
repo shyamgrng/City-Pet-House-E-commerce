@@ -1,0 +1,36 @@
+import type { FaqPageContent } from "./faq-types";
+
+export const faqSeed: FaqPageContent = {
+  pageTitle: "Frequently Asked Questions",
+  pageSubtitle:
+    "Find answers to common questions about ordering pet products, booking veterinary services, buying puppies, adoption, grooming, boarding, and other services from City Pet House.",
+  contactHeading: "Still Have Questions?",
+  contactSubtext: "We are always happy to help pet parents.",
+  items: [
+    { id: "faq-1", cat: "Account & Registration", q: "Do I need an account to purchase products?", a: "Yes. Customers need to create an account before placing an order. Your account helps us manage your orders, delivery details, service bookings, and provide a better shopping experience." },
+    { id: "faq-2", cat: "Account & Registration", q: "How do I create an account?", a: "You can create an account by clicking the Register/Login option and providing your name, email address, phone number, and password. After registration, you can browse products, place orders, and access our services." },
+    { id: "faq-3", cat: "Account & Registration", q: "Can I browse products without creating an account?", a: "Yes. You can browse our products and services without an account. However, account registration is required to purchase products or book services." },
+    { id: "faq-4", cat: "Account & Registration", q: "Can I update my profile information?", a: "Yes. You can update your personal details, delivery information, and account information after logging into your account." },
+    { id: "faq-5", cat: "Online Shopping & Products", q: "What products can I buy from City Pet House?", a: "You can purchase various pet care products including dog food, cat food, pet supplements, grooming products, toys, accessories, healthcare products, and other pet essentials." },
+    { id: "faq-6", cat: "Online Shopping & Products", q: "How do I place an order?", a: "Create an account, select your products, add them to your cart, enter delivery information, complete payment through QR payment, upload your payment receipt, then wait for order confirmation." },
+    { id: "faq-7", cat: "Online Shopping & Products", q: "Can I cancel my order?", a: "Yes. Orders can be cancelled within 12 hours of placing the order, provided the order has not been processed or dispatched." },
+    { id: "faq-8", cat: "Payment", q: "What payment methods are available?", a: "Currently, City Pet House accepts QR-based digital payments. Customers need to scan the QR code, complete payment, upload payment receipt, and wait for payment verification." },
+    { id: "faq-9", cat: "Payment", q: "Why do I need to upload my payment receipt?", a: "Since we manually verify QR payments, uploading your payment receipt helps our team confirm your payment and process your order faster." },
+    { id: "faq-10", cat: "Payment", q: "When will my order be confirmed?", a: "After receiving your payment receipt, our admin team will verify the payment and confirm your order. You will receive updates through email at each stage." },
+    { id: "faq-11", cat: "Delivery", q: "Where do you deliver?", a: "Currently, City Pet House delivers within Kathmandu, Lalitpur, and Bhaktapur." },
+    { id: "faq-12", cat: "Delivery", q: "How long does delivery take?", a: "Our standard delivery target is within 24 hours after payment confirmation. In some situations, delivery may take up to 48 hours due to traffic, weather, holidays, or unexpected circumstances." },
+    { id: "faq-13", cat: "Delivery", q: "How can I track my order?", a: "You will receive email updates regarding: order received, payment verified, order confirmed, order prepared, and order dispatched." },
+    { id: "faq-14", cat: "Veterinary Consultation", q: "Can I consult a veterinarian online?", a: "Yes. City Pet House provides online veterinary consultation services through video consultation, audio consultation, uploading pet photos, and uploading medical reports." },
+    { id: "faq-15", cat: "Veterinary Consultation", q: "Can online veterinarians prescribe medicines?", a: "Yes. Our veterinarians may prescribe medication when clinically appropriate based on the information provided." },
+    { id: "faq-16", cat: "Veterinary Consultation", q: "Can I use online consultation for emergencies?", a: "No. Online consultation is not suitable for emergencies. For emergency situations, please contact our emergency support number or visit a veterinary clinic immediately." },
+    { id: "faq-17", cat: "Grooming Services", q: "What grooming services do you provide?", a: "Our grooming services include bath and blow dry, hair trimming, deshedding, nail trimming, ear cleaning, hygiene grooming, tick and flea treatment, and professional pet grooming." },
+    { id: "faq-18", cat: "Grooming Services", q: "How can I book grooming services?", a: "You can book grooming services through our website, mobile app, phone, or WhatsApp." },
+    { id: "faq-19", cat: "Pet Boarding", q: "Does City Pet House provide pet boarding?", a: "Yes. We provide safe and comfortable boarding facilities for pets. Owners should provide accurate information about vaccination status, health conditions, behaviour, and special requirements." },
+    { id: "faq-20", cat: "Puppy Purchase", q: "Can I buy puppies online?", a: "Yes. City Pet House provides a responsible puppy purchasing platform. Customers can view available puppies and contact our team for further information." },
+    { id: "faq-21", cat: "Puppy Purchase", q: "What age puppies are available for sale?", a: "Puppies will not be sold before 40 days of age." },
+    { id: "faq-22", cat: "Puppy Purchase", q: "Do you provide puppy health assurance?", a: "We aim to provide healthy and active puppies. Customers may request additional health testing, including Canine Parvovirus testing, at additional charges." },
+    { id: "faq-23", cat: "Pet Adoption", q: "Can I adopt pets through City Pet House?", a: "Yes. Our adoption platform helps connect pets needing homes with interested adopters." },
+    { id: "faq-24", cat: "Pet Adoption", q: "Does City Pet House verify adoption listings?", a: "Users are responsible for the information provided in adoption listings. Customers should perform appropriate checks before adoption." },
+    { id: "faq-25", cat: "Mobile App", q: "Will City Pet House have a mobile application?", a: "Yes. City Pet House is developing mobile applications to make pet care services easier and more accessible — customers will be able to shop online, manage orders, book services, access veterinary support, and receive notifications." },
+  ],
+};

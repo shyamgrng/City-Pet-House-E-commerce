@@ -109,9 +109,16 @@ export const footerGeneralLinks = [
   { label: "Career", href: "/career" },
   { label: "Pet Tag Archive", href: "/pet-tag-archive" },
   { label: "Microchipping Archive", href: "/microchipping-archive" },
-  { label: "Dog Breed Archive" },
-  { label: "Terms & Conditions" },
-  { label: "Privacy Policy" },
+  { label: "Dog Breed Archive", href: "/dog-breed-archive" },
+  { label: "Terms & Conditions", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
+];
+
+export const footerCustomerCareLinks = [
+  { label: "FAQ", href: "/faq" },
+  { label: "How to Buy", href: "/how-to-buy" },
+  { label: "Return & Refund", href: "/refund" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
 export const footerQuickLinks = [

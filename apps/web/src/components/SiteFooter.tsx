@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useServices } from "@/context/ServiceContext";
-import { footerGeneralLinks, footerQuickLinks } from "@/lib/home-data";
+import { footerCustomerCareLinks, footerGeneralLinks, footerQuickLinks } from "@/lib/home-data";
 import { siteSettings } from "@/lib/site-settings";
 
 export default function SiteFooter() {
@@ -36,10 +36,11 @@ export default function SiteFooter() {
         <div>
           <div className="text-[15px] font-bold text-white mb-3">Customer Care</div>
           <div className="text-sm leading-[2.2]">
-            <div className="cursor-pointer hover:text-white">FAQ</div>
-            <div className="cursor-pointer hover:text-white">How to Buy</div>
-            <div className="cursor-pointer hover:text-white">Return &amp; Refund</div>
-            <div className="cursor-pointer hover:text-white">Contact Us</div>
+            {footerCustomerCareLinks.map((l) => (
+              <Link key={l.label} href={l.href} className="block cursor-pointer hover:text-white">
+                {l.label}
+              </Link>
+            ))}
           </div>
         </div>
         <div>

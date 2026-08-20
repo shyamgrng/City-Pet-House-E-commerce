@@ -9,9 +9,14 @@ import { BlogProvider } from "@/context/BlogContext";
 import { CareerProvider } from "@/context/CareerContext";
 import { CartProvider } from "@/context/CartContext";
 import { CatalogProvider } from "@/context/CatalogContext";
+import { ContactProvider } from "@/context/ContactContext";
 import { CourierAuthProvider } from "@/context/CourierAuthContext";
 import { DeliveryProvider } from "@/context/DeliveryContext";
+import { DogBreedProvider } from "@/context/DogBreedContext";
 import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
+import { FaqProvider } from "@/context/FaqContext";
+import { HowToBuyProvider } from "@/context/HowToBuyContext";
+import { LegalProvider } from "@/context/LegalContext";
 import { MicrochipProvider } from "@/context/MicrochipContext";
 import { OrderProvider } from "@/context/OrderContext";
 import { PetProvider } from "@/context/PetContext";
@@ -59,7 +64,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                                     <AboutProvider>
                                       <CareerProvider>
                                         <PetTagProvider>
-                                          <MicrochipProvider>{children}</MicrochipProvider>
+                                          <MicrochipProvider>
+                                            <DogBreedProvider>
+                                              <LegalProvider>
+                                                <FaqProvider>
+                                                  <HowToBuyProvider>
+                                                    <ContactProvider>{children}</ContactProvider>
+                                                  </HowToBuyProvider>
+                                                </FaqProvider>
+                                              </LegalProvider>
+                                            </DogBreedProvider>
+                                          </MicrochipProvider>
                                         </PetTagProvider>
                                       </CareerProvider>
                                     </AboutProvider>
