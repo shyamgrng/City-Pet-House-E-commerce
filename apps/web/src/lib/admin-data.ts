@@ -147,10 +147,10 @@ export const deliveryActivityLog = [
 // public /shop page renders.
 
 // ---- Accounts ----
-export const accountsSummary = { clients: 4, doctors: 3, couriers: 1, staff: 2 };
-// Doctor/B2B/Courier account lists now read live from doctor-auth-types.ts, b2b-auth-types.ts
-// and courier-auth-types.ts — see src/app/admin/(dashboard)/accounts/page.tsx — since those are
-// the same seeded credentials that sign in at /doctor/login, /b2b/login and /courier/login.
+// All account stats and lists (clients, doctors, couriers, B2B, staff) now read live from
+// AuthContext, doctor-auth-types.ts, b2b-auth-types.ts, courier-auth-types.ts and adminUsers
+// above — see src/app/admin/(dashboard)/accounts/page.tsx — since those are the same seeded
+// credentials that sign in at /signin, /doctor/login, /b2b/login and /courier/login.
 
 // ---- Finance ----
 export const financeOverview = {

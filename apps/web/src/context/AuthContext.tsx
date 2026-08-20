@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { accountSeed } from "@/lib/account-seed";
 import type { Account, RegisterInput } from "@/lib/auth-types";
 
 const ACCOUNTS_KEY = "cph_accounts";
@@ -10,6 +11,7 @@ type Result = { ok: true } | { ok: false; error: string };
 
 type AuthValue = {
   user: Account | null;
+  accounts: Account[];
   ready: boolean;
   signUp: (input: RegisterInput) => Result;
   signIn: (email: string, password: string) => Result;
@@ -23,9 +25,9 @@ const AuthContext = createContext<AuthValue | null>(null);
 function loadAccounts(): Account[] {
   try {
     const raw = window.localStorage.getItem(ACCOUNTS_KEY);
-    return raw ? (JSON.parse(raw) as Account[]) : [];
+    return raw ? (JSON.parse(raw) as Account[]) : accountSeed;
   } catch {
-    return [];
+    return accountSeed;
   }
 }
 
@@ -37,7 +39,7 @@ function loadSession(accounts: Account[]): Account | null {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<{ accounts: Account[]; user: Account | null; ready: boolean }>({
-    accounts: [],
+    accounts: accountSeed,
     user: null,
     ready: false,
   });
@@ -56,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (state.accounts.some((a) => a.email.toLowerCase() === input.email.toLowerCase())) {
       return { ok: false, error: "An account with this email already exists." };
     }
-    const account: Account = { ...input, id: "acc-" + Math.random().toString(36).slice(2, 9) };
+    const account: Account = { ...input, id: "acc-" + Math.random().toString(36).slice(2, 9), createdAt: Date.now() };
     const accounts = [...state.accounts, account];
     persistAccounts(accounts);
     window.localStorage.setItem(SESSION_KEY, account.id);
@@ -101,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user: state.user, ready: state.ready, signUp, signIn, signOut, updateProfile, changePassword }}
+      value={{ user: state.user, accounts: state.accounts, ready: state.ready, signUp, signIn, signOut, updateProfile, changePassword }}
     >
       {children}
     </AuthContext.Provider>

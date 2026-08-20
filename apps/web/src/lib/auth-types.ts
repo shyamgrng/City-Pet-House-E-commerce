@@ -9,6 +9,7 @@ export type Account = {
   email: string;
   address: string;
   password: string;
+  createdAt: number;
 };
 
-export type RegisterInput = Omit<Account, "id">;
+export type RegisterInput = Omit<Account, "id" | "createdAt">;
