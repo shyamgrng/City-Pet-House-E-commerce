@@ -64,7 +64,9 @@ export default function SiteFooter() {
           </div>
         </div>
         <div>
-          <div className="text-[15px] font-bold text-white mb-3 cursor-pointer">Contact Us</div>
+          <Link href="/contact" className="block text-[15px] font-bold text-white mb-3 cursor-pointer hover:underline">
+            Contact Us
+          </Link>
           <div className="text-sm leading-[2.2]">
             {siteSettings.address}
             <br />
