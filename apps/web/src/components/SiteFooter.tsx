@@ -1,9 +1,14 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useServices } from "@/context/ServiceContext";
+import { footerGeneralLinks, footerQuickLinks } from "@/lib/home-data";
 import { siteSettings } from "@/lib/site-settings";
-import { footerGeneralLinks, footerQuickLinks, footerServiceLinks } from "@/lib/home-data";
 
 export default function SiteFooter() {
+  const { services } = useServices();
+
   return (
     <div className="bg-[#1A2027] text-[#C9CFD4] pt-11 px-8 pb-6">
       <div className="flex items-center gap-3 mb-7">
@@ -44,10 +49,10 @@ export default function SiteFooter() {
         <div>
           <div className="text-[15px] font-bold text-white mb-3">Our Services</div>
           <div className="text-sm leading-[2.2]">
-            {footerServiceLinks.map((l) => (
-              <div key={l} className="cursor-pointer hover:text-white">
-                {l}
-              </div>
+            {services.slice(0, 6).map((s) => (
+              <Link key={s.id} href={`/services/${s.id}`} className="block cursor-pointer hover:text-white">
+                {s.name}
+              </Link>
             ))}
           </div>
         </div>

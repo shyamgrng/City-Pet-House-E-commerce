@@ -1,0 +1,146 @@
+import type { Service } from "@/lib/service-types";
+
+export const serviceSeed: Service[] = [
+  {
+    id: "dog-cat-microchipping",
+    name: "Dog & Cat Microchipping",
+    desc: "Quick, permanent ID for your pet's safety.",
+    seoTitle: "Dog & Cat Microchipping in Kathmandu — Safe, Permanent Pet ID",
+    metaDescription: "Quick, permanent ID for your pet's safety.",
+    longDesc:
+      "Professional pet microchipping in Kathmandu for lasting peace of mind. A rice-grain-sized, ISO-certified chip is implanted under your pet's skin in seconds — no anesthesia needed — giving your dog or cat permanent, scannable identification recognized by vets and shelters nationwide.",
+    benefits: [
+      "Lifelong ID protection, linked to your contact details",
+      "Required for pet passports & international travel",
+      "Quick, painless — done in under a minute",
+      "Affordable pricing, no hidden fees",
+    ],
+    duration: "10 mins",
+    price: "Rs. 680",
+  },
+  {
+    id: "dog-cat-vaccination",
+    name: "Dog & Cat Vaccination",
+    desc: "Routine shots to protect against serious illness.",
+    seoTitle: "Dog & Cat Vaccination in Kathmandu — Protect Your Pet from Day One",
+    metaDescription: "Routine shots to protect against serious illness.",
+    longDesc:
+      "Core and non-core vaccines administered on schedule to protect your dog or cat against rabies, parvovirus, distemper and other serious illness, with a written record kept up to date for renewals, travel and boarding.",
+    benefits: [
+      "Protects against rabies, distemper & parvo",
+      "Required for boarding, grooming & travel",
+      "Vet-reviewed dosing schedule by age",
+      "Digital vaccination card, always up to date",
+    ],
+    duration: "20 mins",
+    price: "",
+    schedule: [
+      { age: "6–8 weeks", vaccine: "DHPPi (1st dose)" },
+      { age: "10–12 weeks", vaccine: "DHPPi (2nd dose) + Leptospirosis" },
+      { age: "14–16 weeks", vaccine: "DHPPi (3rd dose) + Rabies" },
+      { age: "Every 12 months", vaccine: "Annual booster (DHPPi + Rabies)" },
+    ],
+  },
+  {
+    id: "pet-grooming",
+    name: "Pet Grooming",
+    desc: "Bathing, trimming and coat care.",
+    seoTitle: "Pet Grooming in Kathmandu — Bath, Trim & Coat Care",
+    metaDescription: "Bathing, trimming and coat care.",
+    longDesc:
+      "A full grooming session for your dog or cat in Kathmandu — bath, blow-dry, brush-out, nail trim, ear cleaning and a breed-appropriate haircut from experienced, gentle groomers.",
+    benefits: [
+      "Reduces shedding, matting & odor",
+      "Early skin, ear & parasite checks",
+      "Breed-specific styling on request",
+      "Calm, experienced handling for nervous pets",
+    ],
+    duration: "60–90 mins",
+    price: "From Rs. 1,200",
+  },
+  {
+    id: "surgery",
+    name: "Surgery",
+    desc: "Safe, professional veterinary surgery.",
+    seoTitle: "Pet Surgery in Kathmandu — Safe, Monitored Veterinary Care",
+    metaDescription: "Safe, professional veterinary surgery.",
+    longDesc:
+      "Spay/neuter and soft-tissue surgeries performed under monitored anesthesia by our licensed veterinarians in Kathmandu, with clear post-op care instructions for a smooth recovery.",
+    benefits: [
+      "Licensed, experienced veterinary surgeons",
+      "Monitored anesthesia throughout",
+      "Spay/neuter & soft-tissue procedures",
+      "Post-op medication & care plan included",
+    ],
+    duration: "Varies",
+    price: "Consult for quote",
+  },
+  {
+    id: "puppies-buying-selling",
+    name: "Puppies Buying & Selling",
+    desc: "Browse verified breeds available now.",
+    seoTitle: "Buy Puppies in Kathmandu — Verified, Vaccinated Breeds",
+    metaDescription: "Browse verified breeds available now.",
+    longDesc:
+      "Browse our current litter of health-checked, vaccinated puppies from verified breeders in Kathmandu, with home delivery available across the valley.",
+    benefits: [
+      "Health-checked & vaccinated puppies",
+      "Verified breeders, transparent records",
+      "Home delivery across Kathmandu Valley",
+      "Deworming record provided at pickup",
+    ],
+    duration: "—",
+    price: "See listings",
+  },
+  {
+    id: "clinical-treatment",
+    name: "Clinical Treatment",
+    desc: "Diagnosis and treatment at the clinic.",
+    seoTitle: "Pet Clinical Treatment in Kathmandu — Diagnosis & Care",
+    metaDescription: "Diagnosis and treatment at the clinic.",
+    longDesc:
+      "In-clinic examination and treatment for illness or injury in Kathmandu, backed by our own lab and pharmacy so most pets are diagnosed and treated in a single visit.",
+    benefits: [
+      "Same-day diagnosis for most conditions",
+      "On-site lab & pharmacy",
+      "Experienced veterinary team",
+      "Follow-up care included",
+    ],
+    duration: "30 mins",
+    price: "From Rs. 700",
+  },
+  {
+    id: "home-treatment",
+    name: "Home Treatment",
+    desc: "We come to you for a calmer visit.",
+    seoTitle: "Home Visit Vet Service in Kathmandu Valley",
+    metaDescription: "We come to you for a calmer visit.",
+    longDesc:
+      "A vet visits your home in Kathmandu Valley for checkups, vaccinations or minor treatment — a calmer option for anxious, elderly or injured pets.",
+    benefits: [
+      "Less stressful than a clinic visit",
+      "Available across Kathmandu Valley",
+      "Basic equipment brought on-site",
+      "Ideal for elderly or anxious pets",
+    ],
+    duration: "30–45 mins",
+    price: "From Rs. 1,500",
+  },
+  {
+    id: "lab-test",
+    name: "Lab Test",
+    desc: "Blood, urine and other diagnostic tests.",
+    seoTitle: "Pet Lab Tests in Kathmandu — Blood, Urine & Diagnostic Panels",
+    metaDescription: "Blood, urine and other diagnostic tests.",
+    longDesc:
+      "In-house diagnostic testing in Kathmandu for faster results — blood panels, urinalysis, fecal tests and more to guide your vet's treatment decisions the same day.",
+    benefits: [
+      "In-house results — no outside lab wait",
+      "Blood, urine & fecal testing available",
+      "Results explained by a vet",
+      "Guides faster, more accurate treatment",
+    ],
+    duration: "30–60 mins",
+    price: "From Rs. 600",
+  },
+];

@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CatalogProvider } from "@/context/CatalogContext";
 import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
 import { PetProvider } from "@/context/PetContext";
+import { ServiceProvider } from "@/context/ServiceContext";
 import { VetProvider } from "@/context/VetContext";
 import "./globals.css";
 
@@ -33,11 +34,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AuthProvider>
           <DoctorAuthProvider>
             <VetProvider>
-              <CatalogProvider>
-                <PetProvider>
-                  <AdoptionProvider>{children}</AdoptionProvider>
-                </PetProvider>
-              </CatalogProvider>
+              <ServiceProvider>
+                <CatalogProvider>
+                  <PetProvider>
+                    <AdoptionProvider>{children}</AdoptionProvider>
+                  </PetProvider>
+                </CatalogProvider>
+              </ServiceProvider>
             </VetProvider>
           </DoctorAuthProvider>
         </AuthProvider>

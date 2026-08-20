@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import AvailablePuppiesRail from "@/components/AvailablePuppiesRail";
+import HealthCareRail from "@/components/HealthCareRail";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import ProductRail from "@/components/ProductRail";
 import {
@@ -9,7 +9,6 @@ import {
   categories,
   fashionWear,
   groomingAccessories,
-  healthCareItems,
   petAccessories,
   petFood,
   petToys,
@@ -104,19 +103,11 @@ export default function HomePage() {
       <div className="px-5 pt-5 pb-6 bg-[#E7EFEC]">
         <div className="flex justify-center items-center mb-[26px] relative">
           <div className="font-heading font-bold text-lg text-[#1A2027]">City Pet Health &amp; Wellness Care</div>
-          <div className="text-xs text-[#1F7A4D] font-semibold cursor-pointer absolute right-0">See all →</div>
+          <Link href="/services" className="text-xs text-[#1F7A4D] font-semibold cursor-pointer absolute right-0">
+            See all →
+          </Link>
         </div>
-        <div className="flex flex-wrap gap-4">
-          {healthCareItems.map((item) => (
-            <div key={item.title} className="flex-1 min-w-[150px] text-center cursor-pointer">
-              <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center mx-auto mb-4 bg-[#E7EFEC] overflow-hidden">
-                <Image src={item.icon} alt={item.title} width={104} height={104} className="object-contain w-full h-full" />
-              </div>
-              <div className="font-heading font-bold text-[17px] text-[#12181D] mb-2">{item.title}</div>
-              <div className="text-[13px] text-[#3A4450] leading-relaxed mb-3.5">{item.desc}</div>
-            </div>
-          ))}
-        </div>
+        <HealthCareRail />
       </div>
 
       {/* Hot Sales Banner */}

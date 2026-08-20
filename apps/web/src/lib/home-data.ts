@@ -32,33 +32,8 @@ export const categories = [
 // src/components/AvailablePuppiesRail.tsx, shared with the public /pets page and
 // Admin → Pet Available.
 
-export const healthCareItems = [
-  {
-    icon: "/assets/icon-microchipping.png",
-    title: "Microchipping",
-    desc: "Ensure your contact details are always with your pet.",
-  },
-  {
-    icon: "/assets/icon-vaccinations.png",
-    title: "Vaccinations",
-    desc: "Protect your pet from common infectious diseases.",
-  },
-  {
-    icon: "/assets/icon-desexing.png",
-    title: "Desexing",
-    desc: "Prevent unwanted pregnancies and reduce health risks.",
-  },
-  {
-    icon: "/assets/icon-surgery.png",
-    title: "Clinical Surgery",
-    desc: "Expert surgical care backed by experienced vets.",
-  },
-  {
-    icon: "/assets/icon-grooming.png",
-    title: "Pet Grooming",
-    desc: "Keep your pet looking and feeling their very best.",
-  },
-];
+// Health & Wellness Care rail now reads live from ServiceContext (src/context/ServiceContext.tsx)
+// via src/components/HealthCareRail.tsx, linking into the public /services detail pages.
 
 export const petFood: HomeProduct[] = [
   { name: "Focus Puppy Food 1.2kg", price: "Rs. 1,300", badge: "New", badgeColor: "#1996C8" },
@@ -130,14 +105,8 @@ export const blogPosts = [
   { date: "Feb 12, 2026", title: "New Puppy Checklist: Vaccination Schedule & What to Buy" },
 ];
 
-export const footerServiceLinks = [
-  "Dog & Cat Microchipping",
-  "Dog & Cat Vaccination",
-  "Pet Grooming",
-  "Surgery",
-  "Puppies Buying & Selling",
-  "Clinical Treatment",
-];
+// Footer "Our Services" links now read live from ServiceContext (src/context/ServiceContext.tsx)
+// via src/components/SiteFooter.tsx, linking into the public /services detail pages.
 
 export const footerGeneralLinks = [
   "About Us",
