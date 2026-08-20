@@ -3,6 +3,7 @@ import { Poppins, Inter } from "next/font/google";
 import { AdoptionProvider } from "@/context/AdoptionContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { B2BAuthProvider } from "@/context/B2BAuthContext";
+import { B2BProvider } from "@/context/B2BContext";
 import { BlogProvider } from "@/context/BlogContext";
 import { CatalogProvider } from "@/context/CatalogContext";
 import { CourierAuthProvider } from "@/context/CourierAuthContext";
@@ -37,19 +38,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AuthProvider>
           <DoctorAuthProvider>
             <B2BAuthProvider>
-              <CourierAuthProvider>
-                <VetProvider>
-                  <ServiceProvider>
-                    <CatalogProvider>
-                      <PetProvider>
-                        <AdoptionProvider>
-                          <BlogProvider>{children}</BlogProvider>
-                        </AdoptionProvider>
-                      </PetProvider>
-                    </CatalogProvider>
-                  </ServiceProvider>
-                </VetProvider>
-              </CourierAuthProvider>
+              <B2BProvider>
+                <CourierAuthProvider>
+                  <VetProvider>
+                    <ServiceProvider>
+                      <CatalogProvider>
+                        <PetProvider>
+                          <AdoptionProvider>
+                            <BlogProvider>{children}</BlogProvider>
+                          </AdoptionProvider>
+                        </PetProvider>
+                      </CatalogProvider>
+                    </ServiceProvider>
+                  </VetProvider>
+                </CourierAuthProvider>
+              </B2BProvider>
             </B2BAuthProvider>
           </DoctorAuthProvider>
         </AuthProvider>
