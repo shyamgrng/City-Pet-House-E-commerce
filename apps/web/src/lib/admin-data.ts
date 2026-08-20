@@ -133,10 +133,10 @@ export const roleColumns = ["Dashboard", "Deliveries", "Vet Consults", "Shop", "
 // src/app/(site)/pet-tag-archive/page.tsx (which also doubles as the QR-scan landing page).
 
 // ---- Microchipping Records ----
-export const microchipRecords = [
-  { chip: "981098212345671", pet: "Cooki · Male, 4 months", breed: "German Shepard", color: "Black & Tan", owner: "Shyam Gurung", phone: "+977 9851313717", location: "Gokarneshwor, Ward 6, Kathmandu" },
-  { chip: "981098254321098", pet: "Uni · Male, 5 years, 10 months", breed: "Japanese Spitz", color: "White", owner: "Sabita Thapa", phone: "+977 9842760300", location: "Kathmandu Metropolitan, Ward 3, Kathmandu" },
-];
+// Microchip registry + public page content now read live from MicrochipContext (see
+// src/context/MicrochipContext.tsx) — src/app/admin/(dashboard)/microchipping-records/page.tsx,
+// src/app/admin/(dashboard)/pages/microchipping-archive/page.tsx, and the public
+// src/app/(site)/microchipping-archive/page.tsx (gated to signed-in doctors/B2B suppliers).
 
 // Pet Available now reads live from PetContext (src/context/PetContext.tsx) — see
 // src/app/admin/(dashboard)/pet-available/page.tsx, shared with the public /pets page
@@ -195,7 +195,7 @@ export const pageEditorList = [
   { title: "Return & Refund", desc: "Legal content shown on the public Return & Refund page" },
   { title: "How to Buy", desc: "Step-by-step buying guide shown on the public How to Buy page" },
   { title: "FAQ", desc: "Questions & answers shown on the public FAQ page" },
-  { title: "Microchipping Archive", desc: "Banner, content sections & FAQs on the public Microchipping Archive page" },
+  { title: "Microchipping Archive", desc: "Banner, content sections & FAQs on the public Microchipping Archive page", href: "/admin/pages/microchipping-archive" },
   { title: "Pet Tag Archive", desc: "Banner, content sections & FAQs on the public Pet Tag Archive page", href: "/admin/pages/pet-tag-archive" },
 ];
 

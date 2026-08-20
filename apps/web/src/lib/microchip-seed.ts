@@ -1,0 +1,105 @@
+import type { MicrochipPageContent, MicrochipRecord } from "./microchip-types";
+
+export const microchipSeed: MicrochipRecord[] = [
+  {
+    id: "mc-1",
+    mcNumber: "981098212345671",
+    ownerName: "Shyam Gurung",
+    wardNo: "6",
+    municipality: "Gokarneshwor",
+    phone: "+977 9851313717",
+    altPhone: "9841122334",
+    houseNo: "12",
+    district: "Kathmandu",
+    provinceNo: "Bagmati",
+    zone: "Bagmati Zone",
+    mapLink: "",
+    petName: "Cooki",
+    sex: "Male",
+    age: "4 months",
+    color: "Black & Tan",
+    breed: "German Shepard",
+    notes: "",
+    vetName: "Dr. Anjali Rai",
+    clinic: "City Pet House & Animal Clinic",
+    mcDate: "12/03/2026",
+  },
+  {
+    id: "mc-2",
+    mcNumber: "981098254321098",
+    ownerName: "Sabita Thapa",
+    wardNo: "3",
+    municipality: "Kathmandu Metropolitan",
+    phone: "+977 9842760300",
+    altPhone: "",
+    houseNo: "45",
+    district: "Kathmandu",
+    provinceNo: "Bagmati",
+    zone: "Bagmati Zone",
+    mapLink: "",
+    petName: "Uni",
+    sex: "Male",
+    age: "5 years, 10 months",
+    color: "White",
+    breed: "Japanese Spitz",
+    notes: "",
+    vetName: "Dr. Anjali Rai",
+    clinic: "City Pet House & Animal Clinic",
+    mcDate: "02/01/2026",
+  },
+];
+
+export const microchipContentSeed: MicrochipPageContent = {
+  bannerTitle: "Microchipping Archive",
+  bannerSubtitle: "Reuniting microchipped pets with their families across City Pet House's network.",
+  searchCaption: "Found a microchipped pet? Enter the number printed on the scanner readout, or the pet's name, to reach the owner.",
+  sections: [
+    {
+      id: "mcp-sec-1",
+      heading: "What is a pet microchip and how does it work?",
+      body: "A pet microchip is a tiny device, about the size of a grain of rice, that's implanted just under your pet's skin, usually between the shoulder blades. It doesn't have a battery or GPS, and it won't track your pet's location. Instead, when a lost pet is found, a vet or shelter can scan the chip to reveal a unique ID number linked to your contact information in a secure database.",
+    },
+    {
+      id: "mcp-sec-2",
+      heading: "Why microchip your pet?",
+      body: "Unlike collars and tags, a microchip can't fall off or go missing. It's the most reliable permanent ID a lost pet can carry, and it greatly improves the odds they're reunited with their family — even pets that rarely leave home can slip out unexpectedly.",
+    },
+    {
+      id: "mcp-sec-3",
+      heading: "Is the procedure safe?",
+      body: "Yes — it's a quick in-clinic procedure similar to a routine injection, done without anesthesia. Most pets tolerate it well, with at most brief mild soreness at the injection site.",
+    },
+    {
+      id: "mcp-sec-4",
+      heading: "Found a pet with a microchip?",
+      body: "Bring them to us or any vet clinic to have the chip scanned free of charge. If it was registered through City Pet House, search the number in the box on the left to reach the owner directly.",
+    },
+    {
+      id: "mcp-sec-5",
+      heading: "How much does pet microchipping cost?",
+      body: "Microchipping typically costs between Rs. 1,500 and Rs. 3,500, depending on the clinic and whether it's bundled with a wellness visit. This usually covers the chip itself, the insertion procedure, and initial registration in the database. Ask our team about package pricing when combined with vaccinations or a routine checkup.",
+    },
+  ],
+  faqs: [
+    {
+      id: "mcp-faq-1",
+      q: "What is a pet microchip?",
+      a: "A pet microchip is a tiny device, about the size of a grain of rice, implanted just under your pet's skin. It carries a unique ID number that links back to your contact details when scanned.",
+    },
+    {
+      id: "mcp-faq-2",
+      q: "Is a microchip a GPS tracker?",
+      a: "No. A microchip has no battery or GPS — it can't track your pet's location in real time. It only transmits an ID number when a scanner is held near it.",
+    },
+    {
+      id: "mcp-faq-3",
+      q: "Does microchipping hurt my pet?",
+      a: "It's a quick procedure similar to a routine injection, done without anesthesia. Most pets show only brief, mild discomfort.",
+    },
+    {
+      id: "mcp-faq-4",
+      q: "What if my contact details change?",
+      a: "Update your phone number and address with us as soon as they change, so the registry stays accurate if your pet is ever found.",
+    },
+  ],
+};

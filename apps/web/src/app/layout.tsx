@@ -12,6 +12,7 @@ import { CatalogProvider } from "@/context/CatalogContext";
 import { CourierAuthProvider } from "@/context/CourierAuthContext";
 import { DeliveryProvider } from "@/context/DeliveryContext";
 import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
+import { MicrochipProvider } from "@/context/MicrochipContext";
 import { OrderProvider } from "@/context/OrderContext";
 import { PetProvider } from "@/context/PetContext";
 import { PetTagProvider } from "@/context/PetTagContext";
@@ -57,7 +58,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                                   <BlogProvider>
                                     <AboutProvider>
                                       <CareerProvider>
-                                        <PetTagProvider>{children}</PetTagProvider>
+                                        <PetTagProvider>
+                                          <MicrochipProvider>{children}</MicrochipProvider>
+                                        </PetTagProvider>
                                       </CareerProvider>
                                     </AboutProvider>
                                   </BlogProvider>

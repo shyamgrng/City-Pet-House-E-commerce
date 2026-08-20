@@ -108,7 +108,7 @@ export const footerGeneralLinks = [
   { label: "About Us", href: "/about" },
   { label: "Career", href: "/career" },
   { label: "Pet Tag Archive", href: "/pet-tag-archive" },
-  { label: "Microchipping Archive" },
+  { label: "Microchipping Archive", href: "/microchipping-archive" },
   { label: "Dog Breed Archive" },
   { label: "Terms & Conditions" },
   { label: "Privacy Policy" },
