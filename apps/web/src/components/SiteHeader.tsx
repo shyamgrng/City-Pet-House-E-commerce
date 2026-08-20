@@ -33,6 +33,14 @@ export default function SiteHeader() {
     router.push(`/signin?redirect=${encodeURIComponent(pathname)}`);
   };
 
+  const handleAccountClick = () => {
+    if (isSignedIn) {
+      router.push("/account");
+      return;
+    }
+    router.push("/?notice=signin");
+  };
+
   return (
     <div className="sticky top-0 z-10 bg-white">
       <div className="flex items-center justify-center gap-4 px-8 py-1.5 bg-[#F7F9FA] text-[11px] text-[#5B6773] border-b border-[#E4E9EC]">
@@ -66,9 +74,9 @@ export default function SiteHeader() {
         <button onClick={handleTopSignInClick} className="text-[13px] font-semibold text-primary shrink-0 whitespace-nowrap cursor-pointer">
           {isSignedIn ? "Sign Out" : "Pet Owner Sign In"}
         </button>
-        <Link href="/account" className="text-[13px] font-medium text-[#3A4652] shrink-0">
+        <button onClick={handleAccountClick} className="text-[13px] font-medium text-[#3A4652] shrink-0 cursor-pointer">
           Account
-        </Link>
+        </button>
         <Link href="/cart" className="flex items-center gap-1.5 text-[13px] font-semibold text-primary shrink-0">
           🛒 Cart ({count})
         </Link>

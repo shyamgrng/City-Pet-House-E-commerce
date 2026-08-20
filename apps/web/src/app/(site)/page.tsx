@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import AvailablePuppiesRail from "@/components/AvailablePuppiesRail";
 import HealthCareRail from "@/components/HealthCareRail";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import LatestBlogRail from "@/components/LatestBlogRail";
 import ProductRail from "@/components/ProductRail";
+import SignInNoticeBanner from "@/components/SignInNoticeBanner";
 import {
   brands,
   categories,
@@ -25,6 +27,10 @@ const deliveryBannerText = "Delivery available across Kathmandu Valley — Kathm
 export default function HomePage() {
   return (
     <div>
+      <Suspense fallback={null}>
+        <SignInNoticeBanner />
+      </Suspense>
+
       {/* Hero */}
       <div className="flex flex-col lg:flex-row gap-3.5 px-8 pt-5 pb-2">
         <div className="flex-[2.2] relative h-[300px] rounded-xl overflow-hidden">
