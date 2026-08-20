@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { accountB2b, accountCouriers, accountDoctors, accountsSummary } from "@/lib/admin-data";
+import { accountsSummary } from "@/lib/admin-data";
+import { b2bAccountSeed } from "@/lib/b2b-auth-types";
+import { courierAccountSeed } from "@/lib/courier-auth-types";
+import { doctorAccountSeed } from "@/lib/doctor-auth-types";
 
 const subTabs = ["Overview", "Client Account", "Doctor Account", "Courier Account", "B2B Account", "Staff Account"];
+
+const accountDoctors = doctorAccountSeed.map((d) => ({ name: d.name, status: "Active" }));
+const accountB2b = b2bAccountSeed.map((a) => ({ name: a.companyName, status: "Active" }));
+const accountCouriers = courierAccountSeed.map((a) => ({ name: a.companyName, status: "Active" }));
 
 export default function AccountsPage() {
   const [tab, setTab] = useState("Overview");

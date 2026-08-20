@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import { AdoptionProvider } from "@/context/AdoptionContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { B2BAuthProvider } from "@/context/B2BAuthContext";
 import { BlogProvider } from "@/context/BlogContext";
 import { CatalogProvider } from "@/context/CatalogContext";
+import { CourierAuthProvider } from "@/context/CourierAuthContext";
 import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
 import { PetProvider } from "@/context/PetContext";
 import { ServiceProvider } from "@/context/ServiceContext";
@@ -34,17 +36,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <AuthProvider>
           <DoctorAuthProvider>
-            <VetProvider>
-              <ServiceProvider>
-                <CatalogProvider>
-                  <PetProvider>
-                    <AdoptionProvider>
-                      <BlogProvider>{children}</BlogProvider>
-                    </AdoptionProvider>
-                  </PetProvider>
-                </CatalogProvider>
-              </ServiceProvider>
-            </VetProvider>
+            <B2BAuthProvider>
+              <CourierAuthProvider>
+                <VetProvider>
+                  <ServiceProvider>
+                    <CatalogProvider>
+                      <PetProvider>
+                        <AdoptionProvider>
+                          <BlogProvider>{children}</BlogProvider>
+                        </AdoptionProvider>
+                      </PetProvider>
+                    </CatalogProvider>
+                  </ServiceProvider>
+                </VetProvider>
+              </CourierAuthProvider>
+            </B2BAuthProvider>
           </DoctorAuthProvider>
         </AuthProvider>
       </body>

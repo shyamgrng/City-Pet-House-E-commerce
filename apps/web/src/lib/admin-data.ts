@@ -162,13 +162,9 @@ export const deliveryActivityLog = [
 
 // ---- Accounts ----
 export const accountsSummary = { clients: 4, doctors: 3, couriers: 1, staff: 2 };
-export const accountDoctors = [
-  { name: "Dr. Sujata Rai, BVSc & AH", status: "Active" },
-  { name: "Dr. Bikash Shrestha, DVM", status: "Active" },
-  { name: "Dr. Anjali Gurung, BVSc & AH", status: "Active" },
-];
-export const accountB2b = [{ name: "Himal Pet Supplies Pvt. Ltd.", status: "Active" }];
-export const accountCouriers = [{ name: "Valley Express Logistics", status: "Active" }];
+// Doctor/B2B/Courier account lists now read live from doctor-auth-types.ts, b2b-auth-types.ts
+// and courier-auth-types.ts — see src/app/admin/(dashboard)/accounts/page.tsx — since those are
+// the same seeded credentials that sign in at /doctor/login, /b2b/login and /courier/login.
 
 // ---- Finance ----
 export const financeOverview = {
