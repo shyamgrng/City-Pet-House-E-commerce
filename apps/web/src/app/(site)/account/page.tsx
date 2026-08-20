@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAuth } from "@/context/AuthContext";
+import { useOrder } from "@/context/OrderContext";
 import { useVet } from "@/context/VetContext";
 import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
+import { formatRs } from "@/lib/catalog-types";
+import { STATUS_COLORS as ORDER_STATUS_COLORS } from "@/lib/order-types";
 import { STATUS_COLORS as VET_STATUS_COLORS } from "@/lib/vet-types";
 
 const TABS = [
@@ -63,7 +66,7 @@ export default function AccountPage() {
       {tab === "wishlist" && (
         <Empty>No Item has been selected for your Wishlist</Empty>
       )}
-      {tab === "orders" && <Empty>You haven&apos;t placed any orders yet</Empty>}
+      {tab === "orders" && <OrdersTab ownerId={user.id} />}
       {tab === "vetconsults" && <VetTab ownerId={user.id} />}
       {tab === "adoption" && <AdoptionTab ownerId={user.id} />}
       {tab === "profile" && <ProfileTab />}
@@ -76,6 +79,35 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 const STATUS_COLORS: Record<string, string> = { Active: "#C9962B", Adopted: "#1F7A4D" };
+
+function OrdersTab({ ownerId }: { ownerId: string }) {
+  const { orders } = useOrder();
+  const mine = orders.filter((o) => o.ownerId === ownerId).sort((a, b) => b.createdAt - a.createdAt);
+
+  if (mine.length === 0) {
+    return <Empty>You haven&apos;t placed any orders yet</Empty>;
+  }
+
+  const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  return (
+    <div>
+      {mine.map((o) => (
+        <Link key={o.id} href={`/order/${o.id}`} className="flex justify-between items-center py-3.5 border-b border-[#EEF1F3] last:border-0">
+          <div>
+            <div className="text-[13px] font-semibold text-[#1A2027]">{o.id}</div>
+            <div className="text-xs text-[#8A96A3]">
+              {fmtDate(o.createdAt)} · {formatRs(o.total)}
+            </div>
+          </div>
+          <div className="text-[11px] font-semibold" style={{ color: ORDER_STATUS_COLORS[o.status] }}>
+            {o.status}
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 function VetTab({ ownerId }: { ownerId: string }) {
   const { bookings } = useVet();

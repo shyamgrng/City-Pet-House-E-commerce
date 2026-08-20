@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 import { siteSettings } from "@/lib/site-settings";
 
 const navLinks = [
@@ -18,6 +19,7 @@ const navLinks = [
 
 export default function SiteHeader() {
   const { user, ready, signOut } = useAuth();
+  const { count } = useCart();
   const router = useRouter();
   const pathname = usePathname();
   const isSignedIn = ready && !!user;
@@ -68,7 +70,7 @@ export default function SiteHeader() {
           Account
         </Link>
         <Link href="/cart" className="flex items-center gap-1.5 text-[13px] font-semibold text-primary shrink-0">
-          🛒 Cart (0)
+          🛒 Cart ({count})
         </Link>
       </div>
 

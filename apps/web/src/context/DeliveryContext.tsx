@@ -9,6 +9,7 @@ const STORAGE_KEY = "cph_deliveries";
 type DeliveryValue = {
   deliveries: Delivery[];
   ready: boolean;
+  addDelivery: (delivery: Delivery) => void;
   assignCourier: (id: string, courierId: string, courierName: string) => void;
   markReceived: (id: string) => void;
   assignDeliveryPerson: (id: string, dpName: string, dpPhone: string) => void;
@@ -51,6 +52,10 @@ export function DeliveryProvider({ children }: { children: React.ReactNode }) {
       value={{
         deliveries: state.deliveries,
         ready: state.ready,
+        addDelivery: (delivery) => {
+          if (state.deliveries.some((d) => d.id === delivery.id)) return;
+          persist([...state.deliveries, delivery]);
+        },
         assignCourier: (id, courierId, courierName) => update(id, { status: "Dispatched", courierId, courierName, dispatchedAt: Date.now() }),
         markReceived: (id) => update(id, { status: "Received" }),
         assignDeliveryPerson: (id, dpName, dpPhone) => update(id, { status: "Processing", dpName, dpPhone }),

@@ -1,46 +1,138 @@
 "use client";
 
 import { useState } from "react";
-import {
-  adminOrdersData,
-  deliveryActivityLog,
-  deliveryActivityStats,
-  deliveryTabDefs,
-  paymentQueueData,
-  refundedOrdersData,
-  rejectedPaymentsData,
-  revenueByCategory,
-  topProducts,
-} from "@/lib/admin-data";
-import { useDelivery } from "@/context/DeliveryContext";
-import { STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
+import { refundedOrdersData } from "@/lib/admin-data";
 import { courierAccountSeed } from "@/lib/courier-auth-types";
+import { useCatalog } from "@/context/CatalogContext";
+import { useDelivery } from "@/context/DeliveryContext";
+import { useOrder } from "@/context/OrderContext";
+import { STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
+import type { Order } from "@/lib/order-types";
 
-const activityFilters = ["All", "Payment", "Refund", "Rejected", "Dispatch", "Delivered"];
-const rangeFilters = ["Today", "Yesterday", "Last 7 days", "All time"];
+const deliveryTabDefs = [
+  { key: "payments", label: "Payment Queue", badgeColor: "#D64545" },
+  { key: "orders", label: "Orders", badgeColor: "#D64545" },
+  { key: "dispatch", label: "Dispatch", badgeColor: "#D64545" },
+  { key: "delivery", label: "Delivery", badgeColor: "#D64545" },
+  { key: "cancelled", label: "Cancelled", badgeColor: "#D64545" },
+  { key: "rejected", label: "Rejected", badgeColor: "#D64545" },
+  { key: "refunds", label: "Refunds", badgeColor: "#D64545" },
+  { key: "reports", label: "Reports", badgeColor: "#D64545" },
+];
+
+const activityFilters = ["All", "Payment", "Rejected", "Dispatch", "Delivered"];
 const IN_PROGRESS_STATUSES = ["Dispatched", "Received", "Processing"];
+
+type ActivityEntry = { ts: number; activity: string; order: string; type: string };
+
+function buildActivityLog(orders: Order[], deliveries: Delivery[]): ActivityEntry[] {
+  const entries: ActivityEntry[] = [];
+  for (const o of orders) {
+    entries.push({ ts: o.createdAt, activity: `Receipt submitted for review — Rs. ${o.total.toLocaleString("en-IN")}`, order: o.id, type: "Payment" });
+    if (o.status === "Payment Approved" || o.status === "On the Way" || o.status === "Delivered") {
+      if (o.approvedAt) entries.push({ ts: o.approvedAt, activity: `Payment approved — Rs. ${o.total.toLocaleString("en-IN")}`, order: o.id, type: "Payment" });
+    }
+    if (o.status === "Payment Rejected") {
+      entries.push({ ts: o.createdAt, activity: `Payment rejected — ${o.rejectReason ?? ""}`, order: o.id, type: "Rejected" });
+    }
+  }
+  for (const d of deliveries) {
+    if (d.dispatchedAt) entries.push({ ts: d.dispatchedAt, activity: `Forwarded to dispatch — Rs. ${d.amount.toLocaleString("en-IN")}`, order: d.id, type: "Dispatch" });
+    if (d.deliveredAt) entries.push({ ts: d.deliveredAt, activity: `Order marked delivered — Rs. ${d.amount.toLocaleString("en-IN")}`, order: d.id, type: "Delivered" });
+  }
+  return entries.sort((a, b) => b.ts - a.ts);
+}
 
 export default function DeliveriesPage() {
   const [tab, setTab] = useState("payments");
   const [typeFilter, setTypeFilter] = useState("All");
-  const [rangeFilter, setRangeFilter] = useState("All time");
-  const { deliveries, assignCourier } = useDelivery();
-
-  const filteredLog = deliveryActivityLog.filter((a) => typeFilter === "All" || a.type === typeFilter);
+  const { deliveries, assignCourier, addDelivery } = useDelivery();
+  const { orders, approveOrder, rejectOrder, markOnTheWay } = useOrder();
+  const { products, updateProduct } = useCatalog();
 
   const awaitingCourier = deliveries.filter((d) => d.status === "Awaiting Courier");
   const inProgress = deliveries.filter((d) => IN_PROGRESS_STATUSES.includes(d.status));
   const deliveredLive = deliveries.filter((d) => d.status === "Delivered");
   const cancelledLive = deliveries.filter((d) => d.status === "Cancelled");
+  const paymentQueue = orders.filter((o) => o.status === "Receipt Uploaded").sort((a, b) => a.createdAt - b.createdAt);
+  const rejectedOrders = orders.filter((o) => o.status === "Payment Rejected").sort((a, b) => b.createdAt - a.createdAt);
+  const allOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
 
-  const liveBadges: Record<string, number> = { dispatch: awaitingCourier.length, delivery: inProgress.length, cancelled: cancelledLive.length };
+  const liveBadges: Record<string, number> = {
+    payments: paymentQueue.length,
+    dispatch: awaitingCourier.length,
+    delivery: inProgress.length,
+    cancelled: cancelledLive.length,
+    rejected: rejectedOrders.length,
+  };
+
+  const activityLog = buildActivityLog(orders, deliveries);
+  const filteredLog = activityLog.filter((a) => typeFilter === "All" || a.type === typeFilter);
+
+  const deliveryActivityStats = [
+    { label: "Pending Payments", value: paymentQueue.length, color: "#C9962B" },
+    { label: "Rejected Payments", value: rejectedOrders.length, color: "#D64545" },
+    { label: "Awaiting Fulfillment", value: awaitingCourier.length, color: "#1A2027" },
+    { label: "On the Way", value: inProgress.length, color: "#1996C8" },
+    { label: "Delivered", value: deliveredLive.length, color: "#1F7A4D" },
+  ];
+
+  const approvedOrders = orders.filter((o) => o.status === "Payment Approved" || o.status === "On the Way" || o.status === "Delivered");
+  const revenueByCategory = (() => {
+    const byCategory = new Map<string, number>();
+    for (const o of approvedOrders) {
+      for (const it of o.items) {
+        const product = products.find((p) => p.id === it.productId);
+        const category = product?.category ?? "Other";
+        byCategory.set(category, (byCategory.get(category) ?? 0) + it.price * it.qty);
+      }
+    }
+    const max = Math.max(1, ...byCategory.values());
+    return Array.from(byCategory.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, amount]) => ({ label, amount: `Rs. ${amount.toLocaleString("en-IN")}`, pct: `${Math.round((amount / max) * 100)}%` }));
+  })();
+  const topProducts = (() => {
+    const byName = new Map<string, number>();
+    for (const o of approvedOrders) {
+      for (const it of o.items) byName.set(it.name, (byName.get(it.name) ?? 0) + it.qty);
+    }
+    return Array.from(byName.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, sold]) => ({ name, sold }));
+  })();
+
+  const approve = (order: Order) => {
+    for (const it of order.items) {
+      const product = products.find((p) => p.id === it.productId);
+      if (!product) continue;
+      const newQty = Math.max(0, product.qty - it.qty);
+      updateProduct(product.id, { ...product, qty: newQty, outOfStock: newQty === 0 });
+    }
+    approveOrder(order.id);
+    addDelivery({
+      id: order.id,
+      client: order.ownerName,
+      phone: order.ownerPhone,
+      address: order.address,
+      amount: order.total,
+      checklist: order.items.map((it) => `${it.name} ×${it.qty}`),
+      status: "Awaiting Courier",
+    });
+  };
+
+  const dispatch = (id: string, courierId: string, courierName: string) => {
+    assignCourier(id, courierId, courierName);
+    markOnTheWay(id);
+  };
 
   return (
     <div>
       <div className="flex gap-2 mb-5 flex-wrap">
         {deliveryTabDefs.map((t) => {
           const active = tab === t.key;
-          const badge = t.key in liveBadges ? liveBadges[t.key] : t.badge;
+          const badge = liveBadges[t.key] ?? 0;
           return (
             <button
               key={t.key}
@@ -64,40 +156,34 @@ export default function DeliveriesPage() {
 
       {tab === "payments" && (
         <Section title="Payment Queue" subtitle="Receipts awaiting verification — approve to commit stock & issue invoice">
-          <Table headers={["Order", "Customer", "Amount", "Submitted", "Receipt", "Actions"]}>
-            {paymentQueueData.map((o) => (
-              <Row key={o.id} cols={6}>
-                <div className="font-semibold">{o.id}</div>
-                <div>{o.customer}</div>
-                <div className="font-semibold">{o.amount}</div>
-                <div className="text-[11px] text-[#5B6773]">{o.submittedAt}</div>
-                <div className="w-9 h-9 border border-dashed border-[#C7CDD3] rounded-md flex items-center justify-center text-[#8A96A3]">
-                  📄
-                </div>
-                <div className="flex gap-2">
-                  <ActionBtn color="#1F7A4D">Approve</ActionBtn>
-                  <ActionBtn color="#D64545" subtle>
-                    Reject
-                  </ActionBtn>
-                </div>
-              </Row>
-            ))}
-          </Table>
+          {paymentQueue.length === 0 ? (
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">No receipts awaiting review</div>
+          ) : (
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+              {paymentQueue.map((o) => (
+                <PaymentQueueRow key={o.id} order={o} onApprove={approve} onReject={rejectOrder} />
+              ))}
+            </div>
+          )}
         </Section>
       )}
 
       {tab === "orders" && (
         <Section title="Orders">
           <Table headers={["Order", "Client", "Date", "Amount", "Status"]}>
-            {adminOrdersData.map((o) => (
-              <Row key={o.id} cols={5}>
-                <div className="font-semibold">{o.id}</div>
-                <div>{o.client}</div>
-                <div className="text-[#5B6773]">{o.date}</div>
-                <div className="font-semibold">{o.amount}</div>
-                <div className="font-semibold text-[#1F7A4D]">{o.status}</div>
-              </Row>
-            ))}
+            {allOrders.length === 0 ? (
+              <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No orders placed yet</div>
+            ) : (
+              allOrders.map((o) => (
+                <Row key={o.id} cols={5}>
+                  <div className="font-semibold">{o.id}</div>
+                  <div>{o.ownerName}</div>
+                  <div className="text-[#5B6773]">{new Date(o.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
+                  <div className="font-semibold">Rs. {o.total.toLocaleString("en-IN")}</div>
+                  <div className="font-semibold text-[#1F7A4D]">{o.status}</div>
+                </Row>
+              ))
+            )}
           </Table>
         </Section>
       )}
@@ -111,7 +197,7 @@ export default function DeliveriesPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {awaitingCourier.map((o) => (
-                <DispatchCard key={o.id} delivery={o} onDispatch={assignCourier} />
+                <DispatchCard key={o.id} delivery={o} onDispatch={dispatch} />
               ))}
             </div>
           )}
@@ -177,16 +263,20 @@ export default function DeliveriesPage() {
 
       {tab === "rejected" && (
         <Section title="Rejected Payments" subtitle="Receipts declined by admin">
-          <Table headers={["Order", "Client", "Amount", "Reason"]}>
-            {rejectedPaymentsData.map((r) => (
-              <Row key={r.id} cols={4}>
-                <div className="font-semibold">{r.id}</div>
-                <div>{r.client}</div>
-                <div className="font-semibold">{r.amount}</div>
-                <div className="text-[#D64545]">{r.reason}</div>
-              </Row>
-            ))}
-          </Table>
+          {rejectedOrders.length === 0 ? (
+            <EmptyRow show />
+          ) : (
+            <Table headers={["Order", "Client", "Amount", "Reason"]}>
+              {rejectedOrders.map((r) => (
+                <Row key={r.id} cols={4}>
+                  <div className="font-semibold">{r.id}</div>
+                  <div>{r.ownerName}</div>
+                  <div className="font-semibold">Rs. {r.total.toLocaleString("en-IN")}</div>
+                  <div className="text-[#D64545]">{r.rejectReason}</div>
+                </Row>
+              ))}
+            </Table>
+          )}
         </Section>
       )}
 
@@ -212,14 +302,6 @@ export default function DeliveriesPage() {
 
           <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-[18px] flex justify-between items-center mb-4">
             <div>
-              <div className="text-[13px] font-bold text-[#1A2027]">Avg. Delivery Time</div>
-              <div className="text-[11px] text-[#8A96A3]">From payment approval to marked delivered, across the last 30 days</div>
-            </div>
-            <div className="text-sm font-bold text-primary">Avg. 1.4 days</div>
-          </div>
-
-          <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-[18px] flex justify-between items-center mb-4">
-            <div>
               <div className="text-[13px] font-bold text-[#1A2027]">Total Refunds Issued</div>
               <div className="text-[11px] text-[#8A96A3]">0 refunds — deducted from gross revenue</div>
             </div>
@@ -229,53 +311,58 @@ export default function DeliveriesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 mb-4">
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-[18px]">
               <div className="text-[13px] font-bold text-[#1A2027] mb-3">Revenue by Category</div>
-              {revenueByCategory.map((r) => (
-                <div key={r.label} className="mb-3 last:mb-0">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-[#1A2027] font-medium">{r.label}</span>
-                    <span className="font-semibold">{r.amount}</span>
+              {revenueByCategory.length === 0 ? (
+                <div className="text-xs text-[#8A96A3]">No approved orders yet</div>
+              ) : (
+                revenueByCategory.map((r) => (
+                  <div key={r.label} className="mb-3 last:mb-0">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-[#1A2027] font-medium">{r.label}</span>
+                      <span className="font-semibold">{r.amount}</span>
+                    </div>
+                    <div className="h-1.5 bg-[#EEF1F3] rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full" style={{ width: r.pct }} />
+                    </div>
                   </div>
-                  <div className="h-1.5 bg-[#EEF1F3] rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full" style={{ width: r.pct }} />
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-[18px]">
               <div className="text-[13px] font-bold text-[#1A2027] mb-3">Top Selling Products</div>
-              {topProducts.map((p) => (
-                <div key={p.name} className="flex justify-between py-1.5 border-b border-[#F0F2F4] text-xs last:border-0">
-                  <span className="text-[#1A2027]">{p.name}</span>
-                  <span className="font-bold">{p.sold} sold</span>
-                </div>
-              ))}
+              {topProducts.length === 0 ? (
+                <div className="text-xs text-[#8A96A3]">No approved orders yet</div>
+              ) : (
+                topProducts.map((p) => (
+                  <div key={p.name} className="flex justify-between py-1.5 border-b border-[#F0F2F4] text-xs last:border-0">
+                    <span className="text-[#1A2027]">{p.name}</span>
+                    <span className="font-bold">{p.sold} sold</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           <div className="text-[13px] font-bold text-[#1A2027] mb-2">Activity Log</div>
-          <div className="flex gap-1.5 mb-2 flex-wrap">
+          <div className="flex gap-1.5 mb-3 flex-wrap">
             {activityFilters.map((f) => (
-              <FilterPill key={f} active={typeFilter === f} onClick={() => setTypeFilter(f)} dark={false}>
+              <FilterPill key={f} active={typeFilter === f} onClick={() => setTypeFilter(f)}>
                 {f}
               </FilterPill>
             ))}
           </div>
-          <div className="flex gap-1.5 mb-3 flex-wrap">
-            {rangeFilters.map((r) => (
-              <FilterPill key={r} active={rangeFilter === r} onClick={() => setRangeFilter(r)} dark>
-                {r}
-              </FilterPill>
-            ))}
-          </div>
           <Table headers={["Date", "Time", "Activity", "Order"]}>
-            {filteredLog.map((a, i) => (
-              <Row key={i} cols={4}>
-                <div className="text-[#5B6773]">{a.date}</div>
-                <div className="text-[#5B6773]">{a.time}</div>
-                <div>{a.activity}</div>
-                <div className="font-bold">{a.order}</div>
-              </Row>
-            ))}
+            {filteredLog.length === 0 ? (
+              <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No activity yet</div>
+            ) : (
+              filteredLog.map((a, i) => (
+                <Row key={i} cols={4}>
+                  <div className="text-[#5B6773]">{new Date(a.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
+                  <div className="text-[#5B6773]">{new Date(a.ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</div>
+                  <div>{a.activity}</div>
+                  <div className="font-bold">{a.order}</div>
+                </Row>
+              ))
+            )}
           </Table>
         </Section>
       )}
@@ -320,10 +407,12 @@ function Row({ cols, children }: { cols: number; children: React.ReactNode }) {
   );
 }
 
-function ActionBtn({ children, color, subtle }: { children: React.ReactNode; color: string; subtle?: boolean }) {
+function ActionBtn({ children, color, subtle, onClick, disabled }: { children: React.ReactNode; color: string; subtle?: boolean; onClick?: () => void; disabled?: boolean }) {
   return (
     <button
-      className="px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer"
+      onClick={onClick}
+      disabled={disabled}
+      className="px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
       style={subtle ? { background: "#FCEAEA", color } : { background: color, color: "#fff" }}
     >
       {children}
@@ -333,7 +422,55 @@ function ActionBtn({ children, color, subtle }: { children: React.ReactNode; col
 
 function EmptyRow({ show }: { show: boolean }) {
   if (!show) return null;
-  return <div className="bg-white border-t border-[#E4E9EC] pt-0" />;
+  return <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">Nothing here yet</div>;
+}
+
+function PaymentQueueRow({ order, onApprove, onReject }: { order: Order; onApprove: (order: Order) => void; onReject: (id: string, reason: string) => void }) {
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState("");
+  const fmtTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+  return (
+    <div data-testid={`payment-row-${order.id}`} className="border-b border-[#F0F2F4] last:border-0 px-4 py-3.5">
+      <div className="grid grid-cols-6 items-center text-xs">
+        <div className="font-semibold">{order.id}</div>
+        <div>{order.ownerName}</div>
+        <div className="font-semibold">Rs. {order.total.toLocaleString("en-IN")}</div>
+        <div className="text-[11px] text-[#5B6773]">{fmtTime(order.createdAt)}</div>
+        <div className="w-9 h-9 border border-dashed border-[#C7CDD3] rounded-md flex items-center justify-center text-[#8A96A3]">📄</div>
+        <div className="flex gap-2">
+          <ActionBtn color="#1F7A4D" onClick={() => onApprove(order)}>
+            Approve
+          </ActionBtn>
+          <ActionBtn color="#D64545" subtle onClick={() => setRejecting((v) => !v)}>
+            Reject
+          </ActionBtn>
+        </div>
+      </div>
+      {rejecting && (
+        <div className="mt-3 flex gap-2">
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Reason for rejection"
+            className="flex-1 px-2.5 py-2 rounded-lg border border-[#E4E9EC] text-xs box-border"
+          />
+          <button
+            onClick={() => {
+              if (!reason.trim()) return;
+              onReject(order.id, reason.trim());
+              setRejecting(false);
+              setReason("");
+            }}
+            disabled={!reason.trim()}
+            className="bg-[#D64545] text-white px-3.5 py-2 rounded-md text-[11px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Confirm Reject
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function DispatchCard({ delivery, onDispatch }: { delivery: Delivery; onDispatch: (id: string, courierId: string, courierName: string) => void }) {
@@ -346,7 +483,7 @@ function DispatchCard({ delivery, onDispatch }: { delivery: Delivery; onDispatch
   };
 
   return (
-    <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-4">
+    <div data-testid={`dispatch-card-${delivery.id}`} className="bg-white border border-[#E4E9EC] rounded-[10px] p-4">
       <div className="flex justify-between items-start mb-2">
         <div className="font-bold text-sm text-[#1A2027]">{delivery.id}</div>
         <span className="bg-[#E7F3EC] text-[#1F7A4D] text-[10px] font-bold px-2 py-0.5 rounded">Paid</span>
@@ -387,25 +524,12 @@ function DispatchCard({ delivery, onDispatch }: { delivery: Delivery; onDispatch
   );
 }
 
-function FilterPill({
-  children,
-  active,
-  onClick,
-  dark,
-}: {
-  children: React.ReactNode;
-  active: boolean;
-  onClick: () => void;
-  dark: boolean;
-}) {
+function FilterPill({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       className="px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
-      style={{
-        background: active ? (dark ? "#1A2027" : "#1996C8") : "#F0F2F4",
-        color: active ? "#fff" : "#5B6773",
-      }}
+      style={{ background: active ? "#1996C8" : "#F0F2F4", color: active ? "#fff" : "#5B6773" }}
     >
       {children}
     </button>

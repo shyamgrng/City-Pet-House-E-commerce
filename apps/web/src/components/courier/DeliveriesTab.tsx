@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useDelivery } from "@/context/DeliveryContext";
+import { useOrder } from "@/context/OrderContext";
 import { deliveryTimeline, STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
 
 const ACTIVE_STATUSES = ["Dispatched", "Received", "Processing"] as const;
 
 export default function DeliveriesTab({ courierId }: { courierId: string }) {
   const { deliveries, markReceived, assignDeliveryPerson, markDelivered, cancelDelivery } = useDelivery();
+  const { markDelivered: markOrderDelivered } = useOrder();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dpName, setDpName] = useState("");
   const [dpPhone, setDpPhone] = useState("");
@@ -78,7 +80,13 @@ export default function DeliveriesTab({ courierId }: { courierId: string }) {
             )}
 
             {selected.status === "Processing" && (
-              <button onClick={() => markDelivered(selected.id)} className="bg-[#1F7A4D] text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
+              <button
+                onClick={() => {
+                  markDelivered(selected.id);
+                  markOrderDelivered(selected.id);
+                }}
+                className="bg-[#1F7A4D] text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer"
+              >
                 ✓ Mark Delivered
               </button>
             )}

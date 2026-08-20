@@ -77,67 +77,11 @@ export const recentActivity = [
 ];
 
 // ---- Deliveries ----
-export const deliveryTabDefs = [
-  { key: "payments", label: "Payment Queue", badge: 2, badgeColor: "#D64545" },
-  { key: "orders", label: "Orders", badge: 3, badgeColor: "#D64545" },
-  { key: "dispatch", label: "Dispatch", badge: 3, badgeColor: "#D64545" },
-  { key: "delivery", label: "Delivery", badge: 0, badgeColor: "#D64545" },
-  { key: "cancelled", label: "Cancelled", badge: 0, badgeColor: "#D64545" },
-  { key: "rejected", label: "Rejected", badge: 0, badgeColor: "#D64545" },
-  { key: "refunds", label: "Refunds", badge: 0, badgeColor: "#D64545" },
-  { key: "reports", label: "Reports", badge: 0, badgeColor: "#D64545" },
-];
-
-export const paymentQueueData = [
-  { id: "ORD-1045", customer: "Aarya Acharya", amount: "Rs. 2,700", submittedAt: "Today, 11:42 AM" },
-  { id: "ORD-1041", customer: "Puppy Buyer — Japanese Spitz", amount: "Rs. 35,000", submittedAt: "Yesterday, 4:30 PM" },
-];
-
-export const adminOrdersData = [
-  { id: "ORD-1044", client: "Sanju Timalsina", date: "Jul 17, 2026", amount: "Rs. 8,400", status: "Payment Approved" },
-  { id: "ORD-1043", client: "Puspa Thapa", date: "Jul 16, 2026", amount: "Rs. 1,850", status: "Payment Approved" },
-  { id: "ORD-1042", client: "Lin Hollywood", date: "Jul 12, 2026", amount: "Rs. 2,700", status: "Payment Approved" },
-];
-
-// Dispatch/Delivery/Cancelled are now live in DeliveryContext (lib/delivery-seed.ts) — Admin's
-// Dispatch, Delivery, and Cancelled tabs read directly from there instead of static data.
-
-export const rejectedPaymentsData = [{ id: "ORD-1040", client: "Krishna B.", amount: "Rs. 1,600", reason: "Receipt unreadable" }];
+// Payment Queue, Orders, Dispatch, Delivery, Cancelled, Rejected, and Reports (stats, revenue
+// by category, top products, activity log) all now read live from OrderContext + DeliveryContext
+// + CatalogContext — see src/app/admin/(dashboard)/deliveries/page.tsx. Refunds stays static
+// (empty) since no refund flow has been built yet.
 export const refundedOrdersData: { id: string; client: string; amount: string; type: string }[] = [];
-
-export const deliveryActivityStats = [
-  { label: "Pending Payments", value: 2, color: "#C9962B" },
-  { label: "Rejected Payments", value: 1, color: "#D64545" },
-  { label: "Awaiting Fulfillment", value: 3, color: "#1A2027" },
-  { label: "On the Way", value: 3, color: "#1996C8" },
-  { label: "Delivered", value: 1, color: "#1F7A4D" },
-];
-
-export const revenueByCategory = [
-  { label: "Pet Food", amount: "Rs. 1,84,200", pct: "78%" },
-  { label: "Puppies", amount: "Rs. 1,55,000", pct: "66%" },
-  { label: "Grooming Supplies", amount: "Rs. 62,400", pct: "30%" },
-  { label: "Services (Vet, Grooming)", amount: "Rs. 81,000", pct: "35%" },
-];
-
-export const topProducts = [
-  { name: "Focus Puppy Food 1.2kg", sold: 64 },
-  { name: "Himalaya Nefrotec Tablets", sold: 41 },
-  { name: "Bairo Adult Dog Food 1.2kg", sold: 37 },
-  { name: "Retractable Leash 5m", sold: 29 },
-  { name: "Clumping Bentonite Cat Litter 10L", sold: 22 },
-];
-
-export const deliveryActivityLog = [
-  { date: "Jul 18, 2026", time: "Just now", activity: "Payment rejected — Receipt unreadable", order: "ORD-1040", type: "Rejected" },
-  { date: "Jul 18, 2026", time: "Jul 15, 2026", activity: "Order marked delivered — Rs. 3,100", order: "ORD-1030", type: "Delivered" },
-  { date: "Jul 18, 2026", time: "Just now", activity: "Forwarded to dispatch — Rs. 1,950", order: "ORD-1038", type: "Dispatch" },
-  { date: "Jul 18, 2026", time: "Just now", activity: "Forwarded to dispatch — Rs. 3,100", order: "ORD-1036", type: "Dispatch" },
-  { date: "Jul 18, 2026", time: "Just now", activity: "Forwarded to dispatch — Rs. 900", order: "ORD-1034", type: "Dispatch" },
-  { date: "Jul 17, 2026", time: "Jul 17, 2026", activity: "Payment approved — Rs. 8,400", order: "ORD-1044", type: "Payment" },
-  { date: "Jul 16, 2026", time: "Jul 16, 2026", activity: "Payment approved — Rs. 1,850", order: "ORD-1043", type: "Payment" },
-  { date: "Jul 12, 2026", time: "Jul 12, 2026", activity: "Payment approved — Rs. 2,700", order: "ORD-1042", type: "Payment" },
-];
 
 // Vet Consults (doctors + bookings) now reads live from VetContext (src/context/VetContext.tsx) —
 // see src/app/admin/(dashboard)/vet-consults/page.tsx and the public /vet booking flow.

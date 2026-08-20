@@ -5,10 +5,12 @@ import { AuthProvider } from "@/context/AuthContext";
 import { B2BAuthProvider } from "@/context/B2BAuthContext";
 import { B2BProvider } from "@/context/B2BContext";
 import { BlogProvider } from "@/context/BlogContext";
+import { CartProvider } from "@/context/CartContext";
 import { CatalogProvider } from "@/context/CatalogContext";
 import { CourierAuthProvider } from "@/context/CourierAuthContext";
 import { DeliveryProvider } from "@/context/DeliveryContext";
 import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
+import { OrderProvider } from "@/context/OrderContext";
 import { PetProvider } from "@/context/PetContext";
 import { ServiceProvider } from "@/context/ServiceContext";
 import { VetProvider } from "@/context/VetContext";
@@ -45,11 +47,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     <VetProvider>
                       <ServiceProvider>
                         <CatalogProvider>
-                          <PetProvider>
-                            <AdoptionProvider>
-                              <BlogProvider>{children}</BlogProvider>
-                            </AdoptionProvider>
-                          </PetProvider>
+                          <CartProvider>
+                            <OrderProvider>
+                              <PetProvider>
+                                <AdoptionProvider>
+                                  <BlogProvider>{children}</BlogProvider>
+                                </AdoptionProvider>
+                              </PetProvider>
+                            </OrderProvider>
+                          </CartProvider>
                         </CatalogProvider>
                       </ServiceProvider>
                     </VetProvider>

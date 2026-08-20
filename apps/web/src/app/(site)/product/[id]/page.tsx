@@ -1,15 +1,21 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import ShopProductCard from "@/components/ShopProductCard";
+import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { badgeColor, formatRs, salePrice } from "@/lib/catalog-types";
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { products } = useCatalog();
+  const { addItem } = useCart();
+  const router = useRouter();
+  const [qty, setQty] = useState(1);
+  const [added, setAdded] = useState(false);
   const product = products.find((p) => p.id === id);
 
   if (!product) {
@@ -61,9 +67,51 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div className="text-[13px] text-[#5B6773] mb-5">
             Category: {product.category} · Brand: {product.brand}
           </div>
-          <button className="inline-block bg-primary text-white px-[26px] py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer">
-            Add to Cart
-          </button>
+
+          {!product.outOfStock && (
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                className="w-9 h-9 rounded-lg border border-[#E4E9EC] text-[#3A4652] font-bold cursor-pointer"
+              >
+                −
+              </button>
+              <div className="w-10 text-center text-sm font-semibold text-[#1A2027]">{qty}</div>
+              <button
+                onClick={() => setQty((q) => q + 1)}
+                className="w-9 h-9 rounded-lg border border-[#E4E9EC] text-[#3A4652] font-bold cursor-pointer"
+              >
+                +
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-3 items-center">
+            <button
+              onClick={() => {
+                if (product.outOfStock) return;
+                addItem(product, qty);
+                setAdded(true);
+                setTimeout(() => setAdded(false), 2000);
+              }}
+              disabled={product.outOfStock}
+              className="inline-block bg-primary text-white px-[26px] py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {product.outOfStock ? "Out of Stock" : "Add to Cart"}
+            </button>
+            {!product.outOfStock && (
+              <button
+                onClick={() => {
+                  addItem(product, qty);
+                  router.push("/cart");
+                }}
+                className="inline-block bg-[#F0F2F4] text-[#1A2027] px-[22px] py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer"
+              >
+                Buy Now
+              </button>
+            )}
+            {added && <span className="text-xs font-semibold text-[#1F7A4D]">✓ Added to cart</span>}
+          </div>
         </div>
       </div>
 
