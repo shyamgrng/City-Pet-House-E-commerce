@@ -153,27 +153,8 @@ export const deliveryActivityLog = [
   { date: "Jul 12, 2026", time: "Jul 12, 2026", activity: "Payment approved — Rs. 2,700", order: "ORD-1042", type: "Payment" },
 ];
 
-// ---- Vet Consults ----
-export const vetDoctors = [
-  { name: "Dr. Sujata Rai, BVSc & AH", qualification: "BVSc & AH, Tribhuvan University", nvc: "NVC-1042", online: true, consults: 4, completed: 3 },
-  { name: "Dr. Bikash Shrestha, DVM", qualification: "DVM, Nepal Agriculture & Forestry University", nvc: "NVC-0876", online: false, consults: 1, completed: 0 },
-  { name: "Dr. Anjali Gurung, BVSc & AH", qualification: "BVSc & AH, Tribhuvan University", nvc: "NVC-1213", online: true, consults: 0, completed: 0 },
-];
-
-export const vetBookings = [
-  { id: "VET-1001", owner: "Eva Gurung — Bruno", doctor: "Dr. Sujata Rai, BVSc & AH", amount: "Rs. 800", status: "Session ended" },
-  { id: "VET-1002", owner: "Eva Gurung — Bruno", doctor: "Dr. Sujata Rai, BVSc & AH", amount: "Rs. 800", status: "Session ended" },
-  { id: "VET-1003", owner: "Eva Gurung — Bruno", doctor: "Dr. Sujata Rai, BVSc & AH", amount: "Rs. 800", status: "Session ended" },
-  { id: "VET-1004", owner: "Eva Gurung — Milo", doctor: "Dr. Bikash Shrestha, DVM", amount: "Rs. 800", status: "Approved — chat opens 10 min from now" },
-  { id: "VET-1005", owner: "Rojina Shrestha — Coco", doctor: "Dr. Sujata Rai, BVSc & AH", amount: "Rs. 800", status: "Approved — chat opens now" },
-];
-
-export const vetActivityLog = [
-  { date: "Jul 18, 2026", time: "Just now", activity: "Eva Gurung requested a consult with Dr. Sujata Rai, BVSc & AH", type: "Booking" },
-  { date: "Jul 18, 2026", time: "Just now", activity: "Admin approved payment from Eva Gurung — Rs. 800", type: "Payment" },
-  { date: "Jul 18, 2026", time: "Just now", activity: "Eva Gurung joined the call with Dr. Sujata Rai, BVSc & AH", type: "Call" },
-  { date: "Jul 18, 2026", time: "Just now", activity: "Dr. Sujata Rai, BVSc & AH ended the session with Eva Gurung", type: "Call" },
-];
+// Vet Consults (doctors + bookings) now reads live from VetContext (src/context/VetContext.tsx) —
+// see src/app/admin/(dashboard)/vet-consults/page.tsx and the public /vet booking flow.
 
 // Shop / Stock now reads live from CatalogContext (src/context/CatalogContext.tsx) — see
 // src/app/admin/(dashboard)/shop/page.tsx, which is wired to the same product data the

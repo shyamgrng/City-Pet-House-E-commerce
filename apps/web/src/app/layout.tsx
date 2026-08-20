@@ -3,7 +3,9 @@ import { Poppins, Inter } from "next/font/google";
 import { AdoptionProvider } from "@/context/AdoptionContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { CatalogProvider } from "@/context/CatalogContext";
+import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
 import { PetProvider } from "@/context/PetContext";
+import { VetProvider } from "@/context/VetContext";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -29,11 +31,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${poppins.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          <CatalogProvider>
-            <PetProvider>
-              <AdoptionProvider>{children}</AdoptionProvider>
-            </PetProvider>
-          </CatalogProvider>
+          <DoctorAuthProvider>
+            <VetProvider>
+              <CatalogProvider>
+                <PetProvider>
+                  <AdoptionProvider>{children}</AdoptionProvider>
+                </PetProvider>
+              </CatalogProvider>
+            </VetProvider>
+          </DoctorAuthProvider>
         </AuthProvider>
       </body>
     </html>

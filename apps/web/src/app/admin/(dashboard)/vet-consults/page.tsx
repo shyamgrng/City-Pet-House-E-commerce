@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { vetActivityLog, vetBookings, vetDoctors } from "@/lib/admin-data";
+import { useVet } from "@/context/VetContext";
+import { STATUS_COLORS } from "@/lib/vet-types";
 
 const subTabs = ["Overview", "Payment Queue", "Receipts", "Consult Records", "Recordings", "Reports"];
-const typeFilters = ["All", "Booking", "Approval", "Call", "Payment", "Reminder"];
 
 export default function VetConsultsPage() {
   const [active, setActive] = useState(true);
   const [tab, setTab] = useState("Overview");
-  const [typeFilter, setTypeFilter] = useState("All");
+  const { doctors, bookings, approvePayment } = useVet();
 
-  const filteredLog = vetActivityLog.filter((a) => typeFilter === "All" || a.type === typeFilter);
+  const paymentQueue = bookings.filter((b) => b.status === "Payment Review");
 
   return (
     <div>
@@ -56,8 +56,8 @@ export default function VetConsultsPage() {
         <>
           <div className="text-[13px] font-bold text-[#1A2027] mb-3">Doctors</div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
-            {vetDoctors.map((d) => (
-              <div key={d.name} className="bg-white border border-[#E4E9EC] rounded-[10px] p-4">
+            {doctors.map((d) => (
+              <div key={d.id} className="bg-white border border-[#E4E9EC] rounded-[10px] p-4">
                 <div className="flex items-start gap-3 mb-3">
                   <div className="w-11 h-11 rounded-full bg-[#EEF1F3] flex items-center justify-center text-[9px] text-[#8A96A3] shrink-0">
                     Photo
@@ -73,15 +73,15 @@ export default function VetConsultsPage() {
                       </span>
                     </div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">{d.qualification}</div>
-                    <div className="text-[11px] text-[#8A96A3]">{d.nvc}</div>
+                    <div className="text-[11px] text-[#8A96A3]">{d.nvcNumber}</div>
                   </div>
                 </div>
                 <div className="flex gap-4 pt-2 border-t border-[#F0F2F4] text-xs">
                   <span>
-                    <b>{d.consults}</b> consults
+                    <b>{bookings.filter((b) => b.doctorId === d.id).length}</b> consults
                   </span>
                   <span>
-                    <b>{d.completed}</b> completed
+                    <b>{bookings.filter((b) => b.doctorId === d.id && b.status === "Completed").length}</b> completed
                   </span>
                 </div>
               </div>
@@ -89,7 +89,7 @@ export default function VetConsultsPage() {
           </div>
 
           <div className="text-[13px] font-bold text-[#1A2027] mb-3">All Bookings</div>
-          <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-6">
+          <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
             <div className="grid grid-cols-5 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
               <div>Booking</div>
               <div>Owner</div>
@@ -97,50 +97,59 @@ export default function VetConsultsPage() {
               <div>Amount</div>
               <div>Status</div>
             </div>
-            {vetBookings.map((b) => (
+            {bookings.map((b) => (
               <div key={b.id} className="grid grid-cols-5 px-4 py-3.5 text-xs text-[#1A2027] items-center border-b border-[#F0F2F4] last:border-0">
                 <div className="font-bold">{b.id}</div>
-                <div>{b.owner}</div>
-                <div>{b.doctor}</div>
-                <div className="font-semibold">{b.amount}</div>
-                <div className="font-semibold text-[#1F7A4D]">{b.status}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2">Activity Log</div>
-          <div className="flex gap-1.5 mb-3 flex-wrap">
-            {typeFilters.map((f) => (
-              <button
-                key={f}
-                onClick={() => setTypeFilter(f)}
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer"
-                style={{ background: typeFilter === f ? "#1996C8" : "#F0F2F4", color: typeFilter === f ? "#fff" : "#5B6773" }}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-          <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-            <div className="grid grid-cols-[1fr_1fr_3fr_1fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
-              <div>Date</div>
-              <div>Time</div>
-              <div>Activity</div>
-              <div>Type</div>
-            </div>
-            {filteredLog.map((a, i) => (
-              <div key={i} className="grid grid-cols-[1fr_1fr_3fr_1fr] px-4 py-3 text-xs text-[#1A2027] items-center border-b border-[#F0F2F4] last:border-0">
-                <div className="text-[#5B6773]">{a.date}</div>
-                <div className="text-[#5B6773]">{a.time}</div>
-                <div>{a.activity}</div>
-                <div className="font-semibold text-primary">{a.type}</div>
+                <div>
+                  {b.ownerName} — {b.petName}
+                </div>
+                <div>{b.doctorName}</div>
+                <div className="font-semibold">Rs. {b.amount}</div>
+                <div className="font-semibold" style={{ color: STATUS_COLORS[b.status] }}>
+                  {b.status}
+                </div>
               </div>
             ))}
           </div>
         </>
       )}
 
-      {tab !== "Overview" && (
+      {tab === "Payment Queue" && (
+        <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+          <div className="grid grid-cols-[1.4fr_1fr_1fr_0.9fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+            <div>Booking</div>
+            <div>Doctor</div>
+            <div>Amount</div>
+            <div>Actions</div>
+          </div>
+          {paymentQueue.length === 0 ? (
+            <div className="px-4 py-6 text-xs text-[#8A96A3] text-center">No payments waiting for approval.</div>
+          ) : (
+            paymentQueue.map((b) => (
+              <div key={b.id} className="grid grid-cols-[1.4fr_1fr_1fr_0.9fr] px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                <div>
+                  <div className="font-semibold text-[#1A2027]">
+                    {b.ownerName} — {b.petName}
+                  </div>
+                  <div className="text-[11px] text-[#8A96A3] mt-0.5">{b.id} · receipt uploaded</div>
+                </div>
+                <div className="text-[#5B6773]">{b.doctorName}</div>
+                <div className="font-semibold">Rs. {b.amount}</div>
+                <div>
+                  <button
+                    onClick={() => approvePayment(b.id)}
+                    className="bg-primary text-white text-[11px] font-semibold px-3.5 py-2 rounded-md cursor-pointer"
+                  >
+                    Approve
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {tab !== "Overview" && tab !== "Payment Queue" && (
         <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
           {tab} — coming soon
         </div>
