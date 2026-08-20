@@ -98,12 +98,8 @@ export const testimonials = [
   },
 ];
 
-export const blogPosts = [
-  { date: "Mar 20, 2026", title: "Spring Alert: Is Your Dog Itching? Managing Skin Allergies" },
-  { date: "Mar 8, 2026", title: "Parasite Prevention: 5 Critical Tips to Protect Your Pet" },
-  { date: "Feb 26, 2026", title: "First Aid Tips Every Pet Owner Should Know" },
-  { date: "Feb 12, 2026", title: "New Puppy Checklist: Vaccination Schedule & What to Buy" },
-];
+// "Latest from the Blog" rail now reads live from BlogContext (src/context/BlogContext.tsx)
+// via src/components/LatestBlogRail.tsx, linking into the public /blog detail pages.
 
 // Footer "Our Services" links now read live from ServiceContext (src/context/ServiceContext.tsx)
 // via src/components/SiteFooter.tsx, linking into the public /services detail pages.

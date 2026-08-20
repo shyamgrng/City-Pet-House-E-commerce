@@ -2,9 +2,9 @@ import Link from "next/link";
 import AvailablePuppiesRail from "@/components/AvailablePuppiesRail";
 import HealthCareRail from "@/components/HealthCareRail";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
+import LatestBlogRail from "@/components/LatestBlogRail";
 import ProductRail from "@/components/ProductRail";
 import {
-  blogPosts,
   brands,
   categories,
   fashionWear,
@@ -214,17 +214,7 @@ export default function HomePage() {
         <div className="px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Latest from the Blog</div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 px-8 pb-9">
-          {blogPosts.map((b) => (
-            <div key={b.title} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
-              <ImagePlaceholder label="blog photo" striped className="h-[100px]" />
-              <div className="p-3">
-                <div className="text-[11px] text-[#8A96A3] mb-1">{b.date}</div>
-                <div className="text-[13px] font-semibold text-[#1A2027] leading-snug">{b.title}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <LatestBlogRail />
       </div>
     </div>
   );

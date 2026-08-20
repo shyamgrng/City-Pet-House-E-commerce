@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import ImagePlaceholder from "@/components/ImagePlaceholder";
+import { useBlog } from "@/context/BlogContext";
 import { useVet } from "@/context/VetContext";
 
 export default function WebVetPage() {
   const { doctors, ready } = useVet();
+  const { posts } = useBlog();
+  const doctorPosts = posts.filter((p) => p.isDoctorPost).slice(0, 3);
 
   if (!ready) return null;
 
@@ -55,6 +59,26 @@ export default function WebVetPage() {
           </div>
         ))}
       </div>
+
+      {doctorPosts.length > 0 && (
+        <div className="px-8 pb-8">
+          <div className="font-heading font-bold text-base text-[#1A2027] mb-4">Blogs by Our Doctors</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-[18px]">
+            {doctorPosts.map((post) => (
+              <Link key={post.id} href={`/blog/${post.id}`} className="block border border-[#E4E9EC] rounded-xl overflow-hidden cursor-pointer">
+                <div className="h-[150px] relative">
+                  <ImagePlaceholder label="article photo" className="absolute inset-0 w-full h-full" />
+                </div>
+                <div className="p-4">
+                  <div className="text-[11px] text-primary font-semibold mb-1.5">{post.author}</div>
+                  <div className="text-sm font-bold text-[#1A2027] leading-snug mb-2">{post.title}</div>
+                  <div className="text-xs text-[#5B6773] leading-relaxed">{post.excerpt}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

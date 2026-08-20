@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import { AdoptionProvider } from "@/context/AdoptionContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { BlogProvider } from "@/context/BlogContext";
 import { CatalogProvider } from "@/context/CatalogContext";
 import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
 import { PetProvider } from "@/context/PetContext";
@@ -37,7 +38,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <ServiceProvider>
                 <CatalogProvider>
                   <PetProvider>
-                    <AdoptionProvider>{children}</AdoptionProvider>
+                    <AdoptionProvider>
+                      <BlogProvider>{children}</BlogProvider>
+                    </AdoptionProvider>
                   </PetProvider>
                 </CatalogProvider>
               </ServiceProvider>
