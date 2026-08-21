@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import type { Sex } from "@/lib/auth-types";
+import { isValidNepalPhone } from "@/lib/phone";
 
 function SigninInner() {
   const router = useRouter();
@@ -40,6 +42,10 @@ function SigninInner() {
     }
     if (!name.trim() || !dob.trim() || !phone.trim() || !regEmail.trim() || !address.trim() || !regPassword) {
       setError("Please fill in all required fields.");
+      return;
+    }
+    if (!isValidNepalPhone(phone)) {
+      setError("Enter a valid 10-digit phone number.");
       return;
     }
     if (regPassword !== confirmPassword) {
@@ -107,7 +113,7 @@ function SigninInner() {
             <Label required>Date of Birth</Label>
             <Input value={dob} onChange={setDob} type="date" />
             <Label required>Phone Number</Label>
-            <Input value={phone} onChange={setPhone} placeholder="+977 98XXXXXXXX" />
+            <PhoneInput value={phone} onChange={setPhone} className="mb-3.5" />
             <Label required>Email Address</Label>
             <Input value={regEmail} onChange={setRegEmail} placeholder="you@example.com" />
             <Label required>Address</Label>

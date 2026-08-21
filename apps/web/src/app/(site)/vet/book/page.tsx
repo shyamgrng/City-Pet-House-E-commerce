@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
+import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import { useVet } from "@/context/VetContext";
+import { isValidNepalPhone } from "@/lib/phone";
 import { next14Days } from "@/lib/vet-types";
 
 function BookInner() {
@@ -66,6 +68,10 @@ function BookInner() {
     }
     if (!ownerName.trim() || !ownerPhone.trim() || !ownerEmail.trim() || !petName.trim() || !petSpecies.trim() || !petAge.trim() || !reason.trim()) {
       setError("Please fill in all required fields.");
+      return;
+    }
+    if (!isValidNepalPhone(ownerPhone)) {
+      setError("Enter a valid 10-digit phone number.");
       return;
     }
     const booking = bookConsult({
@@ -130,7 +136,10 @@ function BookInner() {
       <Field label="Full Name" required value={ownerName} onChange={setOwnerName} placeholder="Your full name" />
       <div className="flex gap-3">
         <div className="flex-1">
-          <Field label="Phone" required value={ownerPhone} onChange={setOwnerPhone} placeholder="98XXXXXXXX" />
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
+            Phone <span className="text-[#D64545]">*</span>
+          </div>
+          <PhoneInput value={ownerPhone} onChange={setOwnerPhone} className="mb-3.5" />
         </div>
         <div className="flex-1">
           <Field label="Email" required value={ownerEmail} onChange={setOwnerEmail} placeholder="you@example.com" />

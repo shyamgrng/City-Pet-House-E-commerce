@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import PhoneInput from "@/components/PhoneInput";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAuth } from "@/context/AuthContext";
 import { useOrder } from "@/context/OrderContext";
@@ -10,6 +11,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
 import { formatRs } from "@/lib/catalog-types";
 import { STATUS_COLORS as ORDER_STATUS_COLORS } from "@/lib/order-types";
+import { isValidNepalPhone } from "@/lib/phone";
 import { STATUS_COLORS as VET_STATUS_COLORS } from "@/lib/vet-types";
 
 const TABS = [
@@ -303,10 +305,15 @@ function ProfileTab() {
           <div className="text-[13px] font-bold text-[#1A2027] mb-3.5 pb-2 border-b border-[#EEF1F3]">Personal Details</div>
           <EditField label="Full Name" value={draft.name} onChange={(v) => setDraft((d) => ({ ...d, name: v }))} />
           <EditField label="Email" value={draft.email} onChange={(v) => setDraft((d) => ({ ...d, email: v }))} />
-          <EditField label="Phone" value={draft.phone} onChange={(v) => setDraft((d) => ({ ...d, phone: v }))} />
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone</div>
+          <PhoneInput value={draft.phone} onChange={(v) => setDraft((d) => ({ ...d, phone: v }))} />
           <EditField label="Address" value={draft.address} onChange={(v) => setDraft((d) => ({ ...d, address: v }))} />
           <div className="flex gap-2.5 mt-2">
-            <button onClick={save} className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+            <button
+              onClick={save}
+              disabled={!isValidNepalPhone(draft.phone)}
+              className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               Save
             </button>
             <button

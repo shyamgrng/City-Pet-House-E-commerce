@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import PhoneInput from "@/components/PhoneInput";
 import { usePetTag } from "@/context/PetTagContext";
+import { isValidNepalPhone } from "@/lib/phone";
 import type { PetTag } from "@/lib/pet-tag-types";
 
 type TagForm = {
@@ -86,7 +88,7 @@ export default function AdminPetTagArchivePage() {
   };
 
   const submit = () => {
-    if (!form.petName.trim() || !form.ownerName.trim() || !form.phone.trim()) return;
+    if (!form.petName.trim() || !form.ownerName.trim() || !isValidNepalPhone(form.phone)) return;
     if (editingId) updateTag(editingId, form);
     else addTag(form);
     setFormOpen(false);
@@ -153,12 +155,12 @@ export default function AdminPetTagArchivePage() {
               <Input value={form.ownerName} onChange={(v) => setForm((f) => ({ ...f, ownerName: v }))} placeholder="Full name" />
             </Field>
             <Field label="Phone *">
-              <Input value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} placeholder="+977 98XXXXXXXX" />
+              <PhoneInput value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} className="" />
             </Field>
           </div>
           <div className="mb-3.5 max-w-[340px]">
             <Field label="Alt. Phone">
-              <Input value={form.altPhone} onChange={(v) => setForm((f) => ({ ...f, altPhone: v }))} placeholder="Secondary number" />
+              <PhoneInput value={form.altPhone} onChange={(v) => setForm((f) => ({ ...f, altPhone: v }))} className="" />
             </Field>
           </div>
           <div className="mb-3.5">

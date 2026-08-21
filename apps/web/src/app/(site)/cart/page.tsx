@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useOrder } from "@/context/OrderContext";
 import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import type { CartItem } from "@/lib/cart-types";
+import { isValidNepalPhone } from "@/lib/phone";
 
 const DELIVERY_FEE = 100;
 const PAYMENT_METHODS = ["eSewa", "Khalti", "Bank Transfer"];
@@ -111,6 +113,10 @@ function CheckoutSection({
       setError("Please fill in your delivery address and phone.");
       return;
     }
+    if (!isValidNepalPhone(phone)) {
+      setError("Enter a valid 10-digit phone number.");
+      return;
+    }
     if (!uploaded) {
       setError("Please upload your payment receipt to continue.");
       return;
@@ -141,11 +147,7 @@ function CheckoutSection({
           className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 box-border"
         />
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">📞 Phone</div>
-        <input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
-        />
+        <PhoneInput value={phone} onChange={setPhone} className="" />
         <div className="text-[11px] text-[#8A96A3] mt-2.5">Delivery — {formatRs(DELIVERY_FEE)} (varies by item)</div>
       </div>
 

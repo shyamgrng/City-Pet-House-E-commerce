@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import PhoneInput from "@/components/PhoneInput";
 import { microchipAddress, useMicrochip } from "@/context/MicrochipContext";
+import { isValidNepalPhone } from "@/lib/phone";
 import type { MicrochipRecord } from "@/lib/microchip-types";
 
 type McForm = Omit<MicrochipRecord, "id">;
@@ -76,7 +78,7 @@ export default function MicrochippingRecordsPage() {
   };
 
   const submit = () => {
-    if (!form.mcNumber.trim() || !form.ownerName.trim() || !form.petName.trim() || !form.phone.trim()) return;
+    if (!form.mcNumber.trim() || !form.ownerName.trim() || !form.petName.trim() || !isValidNepalPhone(form.phone)) return;
     if (editingId) updateRecord(editingId, form);
     else addRecord(form);
     setFormOpen(false);
@@ -109,12 +111,12 @@ export default function MicrochippingRecordsPage() {
               <Input value={form.municipality} onChange={(v) => setForm((f) => ({ ...f, municipality: v }))} placeholder="e.g. Gokarneshwor" />
             </Field>
             <Field label="Phone No. *">
-              <Input value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} placeholder="+977 98XXXXXXXX" />
+              <PhoneInput value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} className="" />
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-4 mb-3.5">
             <Field label="Alt. Phone No.">
-              <Input value={form.altPhone} onChange={(v) => setForm((f) => ({ ...f, altPhone: v }))} placeholder="Secondary number" />
+              <PhoneInput value={form.altPhone} onChange={(v) => setForm((f) => ({ ...f, altPhone: v }))} className="" />
             </Field>
             <Field label="House No.">
               <Input value={form.houseNo} onChange={(v) => setForm((f) => ({ ...f, houseNo: v }))} placeholder="e.g. 12" />

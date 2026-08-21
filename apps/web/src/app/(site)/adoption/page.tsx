@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import PhoneInput from "@/components/PhoneInput";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAuth } from "@/context/AuthContext";
 import { daysLeft } from "@/lib/adoption-types";
+import { isValidNepalPhone } from "@/lib/phone";
 
 export default function AdoptionPage() {
   const { posts } = useAdoption();
@@ -116,7 +118,7 @@ function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaul
   const [contact, setContact] = useState(defaultContact);
   const [posted, setPosted] = useState(false);
 
-  const canSave = name.trim().length > 0 && breed.trim().length > 0;
+  const canSave = name.trim().length > 0 && breed.trim().length > 0 && isValidNepalPhone(contact);
 
   const submit = () => {
     if (!canSave) return;
@@ -159,7 +161,7 @@ function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaul
       <FormLabel>Description</FormLabel>
       <FormInput value={desc} onChange={setDesc} />
       <FormLabel>Contact Number</FormLabel>
-      <FormInput value={contact} onChange={setContact} />
+      <PhoneInput value={contact} onChange={setContact} />
       <FormLabel>Address</FormLabel>
       <FormInput value={address} onChange={setAddress} />
 

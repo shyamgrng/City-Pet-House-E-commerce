@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import PhoneInput from "@/components/PhoneInput";
 import { useCourierAuth } from "@/context/CourierAuthContext";
+import { isValidNepalPhone, phoneDigits } from "@/lib/phone";
 
 export default function ProfileTab() {
   const { courier, updateProfile, changePassword } = useCourierAuth();
@@ -26,7 +28,10 @@ export default function ProfileTab() {
     setEditing(true);
   };
 
+  const canSaveProfile = isValidNepalPhone(phone) && (phoneDigits(altPhone).length === 0 || isValidNepalPhone(altPhone));
+
   const saveProfile = () => {
+    if (!canSaveProfile) return;
     updateProfile({ phone, altPhone, address });
     setEditing(false);
     setProfileSaved(true);
@@ -67,13 +72,9 @@ export default function ProfileTab() {
         ) : (
           <div className="mt-2.5">
             <div className="text-xs text-[#8A96A3] mb-0.5">Phone</div>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-2.5 py-2 rounded-lg border border-[#E4E9EC] text-xs mb-2.5 box-border" />
+            <PhoneInput value={phone} onChange={setPhone} className="mb-2.5" />
             <div className="text-xs text-[#8A96A3] mb-0.5">Alternate Phone</div>
-            <input
-              value={altPhone}
-              onChange={(e) => setAltPhone(e.target.value)}
-              className="w-full px-2.5 py-2 rounded-lg border border-[#E4E9EC] text-xs mb-2.5 box-border"
-            />
+            <PhoneInput value={altPhone} onChange={setAltPhone} className="mb-2.5" />
             <div className="text-xs text-[#8A96A3] mb-0.5">Address</div>
             <input
               value={address}
@@ -81,7 +82,11 @@ export default function ProfileTab() {
               className="w-full px-2.5 py-2 rounded-lg border border-[#E4E9EC] text-xs mb-3 box-border"
             />
             <div className="flex gap-2">
-              <button onClick={saveProfile} className="bg-primary text-white px-3.5 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer">
+              <button
+                onClick={saveProfile}
+                disabled={!canSaveProfile}
+                className="bg-primary text-white px-3.5 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 Save
               </button>
               <button

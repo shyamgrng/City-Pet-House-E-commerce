@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import PhoneInput from "@/components/PhoneInput";
 import { useCareer } from "@/context/CareerContext";
+import { isValidNepalPhone } from "@/lib/phone";
 
 export default function CareerApplyPage() {
   return (
@@ -31,6 +33,10 @@ function CareerApplyForm() {
   const submit = () => {
     if (!name.trim() || !phone.trim() || !email.trim()) {
       setError("Please fill all required fields (Name, Phone Number & Email Address).");
+      return;
+    }
+    if (!isValidNepalPhone(phone)) {
+      setError("Enter a valid 10-digit phone number.");
       return;
     }
     submitApplication({
@@ -90,12 +96,7 @@ function CareerApplyForm() {
             placeholder="Applicant Name*"
             className="w-full box-border h-[46px] rounded-lg border border-[#E4E9EC] px-3.5 text-[13px]"
           />
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="Phone Number*"
-            className="w-full box-border h-[46px] rounded-lg border border-[#E4E9EC] px-3.5 text-[13px]"
-          />
+          <PhoneInput value={phone} onChange={setPhone} className="" />
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
