@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PriceInput from "@/components/PriceInput";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
 import { STATUS_COLORS } from "@/lib/b2b-types";
@@ -73,7 +74,7 @@ export default function ProductsTab() {
             </select>
           </Field>
           <Field label="Price per Unit (Rs.)">
-            <input type="number" value={form.price} onChange={(e) => set({ price: e.target.value })} className={inputCls} />
+            <PriceInput value={price} onChange={(v) => set({ price: v ? String(v) : "" })} className="" />
           </Field>
           <Field label="Quantity Supplied">
             <input type="number" value={form.qty} onChange={(e) => set({ qty: e.target.value })} className={inputCls} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PriceInput from "@/components/PriceInput";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
 import type { Doctor } from "@/lib/vet-types";
@@ -12,7 +13,7 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
   const [addressEditing, setAddressEditing] = useState(false);
   const [addressDraft, setAddressDraft] = useState(doctor?.address ?? "");
 
-  const [feeDraft, setFeeDraft] = useState(String(doctorRecord?.feeRs ?? 800));
+  const [feeDraft, setFeeDraft] = useState(doctorRecord?.feeRs ?? 800);
   const [feeSaved, setFeeSaved] = useState(false);
 
   const [newPassword, setNewPassword] = useState("");
@@ -34,9 +35,8 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
   };
 
   const saveFee = () => {
-    const fee = Number(feeDraft);
-    if (!doctorRecord || Number.isNaN(fee) || fee <= 0) return;
-    setDoctorFee(doctorRecord.id, fee);
+    if (!doctorRecord || feeDraft <= 0) return;
+    setDoctorFee(doctorRecord.id, feeDraft);
     setFeeSaved(true);
     setTimeout(() => setFeeSaved(false), 3000);
   };
@@ -122,12 +122,7 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
           <div className="border border-[#E4E9EC] rounded-xl p-5">
             <div className="text-[13px] font-bold text-[#1A2027] mb-3.5">Consultation Fee</div>
             <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Fee per consult (Rs.)</div>
-            <input
-              value={feeDraft}
-              onChange={(e) => setFeeDraft(e.target.value)}
-              type="number"
-              className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 box-border"
-            />
+            <PriceInput value={feeDraft} onChange={setFeeDraft} className="mb-3" />
             <button onClick={saveFee} className="bg-primary text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
               Update Fee
             </button>

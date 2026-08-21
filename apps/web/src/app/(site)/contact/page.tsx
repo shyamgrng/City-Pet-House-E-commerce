@@ -2,7 +2,9 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import EmailInput from "@/components/EmailInput";
 import { useContactPage } from "@/context/ContactContext";
+import { isValidEmail } from "@/lib/email-format";
 import { siteSettings } from "@/lib/site-settings";
 
 export default function ContactPage() {
@@ -22,11 +24,17 @@ function ContactContent() {
   const [subject, setSubject] = useState(prefillService ? "Grooming / Services" : "");
   const [message, setMessage] = useState(prefillService ? `I'd like to book: ${prefillService}.` : "");
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   if (!ready) return null;
 
   const submit = () => {
+    setError("");
     if (!name.trim() || !email.trim()) return;
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email like abc@abc.com.");
+      return;
+    }
     setSubmitted(true);
   };
 
@@ -68,12 +76,7 @@ function ContactContent() {
                 placeholder="Your Name*"
                 className="w-full box-border h-[46px] rounded-[9px] border border-[#E4E9EC] px-3.5 text-[13px]"
               />
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your Email*"
-                className="w-full box-border h-[46px] rounded-[9px] border border-[#E4E9EC] px-3.5 text-[13px]"
-              />
+              <EmailInput value={email} onChange={setEmail} placeholder="Your Email*" className="" />
               <select
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
@@ -92,6 +95,7 @@ function ContactContent() {
                 placeholder="Write Message"
                 className="w-full box-border h-[130px] rounded-[9px] border border-[#E4E9EC] p-3.5 text-[13px] font-sans resize-y"
               />
+              {error && <div className="text-xs text-[#D64545]">{error}</div>}
               <button
                 onClick={submit}
                 className="w-full box-border bg-primary text-white text-center py-3.5 rounded-[9px] text-[13px] font-bold cursor-pointer tracking-[0.5px]"

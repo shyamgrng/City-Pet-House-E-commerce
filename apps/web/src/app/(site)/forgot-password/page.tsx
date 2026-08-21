@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import EmailInput from "@/components/EmailInput";
 import { useAuth } from "@/context/AuthContext";
+import { isValidEmail } from "@/lib/email-format";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -20,6 +22,10 @@ export default function ForgotPasswordPage() {
     setError("");
     if (!email.trim()) {
       setError("Please enter your account email.");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email like abc@abc.com.");
       return;
     }
     const res = requestPasswordReset(email.trim());
@@ -60,7 +66,7 @@ export default function ForgotPasswordPage() {
         {step === "request" && (
           <>
             <Label>Email ID</Label>
-            <Input value={email} onChange={setEmail} placeholder="you@example.com" />
+            <EmailInput value={email} onChange={setEmail} className="mb-3.5" />
           </>
         )}
 

@@ -3,7 +3,9 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import EmailInput from "@/components/EmailInput";
 import { useAdminAuth } from "@/context/AdminAuthContext";
+import { isValidEmail } from "@/lib/email-format";
 
 export default function AdminLoginPage() {
   const { user, ready, login } = useAdminAuth();
@@ -17,6 +19,10 @@ export default function AdminLoginPage() {
   }, [ready, user, router]);
 
   const submit = () => {
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email like abc@abc.com.");
+      return;
+    }
     if (login(email, password)) {
       router.replace("/admin/dashboard");
     } else {
@@ -34,12 +40,7 @@ export default function AdminLoginPage() {
         <div className="text-xs text-[#8A96A3] mb-[22px]">Sign in with your staff email and password.</div>
 
         <div className="text-[11px] font-semibold text-[#3A4652] mb-1.5">Email</div>
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@citypethouse.com"
-          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 box-border"
-        />
+        <EmailInput value={email} onChange={setEmail} placeholder="you@citypethouse.com" />
         <div className="text-[11px] font-semibold text-[#3A4652] mb-1.5">Password</div>
         <input
           type="password"

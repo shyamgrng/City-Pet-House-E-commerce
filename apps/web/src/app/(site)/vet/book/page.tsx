@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
+import EmailInput from "@/components/EmailInput";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import { useVet } from "@/context/VetContext";
+import { isValidEmail } from "@/lib/email-format";
 import { isValidNepalPhone } from "@/lib/phone";
 import { next14Days } from "@/lib/vet-types";
 
@@ -72,6 +74,10 @@ function BookInner() {
     }
     if (!isValidNepalPhone(ownerPhone)) {
       setError("Enter a valid 10-digit phone number.");
+      return;
+    }
+    if (!isValidEmail(ownerEmail)) {
+      setError("Enter a valid email like abc@abc.com.");
       return;
     }
     const booking = bookConsult({
@@ -142,7 +148,10 @@ function BookInner() {
           <PhoneInput value={ownerPhone} onChange={setOwnerPhone} className="mb-3.5" />
         </div>
         <div className="flex-1">
-          <Field label="Email" required value={ownerEmail} onChange={setOwnerEmail} placeholder="you@example.com" />
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
+            Email <span className="text-[#D64545]">*</span>
+          </div>
+          <EmailInput value={ownerEmail} onChange={setOwnerEmail} className="mb-3.5" />
         </div>
       </div>
 

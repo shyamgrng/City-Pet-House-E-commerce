@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import EmailInput from "@/components/EmailInput";
 import PhoneInput from "@/components/PhoneInput";
 import { useCareer } from "@/context/CareerContext";
+import { isValidEmail } from "@/lib/email-format";
 import { isValidNepalPhone } from "@/lib/phone";
 
 export default function CareerApplyPage() {
@@ -37,6 +39,10 @@ function CareerApplyForm() {
     }
     if (!isValidNepalPhone(phone)) {
       setError("Enter a valid 10-digit phone number.");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError("Enter a valid email like abc@abc.com.");
       return;
     }
     submitApplication({
@@ -97,12 +103,7 @@ function CareerApplyForm() {
             className="w-full box-border h-[46px] rounded-lg border border-[#E4E9EC] px-3.5 text-[13px]"
           />
           <PhoneInput value={phone} onChange={setPhone} className="" />
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email Address*"
-            className="w-full box-border h-[46px] rounded-lg border border-[#E4E9EC] px-3.5 text-[13px]"
-          />
+          <EmailInput value={email} onChange={setEmail} placeholder="Email Address*" className="" />
           <input
             value={address}
             onChange={(e) => setAddress(e.target.value)}

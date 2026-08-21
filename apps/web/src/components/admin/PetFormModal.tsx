@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PriceInput from "@/components/PriceInput";
 import { petSpeciesList, type Pet, type PetStatus } from "@/lib/pet-types";
 
 type Draft = Omit<Pet, "id">;
@@ -87,11 +88,11 @@ export default function PetFormModal({
         <div className="grid grid-cols-2 gap-2.5 mb-3">
           <div>
             <Label>Price (Rs.) *</Label>
-            <Input type="number" value={String(draft.price)} onChange={(v) => set("price", Number(v) || 0)} />
+            <PriceInput value={draft.price} onChange={(v) => set("price", v)} className="mb-3" />
           </div>
           <div>
             <Label>Delivery Fee (Rs.)</Label>
-            <Input type="number" value={String(draft.deliveryFee)} onChange={(v) => set("deliveryFee", Number(v) || 0)} />
+            <PriceInput value={draft.deliveryFee} onChange={(v) => set("deliveryFee", v)} className="mb-3" />
           </div>
         </div>
 

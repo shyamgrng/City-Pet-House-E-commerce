@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import EmailInput from "@/components/EmailInput";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import type { Sex } from "@/lib/auth-types";
+import { isValidEmail } from "@/lib/email-format";
 import { isValidNepalPhone } from "@/lib/phone";
 
 function SigninInner() {
@@ -32,6 +34,10 @@ function SigninInner() {
   const submit = () => {
     setError("");
     if (mode === "signin") {
+      if (!isValidEmail(email)) {
+        setError("Enter a valid email like abc@abc.com.");
+        return;
+      }
       const res = signIn(email, password);
       if (!res.ok) {
         setError(res.error);
@@ -46,6 +52,10 @@ function SigninInner() {
     }
     if (!isValidNepalPhone(phone)) {
       setError("Enter a valid 10-digit phone number.");
+      return;
+    }
+    if (!isValidEmail(regEmail)) {
+      setError("Enter a valid email like abc@abc.com.");
       return;
     }
     if (regPassword !== confirmPassword) {
@@ -82,7 +92,7 @@ function SigninInner() {
         {mode === "signin" && (
           <>
             <Label>Email ID</Label>
-            <Input value={email} onChange={setEmail} placeholder="you@example.com" />
+            <EmailInput value={email} onChange={setEmail} className="mb-3.5" />
             <Label>Password</Label>
             <Input value={password} onChange={setPassword} type="password" />
             <Link href="/forgot-password" className="text-xs text-primary font-semibold text-right mb-5 block">
@@ -115,7 +125,7 @@ function SigninInner() {
             <Label required>Phone Number</Label>
             <PhoneInput value={phone} onChange={setPhone} className="mb-3.5" />
             <Label required>Email Address</Label>
-            <Input value={regEmail} onChange={setRegEmail} placeholder="you@example.com" />
+            <EmailInput value={regEmail} onChange={setRegEmail} className="mb-3.5" />
             <Label required>Address</Label>
             <Input value={address} onChange={setAddress} placeholder="e.g. Boudha, Gokarneshwor-6, Kathmandu" />
             <Label required>Password</Label>
