@@ -1,17 +1,19 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useVet } from "@/context/VetContext";
+import { resizeImageFile } from "@/lib/image-upload";
 
 export default function VetPaymentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { bookings, submitPayment } = useVet();
   const booking = bookings.find((b) => b.id === id);
-  const [uploaded, setUploaded] = useState(false);
+  const [receiptPhoto, setReceiptPhoto] = useState("");
   const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   if (!booking) {
     return (
@@ -21,12 +23,27 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
     );
   }
 
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+    try {
+      const dataUrl = await resizeImageFile(file, 1000, 1400);
+      setReceiptPhoto(dataUrl);
+    } catch {
+      setError("Could not process that image — try a different file.");
+    }
+  };
+
   const submit = () => {
-    if (!uploaded) {
+    if (!receiptPhoto) {
       setError("Please upload your payment receipt to continue.");
       return;
     }
-    submitPayment(booking.id);
+    submitPayment(booking.id, receiptPhoto);
     router.push(`/vet/status/${booking.id}`);
   };
 
@@ -59,13 +76,23 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
           Upload Payment Receipt <span className="text-[#D64545]">*</span>
         </div>
-        <button
-          onClick={() => setUploaded(true)}
-          className="w-full h-[150px] mb-4 rounded-lg border-2 border-dashed border-[#E4E9EC] flex items-center justify-center text-xs cursor-pointer"
-          style={{ color: uploaded ? "#1F7A4D" : "#8A96A3" }}
-        >
-          {uploaded ? "✓ receipt-screenshot.png uploaded" : "Drop your payment screenshot"}
-        </button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+        {receiptPhoto ? (
+          <div className="mb-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={receiptPhoto} alt="payment receipt" className="w-full max-h-[220px] object-contain rounded-lg border border-[#E4E9EC] mb-2" />
+            <button onClick={() => fileRef.current?.click()} className="text-xs font-semibold text-primary cursor-pointer">
+              Replace
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="w-full h-[150px] mb-4 rounded-lg border-2 border-dashed border-[#E4E9EC] flex items-center justify-center text-xs text-[#8A96A3] cursor-pointer"
+          >
+            Drop your payment screenshot
+          </button>
+        )}
 
         {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
         <button onClick={submit} className="w-full bg-primary text-white text-center py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer">

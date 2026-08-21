@@ -13,9 +13,15 @@ export default function ConsultRoom({
   viewer: "client" | "doctor";
   onLeave?: () => void;
 }) {
-  const { sendMessage, addClientDocument, addDoctorDocument } = useVet();
+  const { sendMessage, addClientDocument, addDoctorDocument, saveRecording } = useVet();
   const [chatInput, setChatInput] = useState("");
   const [justShared, setJustShared] = useState(false);
+  const [recording, setRecording] = useState(false);
+
+  const toggleRecording = () => {
+    if (recording) saveRecording(booking.id);
+    setRecording((r) => !r);
+  };
 
   const send = () => {
     if (!chatInput.trim()) return;
@@ -47,6 +53,16 @@ export default function ConsultRoom({
         <div className="text-[11px] font-bold tracking-widest absolute top-3 left-3.5 text-[#3E5C74]">AGORA</div>
         <div className="text-3xl">📹</div>
         <div className="text-xs mt-2.5">Remote video stream</div>
+        {viewer === "doctor" && (
+          <button
+            onClick={toggleRecording}
+            className="absolute top-3 right-3.5 px-3 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer text-white"
+            style={{ background: recording ? "#C9962B" : "#3A4652" }}
+          >
+            {recording ? "⏹ Stop Recording" : "⏺ Start Recording"}
+          </button>
+        )}
+        {recording && <div className="absolute bottom-3 left-3.5 text-[11px] font-semibold text-[#E4A03A]">● Recording…</div>}
       </div>
 
       <div className="flex gap-4 flex-wrap items-start">

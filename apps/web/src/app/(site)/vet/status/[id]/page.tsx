@@ -57,7 +57,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
         <div className="bg-[#EAF6EE] border border-[#CFE9D8] rounded-2xl px-10 py-8 text-center mb-5">
           <div className="text-5xl mb-4">✓</div>
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3.5">Payment Approved</div>
-          {!booking.instant && !booking.callStartedByDoctor ? (
+          {booking.status === "Awaiting Doctor Reconfirm" ? (
             <>
               <div className="text-base text-[#3A6B4C] leading-relaxed mb-2">
                 Your payment has been verified — we&apos;re confirming your appointment time with {booking.doctorName}. You&apos;ll be

@@ -6,11 +6,23 @@ import { useBlog } from "@/context/BlogContext";
 import { useVet } from "@/context/VetContext";
 
 export default function WebVetPage() {
-  const { doctors, ready } = useVet();
+  const { doctors, ready, webVetActive } = useVet();
   const { posts } = useBlog();
   const doctorPosts = posts.filter((p) => p.isDoctorPost).slice(0, 3);
 
   if (!ready) return null;
+
+  if (!webVetActive) {
+    return (
+      <div className="px-8 py-[100px] flex flex-col items-center text-center">
+        <div className="text-5xl mb-4">🚧</div>
+        <div className="font-heading font-bold text-2xl text-[#1A2027] mb-2.5">Web Vet is Under Construction</div>
+        <div className="text-sm text-[#5B6773] max-w-[440px] leading-relaxed">
+          We&apos;re setting things up. Please check back soon, or contact us directly if you need urgent veterinary help.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

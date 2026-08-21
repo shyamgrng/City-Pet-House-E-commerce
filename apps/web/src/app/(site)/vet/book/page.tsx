@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import EmailInput from "@/components/EmailInput";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
@@ -31,14 +31,27 @@ function BookInner() {
   const timeChips = doctor ? (availability[doctor.id]?.[date] ?? []) : [];
   const time = timeChips.includes(timeChoice) ? timeChoice : (timeChips[0] ?? "");
 
-  const [ownerName, setOwnerName] = useState(user?.name ?? "");
-  const [ownerPhone, setOwnerPhone] = useState(user?.phone ?? "");
-  const [ownerEmail, setOwnerEmail] = useState(user?.email ?? "");
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
   const [petName, setPetName] = useState("");
   const [petSpecies, setPetSpecies] = useState("");
   const [petAge, setPetAge] = useState("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
+
+  // AuthContext resolves `user` asynchronously after mount — seed the owner fields once it's ready.
+  useEffect(() => {
+    if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOwnerName(user.name);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOwnerPhone(user.phone);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOwnerEmail(user.email);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   if (!ready) return null;
 

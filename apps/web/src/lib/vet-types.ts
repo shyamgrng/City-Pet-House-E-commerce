@@ -28,10 +28,17 @@ export function next14Days(): string[] {
   return days;
 }
 
-export type VetStatus = "Pending Payment" | "Payment Review" | "Confirmed" | "In Progress" | "Completed" | "Cancelled";
+export type VetStatus =
+  | "Pending Payment"
+  | "Payment Review"
+  | "Awaiting Doctor Reconfirm"
+  | "Confirmed"
+  | "In Progress"
+  | "Completed"
+  | "Cancelled";
 
 export type ChatMessage = { from: "client" | "doctor"; text: string; time: string };
-export type SharedDoc = { name: string };
+export type SharedDoc = { name: string; ts: number };
 export type NoteEntry = { date: string; doctor: string; text: string };
 
 export type VetBooking = {
@@ -52,6 +59,7 @@ export type VetBooking = {
   amount: number;
   status: VetStatus;
   paymentReceiptUploaded: boolean;
+  receiptPhoto: string;
   callStartedByDoctor: boolean;
   chatMessages: ChatMessage[];
   clientDocuments: SharedDoc[];
@@ -59,16 +67,29 @@ export type VetBooking = {
   doctorNote: string;
   noteHistory: NoteEntry[];
   invoiceNumber: string;
+  invoiceSent: boolean;
   createdAt: number;
 };
 
 export const STATUS_COLORS: Record<VetStatus, string> = {
   "Pending Payment": "#C9962B",
   "Payment Review": "#C9962B",
-  Confirmed: "#1996C8",
+  "Awaiting Doctor Reconfirm": "#1996C8",
+  Confirmed: "#1F7A4D",
   "In Progress": "#1F7A4D",
   Completed: "#8A96A3",
   Cancelled: "#D64545",
+};
+
+export type ActivityType = "Booking" | "Approval" | "Call" | "Payment" | "Reminder";
+export type ActivityEntry = { id: string; type: ActivityType; text: string; ts: number };
+
+export const ACTIVITY_TYPE_COLORS: Record<ActivityType, string> = {
+  Booking: "#1996C8",
+  Approval: "#1F7A4D",
+  Call: "#7A56C8",
+  Payment: "#C9962B",
+  Reminder: "#1996C8",
 };
 
 export function nowTime() {
@@ -77,9 +98,27 @@ export function nowTime() {
 
 type TimelineStep = { icon: string; title: string; subtitle: string; done: boolean; current: boolean; isLast: boolean };
 
+/** "Awaiting Doctor Reconfirm" and "Confirmed" both land on step 2 (Doctor Assigned). */
+function timelineStepIndex(status: VetStatus): number {
+  switch (status) {
+    case "Pending Payment":
+      return 0;
+    case "Payment Review":
+      return 1;
+    case "Awaiting Doctor Reconfirm":
+    case "Confirmed":
+      return 2;
+    case "In Progress":
+      return 3;
+    case "Completed":
+      return 4;
+    case "Cancelled":
+      return -1;
+  }
+}
+
 export function vetTimeline(booking: VetBooking): TimelineStep[] {
-  const order: VetStatus[] = ["Pending Payment", "Payment Review", "Confirmed", "In Progress", "Completed"];
-  const idx = booking.status === "Cancelled" ? -1 : order.indexOf(booking.status);
+  const idx = timelineStepIndex(booking.status);
   const steps = [
     { icon: "1", title: "Booking Received", subtitle: "Your request has been sent to our team." },
     { icon: "2", title: "Payment Verified", subtitle: "Admin confirms your consult fee payment." },
