@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import BlogArticleEditor from "@/components/blog/BlogArticleEditor";
 import BlogFormModal from "@/components/blog/BlogFormModal";
 import AvailabilityTab from "@/components/doctor/AvailabilityTab";
 import FinanceTab from "@/components/doctor/FinanceTab";
@@ -25,6 +26,7 @@ export default function DoctorPortalPage() {
   const [tab, setTab] = useState<Tab>("Overview");
   const [blogModalOpen, setBlogModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  const [newArticleOpen, setNewArticleOpen] = useState(false);
 
   useEffect(() => {
     if (ready && !doctor) router.replace("/doctor/login");
@@ -41,17 +43,15 @@ export default function DoctorPortalPage() {
   const remaining = upcoming.reduce((sum, b) => sum + b.amount, 0);
   const ownPosts = posts.filter((p) => isAuthoredBy(p.author, doctor.name));
 
-  const openAddPost = () => {
-    setEditingPost(null);
-    setBlogModalOpen(true);
-  };
   const openEditPost = (p: BlogPost) => {
     setEditingPost(p);
     setBlogModalOpen(true);
   };
   const handleSavePost = (draft: Omit<BlogPost, "id">) => {
     if (editingPost) updatePost(editingPost.id, draft);
-    else addPost(draft);
+  };
+  const handleDeletePost = () => {
+    if (editingPost) deletePost(editingPost.id);
     setBlogModalOpen(false);
   };
 
@@ -145,11 +145,11 @@ export default function DoctorPortalPage() {
         {tab === "Finance" && <FinanceTab bookings={mine} />}
         {tab === "Profile" && <ProfileTab doctorRecord={doctorRecord} />}
 
-        {tab === "Blog" && (
+        {tab === "Blog" && !newArticleOpen && (
           <div>
             <div className="flex justify-between items-center mb-4">
               <div className="text-[13px] font-bold text-[#1A2027]">My Blog Posts</div>
-              <button onClick={openAddPost} className="bg-primary text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
+              <button onClick={() => setNewArticleOpen(true)} className="bg-primary text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
                 + New Article
               </button>
             </div>
@@ -177,10 +177,23 @@ export default function DoctorPortalPage() {
             </div>
           </div>
         )}
+
+        {tab === "Blog" && newArticleOpen && (
+          <BlogArticleEditor
+            backLabel="← My Blog Posts"
+            onBack={() => setNewArticleOpen(false)}
+            defaultAuthor={doctor.name}
+            showDoctorToggle={false}
+            onPublish={(draft) => {
+              addPost(draft);
+              setNewArticleOpen(false);
+            }}
+          />
+        )}
       </div>
 
-      {blogModalOpen && (
-        <BlogFormModal initial={editingPost} lockAuthorAs={doctor.name} onClose={() => setBlogModalOpen(false)} onSave={handleSavePost} />
+      {blogModalOpen && editingPost && (
+        <BlogFormModal initial={editingPost} onClose={() => setBlogModalOpen(false)} onSave={handleSavePost} onDelete={handleDeletePost} />
       )}
     </div>
   );

@@ -7,6 +7,8 @@ export type BlogPost = {
   isDoctorPost: boolean;
   excerpt: string;
   content: string;
+  slug: string;
+  metaDescription: string;
 };
 
 export function slugify(title: string) {

@@ -3,6 +3,8 @@ import type { BlogPost } from "@/lib/blog-types";
 export const blogSeed: BlogPost[] = [
   {
     id: "spring-alert-is-your-dog-itching-managing-skin-allergies",
+    slug: "spring-alert-is-your-dog-itching-managing-skin-allergies",
+    metaDescription: "",
     title: "Spring Alert: Is Your Dog Itching? Managing Skin Allergies",
     photo: "",
     date: "Mar 20, 2026",
@@ -14,6 +16,8 @@ export const blogSeed: BlogPost[] = [
   },
   {
     id: "parasite-prevention-5-critical-tips-to-protect-your-pet",
+    slug: "parasite-prevention-5-critical-tips-to-protect-your-pet",
+    metaDescription: "",
     title: "Parasite Prevention: 5 Critical Tips to Protect Your Pet",
     photo: "",
     date: "Mar 8, 2026",
@@ -25,6 +29,8 @@ export const blogSeed: BlogPost[] = [
   },
   {
     id: "first-aid-tips-every-pet-owner-should-know",
+    slug: "first-aid-tips-every-pet-owner-should-know",
+    metaDescription: "",
     title: "First Aid Tips Every Pet Owner Should Know",
     photo: "",
     date: "Feb 26, 2026",
@@ -36,6 +42,8 @@ export const blogSeed: BlogPost[] = [
   },
   {
     id: "new-puppy-checklist-vaccination-schedule-what-to-buy",
+    slug: "new-puppy-checklist-vaccination-schedule-what-to-buy",
+    metaDescription: "",
     title: "New Puppy Checklist: Vaccination Schedule & What to Buy",
     photo: "",
     date: "Feb 12, 2026",

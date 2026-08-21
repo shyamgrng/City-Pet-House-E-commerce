@@ -7,24 +7,22 @@ import { useBlog } from "@/context/BlogContext";
 import type { BlogPost } from "@/lib/blog-types";
 
 export default function AdminBlogPage() {
-  const { posts, addPost, updatePost, deletePost } = useBlog();
+  const { posts, updatePost, deletePost } = useBlog();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<BlogPost | null>(null);
 
   const doctorPosts = posts.filter((p) => p.isDoctorPost);
   const adminPosts = posts.filter((p) => !p.isDoctorPost);
 
-  const openAdd = () => {
-    setEditing(null);
-    setModalOpen(true);
-  };
   const openEdit = (p: BlogPost) => {
     setEditing(p);
     setModalOpen(true);
   };
   const handleSave = (draft: Omit<BlogPost, "id">) => {
     if (editing) updatePost(editing.id, draft);
-    else addPost(draft);
+  };
+  const handleDelete = () => {
+    if (editing) deletePost(editing.id);
     setModalOpen(false);
   };
 
@@ -92,14 +90,16 @@ export default function AdminBlogPage() {
         </div>
       </div>
 
-      <button
-        onClick={openAdd}
-        className="border border-dashed border-primary text-primary text-center px-4 py-3 rounded-[10px] text-xs font-semibold cursor-pointer mt-5 max-w-[360px]"
+      <Link
+        href="/admin/pages/blog/new"
+        className="border border-dashed border-primary text-primary text-center px-4 py-3 rounded-[10px] text-xs font-semibold cursor-pointer mt-5 max-w-[360px] block"
       >
         + Add Article
-      </button>
+      </Link>
 
-      {modalOpen && <BlogFormModal initial={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
+      {modalOpen && editing && (
+        <BlogFormModal initial={editing} onClose={() => setModalOpen(false)} onSave={handleSave} onDelete={handleDelete} />
+      )}
     </div>
   );
 }
