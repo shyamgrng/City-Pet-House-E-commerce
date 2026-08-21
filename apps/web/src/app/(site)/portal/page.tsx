@@ -1,33 +1,30 @@
+import Image from "next/image";
 import Link from "next/link";
 
-const portals = [
-  { label: "Pet Owner Sign In", href: "/signin" },
-  { label: "Admin & Staff Sign In", href: "/admin/login" },
-  { label: "Doctor Sign In", href: "/doctor/login" },
-  { label: "B2B Supplier Sign In", href: "/b2b/login" },
-  { label: "Courier Sign In", href: "/courier/login" },
+const roles = [
+  { label: "Doctors", href: "/doctor/login", src: "/assets/role-icon-doctor.png", size: 140 },
+  { label: "B2B Suppliers", href: "/b2b/login", src: "/assets/role-icon-b2b.png", size: 86 },
+  { label: "Courier Agents", href: "/courier/login", src: "/assets/role-icon-courier.png", size: 130 },
 ];
 
 export default function PortalPage() {
   return (
-    <div className="py-16 px-8 flex justify-center">
-      <div className="w-full max-w-[440px] text-center">
-        <div className="font-heading font-extrabold text-[26px] text-[#1A2027] mb-2.5">Staff &amp; Portal Sign In</div>
-        <div className="text-sm text-[#5B6773] leading-relaxed mb-8">
-          Each role signs in separately from Pet Owner accounts. Choose where you&apos;d like to sign in below.
-        </div>
+    <div className="py-[60px] px-8 flex flex-col items-center" style={{ background: "#EAF4FB" }}>
+      <div className="font-heading font-bold text-[22px] text-[#1A2027] mb-1.5">How would you like to sign in?</div>
+      <div className="text-[13px] text-[#8A96A3] mb-8">Choose your account type to continue</div>
 
-        <div className="flex flex-col gap-3">
-          {portals.map((p) => (
-            <Link
-              key={p.href}
-              href={p.href}
-              className="block w-full bg-primary text-white text-center py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer"
+      <div className="grid grid-cols-3 gap-[18px] max-w-[700px] w-full">
+        {roles.map((r) => (
+          <Link key={r.href} href={r.href} className="flex flex-col items-center cursor-pointer">
+            <div
+              className="w-[140px] h-[140px] mb-3 rounded-full flex items-center justify-center overflow-hidden"
+              style={{ background: "#E4E9EC" }}
             >
-              {p.label}
-            </Link>
-          ))}
-        </div>
+              <Image src={r.src} alt={r.label} width={r.size} height={r.size} className="object-contain" />
+            </div>
+            <div className="text-center text-sm font-bold text-[#1A2027]">{r.label}</div>
+          </Link>
+        ))}
       </div>
     </div>
   );
