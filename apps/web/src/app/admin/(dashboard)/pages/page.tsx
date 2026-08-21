@@ -22,12 +22,12 @@ export default function PagesPage() {
               <div className="text-primary text-xs font-semibold shrink-0 cursor-pointer">Edit →</div>
             </Link>
           ) : (
-            <div key={p.title} className="bg-white border border-[#E4E9EC] rounded-[10px] px-[18px] py-3.5 flex justify-between items-center gap-4">
+            <div key={p.title} className="bg-white border border-[#E4E9EC] rounded-[10px] px-[18px] py-3.5 flex justify-between items-center gap-4 opacity-60">
               <div>
                 <div className="font-bold text-sm text-[#1A2027]">{p.title}</div>
                 <div className="text-xs text-[#8A96A3] mt-0.5">{p.desc}</div>
               </div>
-              <div className="text-primary text-xs font-semibold shrink-0 cursor-pointer">Edit →</div>
+              <div className="text-[#8A96A3] text-xs font-semibold shrink-0">Not available</div>
             </div>
           )
         )}

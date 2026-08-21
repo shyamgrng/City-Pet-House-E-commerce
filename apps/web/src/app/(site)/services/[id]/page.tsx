@@ -69,9 +69,12 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
         </div>
       ))}
 
-      <button className="inline-block bg-primary text-white px-[26px] py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer mt-2.5">
+      <Link
+        href={`/contact?service=${encodeURIComponent(service.name)}`}
+        className="inline-block bg-primary text-white px-[26px] py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer mt-2.5"
+      >
         Book Now
-      </button>
+      </Link>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import ShopProductCard from "@/components/ShopProductCard";
 import { useCatalog } from "@/context/CatalogContext";
 import { brandNames, shopCategories, type Product } from "@/lib/catalog-types";
@@ -31,12 +32,27 @@ function aiSearch(products: Product[], query: string): string[] {
 }
 
 export default function ShopPage() {
+  return (
+    <Suspense fallback={null}>
+      <ShopContent />
+    </Suspense>
+  );
+}
+
+function ShopContent() {
   const { products } = useCatalog();
-  const [category, setCategory] = useState<string>("");
-  const [brand, setBrand] = useState<string>("");
+  const searchParams = useSearchParams();
+  const [category, setCategory] = useState<string>(() => {
+    const fromUrl = searchParams.get("category");
+    return fromUrl && shopCategories.includes(fromUrl) ? fromUrl : "";
+  });
+  const [brand, setBrand] = useState<string>(() => {
+    const fromUrl = searchParams.get("brand");
+    return fromUrl && brandNames.includes(fromUrl) ? fromUrl : "";
+  });
   const [rating, setRating] = useState<number>(0);
   const [priceRange, setPriceRange] = useState<{ min: number; max: number } | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [aiBusy, setAiBusy] = useState(false);
   const [aiNote, setAiNote] = useState("");
   const [aiResultNames, setAiResultNames] = useState<string[] | null>(null);

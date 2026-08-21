@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { useContactPage } from "@/context/ContactContext";
 import { siteSettings } from "@/lib/site-settings";
 
 export default function ContactPage() {
+  return (
+    <Suspense fallback={null}>
+      <ContactContent />
+    </Suspense>
+  );
+}
+
+function ContactContent() {
   const { content, ready } = useContactPage();
+  const searchParams = useSearchParams();
+  const prefillService = searchParams.get("service");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+  const [subject, setSubject] = useState(prefillService ? "Grooming / Services" : "");
+  const [message, setMessage] = useState(prefillService ? `I'd like to book: ${prefillService}.` : "");
   const [submitted, setSubmitted] = useState(false);
 
   if (!ready) return null;

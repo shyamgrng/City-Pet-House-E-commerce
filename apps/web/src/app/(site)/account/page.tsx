@@ -6,6 +6,7 @@ import { useAdoption } from "@/context/AdoptionContext";
 import { useAuth } from "@/context/AuthContext";
 import { useOrder } from "@/context/OrderContext";
 import { useVet } from "@/context/VetContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
 import { formatRs } from "@/lib/catalog-types";
 import { STATUS_COLORS as ORDER_STATUS_COLORS } from "@/lib/order-types";
@@ -63,9 +64,7 @@ export default function AccountPage() {
         ))}
       </div>
 
-      {tab === "wishlist" && (
-        <Empty>No Item has been selected for your Wishlist</Empty>
-      )}
+      {tab === "wishlist" && <WishlistTab />}
       {tab === "orders" && <OrdersTab ownerId={user.id} />}
       {tab === "vetconsults" && <VetTab ownerId={user.id} />}
       {tab === "adoption" && <AdoptionTab ownerId={user.id} />}
@@ -76,6 +75,32 @@ export default function AccountPage() {
 
 function Empty({ children }: { children: React.ReactNode }) {
   return <div className="py-16 text-sm text-[#8A96A3] text-center">{children}</div>;
+}
+
+function WishlistTab() {
+  const { items, toggle } = useWishlist();
+
+  if (items.length === 0) {
+    return <Empty>No Item has been selected for your Wishlist</Empty>;
+  }
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      {items.map((item) => (
+        <div key={`${item.kind}-${item.id}`} className="flex justify-between items-center border border-[#E4E9EC] rounded-xl px-4 py-3.5">
+          <Link href={item.href} className="flex-1">
+            <div className="text-sm font-semibold text-[#1A2027]">{item.name}</div>
+            <div className="text-xs text-[#8A96A3] mt-0.5">
+              {item.kind === "product" ? "Product" : "Pet"} · {item.priceLabel}
+            </div>
+          </Link>
+          <button onClick={() => toggle(item)} className="text-xs font-semibold text-[#D64545] cursor-pointer">
+            Remove
+          </button>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 const STATUS_COLORS: Record<string, string> = { Active: "#C9962B", Adopted: "#1F7A4D" };

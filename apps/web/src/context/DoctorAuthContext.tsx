@@ -1,13 +1,17 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { notifyEvent } from "@/lib/notify-client";
 import { doctorAccountSeed, type DoctorAccount } from "@/lib/doctor-auth-types";
 
 const SESSION_KEY = "cph_doctor_session_id";
 const OVERRIDES_KEY = "cph_doctor_account_overrides";
+const RESETS_KEY = "cph_doctor_password_resets";
+const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 
 type Result = { ok: true } | { ok: false; error: string };
 type Overrides = Record<string, Partial<Pick<DoctorAccount, "password" | "address">>>;
+type ResetRecord = { code: string; expiresAt: number };
 
 type DoctorAuthValue = {
   doctor: DoctorAccount | null;
@@ -16,9 +20,24 @@ type DoctorAuthValue = {
   signOut: () => void;
   updateAddress: (address: string) => void;
   changePassword: (newPassword: string) => void;
+  requestPasswordReset: (doctorId: string) => Result;
+  resetPassword: (doctorId: string, code: string, newPassword: string) => Result;
 };
 
 const DoctorAuthContext = createContext<DoctorAuthValue | null>(null);
+
+function loadResets(): Record<string, ResetRecord> {
+  try {
+    const raw = window.localStorage.getItem(RESETS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, ResetRecord>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistResets(resets: Record<string, ResetRecord>) {
+  window.localStorage.setItem(RESETS_KEY, JSON.stringify(resets));
+}
 
 function loadOverrides(): Overrides {
   try {
@@ -58,6 +77,33 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
     window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
   };
 
+  const requestPasswordReset = (doctorId: string): Result => {
+    const account = state.accounts.find((d) => d.doctorId.toLowerCase() === doctorId.trim().toLowerCase());
+    if (!account) return { ok: false, error: "No doctor account found with that ID." };
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const resets = loadResets();
+    resets[account.doctorId] = { code, expiresAt: Date.now() + RESET_CODE_TTL_MS };
+    persistResets(resets);
+    notifyEvent("forgot_password", account.email, account.name, { name: account.name, code });
+    return { ok: true };
+  };
+
+  const resetPassword = (doctorId: string, code: string, newPassword: string): Result => {
+    const resets = loadResets();
+    const account = state.accounts.find((d) => d.doctorId.toLowerCase() === doctorId.trim().toLowerCase());
+    if (!account) return { ok: false, error: "No doctor account found with that ID." };
+    const record = resets[account.doctorId];
+    if (!record || record.code !== code.trim()) return { ok: false, error: "Incorrect or expired code." };
+    if (Date.now() > record.expiresAt) return { ok: false, error: "This code has expired — request a new one." };
+    persistOverride(account.doctorId, { password: newPassword });
+    const updated = { ...account, password: newPassword };
+    const accounts = state.accounts.map((a) => (a.doctorId === updated.doctorId ? updated : a));
+    setState((s) => ({ ...s, accounts }));
+    delete resets[account.doctorId];
+    persistResets(resets);
+    return { ok: true };
+  };
+
   const signIn = (doctorId: string, password: string): Result => {
     const account = state.accounts.find((d) => d.doctorId.toLowerCase() === doctorId.trim().toLowerCase());
     if (!account || account.password !== password) {
@@ -94,7 +140,9 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <DoctorAuthContext.Provider value={{ doctor: state.doctor, ready: state.ready, signIn, signOut, updateAddress, changePassword }}>
+    <DoctorAuthContext.Provider
+      value={{ doctor: state.doctor, ready: state.ready, signIn, signOut, updateAddress, changePassword, requestPasswordReset, resetPassword }}
+    >
       {children}
     </DoctorAuthContext.Provider>
   );

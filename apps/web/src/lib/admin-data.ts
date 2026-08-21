@@ -16,11 +16,9 @@ export const sidebarDefs: { key: string; label: string }[] = [
   { key: "settings", label: "Settings" },
 ];
 
-export const sidebarBadges: Record<string, { count: number; color: string }> = {
-  deliveries: { count: 5, color: "#D64545" },
-  career: { count: 3, color: "#C9962B" },
-  notifications: { count: 1, color: "#C9962B" },
-};
+// Deliveries and Career badges are computed live in AdminSidebar from real
+// order/delivery/application data — see AdminSidebar.tsx.
+export const sidebarBadges: Record<string, { count: number; color: string }> = {};
 
 // ---- Dashboard ----
 export const liveStatusCards = [
@@ -181,12 +179,11 @@ export const notifTopCampaigns = [{ name: "July Vaccination Reminder Push", stat
 
 // ---- Pages list ----
 export const pageEditorList = [
-  { title: "Home", desc: "Hero, banners, headline & SEO" },
-  { title: "Testimonials", desc: "Customer quotes shown on Home" },
+  { title: "Testimonials", desc: "Customer quotes shown on Home", href: "/admin/pages/testimonials" },
   { title: "Services", desc: "Add, edit & image services shown site-wide", href: "/admin/pages/services" },
   { title: "Blog", desc: "Add, edit & image blog articles", href: "/admin/pages/blog" },
   { title: "About Us", desc: "Page title & body shown on the public About Us page", href: "/admin/pages/about" },
-  { title: "Vet Consults", desc: "Walkthrough video/banner, headline & content on the public Vet Consults page" },
+  { title: "Vet Consults", desc: "Coming soon — no editable content on the public Vet Consults page yet" },
   { title: "Career", desc: "Intro text, headline & CTA on the public Career page", href: "/admin/pages/career" },
   { title: "Dog Breed Archive", desc: "Add, edit & remove breed entries shown on the public Dog Breed Archive page", href: "/admin/pages/dog-breed-archive" },
   { title: "Contact Us", desc: "Intro text, info cards, map & form on the Contact page", href: "/admin/pages/contact" },

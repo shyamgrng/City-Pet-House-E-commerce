@@ -1,19 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
 import { usePets } from "@/context/PetContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { formatRs, petSpeciesList, type Pet } from "@/lib/pet-types";
 
 const chips = ["All", ...petSpeciesList];
 
 export default function PetsAvailablePage() {
-  const { pets } = usePets();
-  const [species, setSpecies] = useState("All");
+  return (
+    <Suspense fallback={null}>
+      <PetsAvailableContent />
+    </Suspense>
+  );
+}
+
+function PetsAvailableContent() {
+  const { pets, updatePet } = usePets();
+  const { user } = useAuth();
+  const { addItem } = useCart();
+  const { has, toggle } = useWishlist();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [species, setSpecies] = useState(() => {
+    const fromUrl = searchParams.get("species");
+    return fromUrl && chips.includes(fromUrl) ? fromUrl : "All";
+  });
   const [selected, setSelected] = useState<Pet | null>(null);
 
   const available = pets.filter((p) => p.status === "Available");
   const filtered = species === "All" ? available : available.filter((p) => p.species === species);
+
+  const bookPuppy = (pet: Pet) => {
+    if (!user) {
+      router.push("/signin?redirect=/pets");
+      return;
+    }
+    addItem({ id: pet.id, name: `${pet.breed} (Puppy)`, price: pet.price }, 1);
+    updatePet(pet.id, { ...pet, status: "Reserved" });
+    router.push("/cart");
+  };
+
+  const heart = (pet: Pet) => (
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        toggle({ id: pet.id, kind: "pet", name: pet.breed, priceLabel: formatRs(pet.price), href: "/pets" });
+      }}
+      className="text-base cursor-pointer"
+      style={{ color: has(pet.id, "pet") ? "#D64545" : "#C7CDD2" }}
+    >
+      {has(pet.id, "pet") ? "♥" : "♡"}
+    </div>
+  );
 
   if (selected) {
     const similar = available.filter((p) => p.species === selected.species && p.id !== selected.id).slice(0, 4);
@@ -32,7 +75,10 @@ export default function PetsAvailablePage() {
             </div>
           </div>
           <div className="flex-1 min-w-[280px]">
-            <div className="font-heading font-bold text-2xl text-[#1A2027]">{selected.breed}</div>
+            <div className="flex justify-between items-start gap-3">
+              <div className="font-heading font-bold text-2xl text-[#1A2027]">{selected.breed}</div>
+              {heart(selected)}
+            </div>
             <div className="text-sm text-[#8A96A3] mt-1">
               {selected.sex} · {selected.age}
             </div>
@@ -45,7 +91,10 @@ export default function PetsAvailablePage() {
             </div>
             <div className="text-[22px] font-bold text-primary mb-0.5">{formatRs(selected.price)}</div>
             <div className="text-xs text-[#8A96A3] mb-[18px]">+ {formatRs(selected.deliveryFee)} delivery</div>
-            <button className="bg-primary text-white text-center px-6 py-3 rounded-[9px] text-sm font-semibold cursor-pointer max-w-[240px]">
+            <button
+              onClick={() => bookPuppy(selected)}
+              className="bg-primary text-white text-center px-6 py-3 rounded-[9px] text-sm font-semibold cursor-pointer max-w-[240px]"
+            >
               Book Now
             </button>
           </div>
@@ -65,7 +114,7 @@ export default function PetsAvailablePage() {
                     </div>
                     <div className="flex justify-between items-center mt-1">
                       <div className="text-[13px] font-bold text-primary">{formatRs(p.price)}</div>
-                      <div className="text-sm text-[#C7CDD2]">♥</div>
+                      {heart(p)}
                     </div>
                   </div>
                 </div>
@@ -115,7 +164,7 @@ export default function PetsAvailablePage() {
               <div className="p-3.5">
                 <div className="flex justify-between items-start">
                   <div className="text-sm font-bold text-[#1A2027]">{p.breed}</div>
-                  <div className="text-base text-[#C7CDD2] cursor-pointer">♥</div>
+                  {heart(p)}
                 </div>
                 <div className="text-xs text-[#8A96A3] mt-0.5">
                   {p.sex} · {p.age}
@@ -129,7 +178,13 @@ export default function PetsAvailablePage() {
                 </div>
                 <div className="text-[15px] font-bold text-primary mb-0.5">{formatRs(p.price)}</div>
                 <div className="text-[11px] text-[#8A96A3] mb-2.5">+ {formatRs(p.deliveryFee)} delivery</div>
-                <button className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    bookPuppy(p);
+                  }}
+                  className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-xs font-semibold cursor-pointer"
+                >
                   Book Now
                 </button>
               </div>

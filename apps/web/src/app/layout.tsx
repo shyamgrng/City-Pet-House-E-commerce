@@ -22,7 +22,9 @@ import { OrderProvider } from "@/context/OrderContext";
 import { PetProvider } from "@/context/PetContext";
 import { PetTagProvider } from "@/context/PetTagContext";
 import { ServiceProvider } from "@/context/ServiceContext";
+import { TestimonialProvider } from "@/context/TestimonialContext";
 import { VetProvider } from "@/context/VetContext";
+import { WishlistProvider } from "@/context/WishlistContext";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -69,7 +71,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                                               <LegalProvider>
                                                 <FaqProvider>
                                                   <HowToBuyProvider>
-                                                    <ContactProvider>{children}</ContactProvider>
+                                                    <ContactProvider>
+                                                      <TestimonialProvider>
+                                                        <WishlistProvider>{children}</WishlistProvider>
+                                                      </TestimonialProvider>
+                                                    </ContactProvider>
                                                   </HowToBuyProvider>
                                                 </FaqProvider>
                                               </LegalProvider>

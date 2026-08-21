@@ -68,9 +68,12 @@ export default function AdoptionPage() {
                     <div className="text-[11px] font-semibold text-[#1F7A4D] bg-[#E6F3EC] inline-block px-2 py-1 rounded-md mb-2.5">
                       {daysLeft(post)} days left on listing
                     </div>
-                    <button className="w-full bg-primary text-white text-center py-2 rounded-lg text-xs font-semibold cursor-pointer">
-                      Contact Owner
-                    </button>
+                    <a
+                      href={`tel:${post.contact}`}
+                      className="block w-full bg-primary text-white text-center py-2 rounded-lg text-xs font-semibold cursor-pointer no-underline"
+                    >
+                      📞 Contact Owner — {post.contact}
+                    </a>
                   </div>
                 </div>
               ))}

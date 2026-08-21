@@ -1,13 +1,17 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { notifyEvent } from "@/lib/notify-client";
 import { b2bAccountSeed, type B2BAccount } from "@/lib/b2b-auth-types";
 
 const SESSION_KEY = "cph_b2b_session_id";
 const OVERRIDES_KEY = "cph_b2b_account_overrides";
+const RESETS_KEY = "cph_b2b_password_resets";
+const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 
 type Result = { ok: true } | { ok: false; error: string };
 type Overrides = Record<string, Partial<Pick<B2BAccount, "password" | "phone" | "altPhone" | "address">>>;
+type ResetRecord = { code: string; expiresAt: number };
 
 type B2BAuthValue = {
   supplier: B2BAccount | null;
@@ -16,9 +20,24 @@ type B2BAuthValue = {
   signOut: () => void;
   updateProfile: (patch: { phone: string; altPhone: string; address: string }) => void;
   changePassword: (newPassword: string) => void;
+  requestPasswordReset: (b2bId: string) => Result;
+  resetPassword: (b2bId: string, code: string, newPassword: string) => Result;
 };
 
 const B2BAuthContext = createContext<B2BAuthValue | null>(null);
+
+function loadResets(): Record<string, ResetRecord> {
+  try {
+    const raw = window.localStorage.getItem(RESETS_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, ResetRecord>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistResets(resets: Record<string, ResetRecord>) {
+  window.localStorage.setItem(RESETS_KEY, JSON.stringify(resets));
+}
 
 function loadOverrides(): Overrides {
   try {
@@ -58,6 +77,33 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
   };
 
+  const requestPasswordReset = (b2bId: string): Result => {
+    const account = state.accounts.find((a) => a.b2bId.toLowerCase() === b2bId.trim().toLowerCase());
+    if (!account) return { ok: false, error: "No B2B account found with that ID." };
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const resets = loadResets();
+    resets[account.b2bId] = { code, expiresAt: Date.now() + RESET_CODE_TTL_MS };
+    persistResets(resets);
+    notifyEvent("forgot_password", account.email, account.contactPerson, { name: account.contactPerson, code });
+    return { ok: true };
+  };
+
+  const resetPassword = (b2bId: string, code: string, newPassword: string): Result => {
+    const resets = loadResets();
+    const account = state.accounts.find((a) => a.b2bId.toLowerCase() === b2bId.trim().toLowerCase());
+    if (!account) return { ok: false, error: "No B2B account found with that ID." };
+    const record = resets[account.b2bId];
+    if (!record || record.code !== code.trim()) return { ok: false, error: "Incorrect or expired code." };
+    if (Date.now() > record.expiresAt) return { ok: false, error: "This code has expired — request a new one." };
+    persistOverride(account.b2bId, { password: newPassword });
+    const updated = { ...account, password: newPassword };
+    const accounts = state.accounts.map((a) => (a.b2bId === updated.b2bId ? updated : a));
+    setState((s) => ({ ...s, accounts }));
+    delete resets[account.b2bId];
+    persistResets(resets);
+    return { ok: true };
+  };
+
   const signIn = (b2bId: string, password: string): Result => {
     const account = state.accounts.find((a) => a.b2bId.toLowerCase() === b2bId.trim().toLowerCase());
     if (!account || account.password !== password) {
@@ -94,7 +140,9 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <B2BAuthContext.Provider value={{ supplier: state.supplier, ready: state.ready, signIn, signOut, updateProfile, changePassword }}>
+    <B2BAuthContext.Provider
+      value={{ supplier: state.supplier, ready: state.ready, signIn, signOut, updateProfile, changePassword, requestPasswordReset, resetPassword }}
+    >
       {children}
     </B2BAuthContext.Provider>
   );

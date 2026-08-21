@@ -5,12 +5,15 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { useCareer } from "@/context/CareerContext";
+import { useDelivery } from "@/context/DeliveryContext";
+import { useOrder } from "@/context/OrderContext";
 import { sidebarBadges, sidebarDefs } from "@/lib/admin-data";
 
 function slugFor(key: string) {
   const map: Record<string, string> = {
     pettagarchive: "pet-tag-archive",
     microchiprecords: "microchipping-records",
+    vetconsults: "vet-consults",
     petavailable: "pet-available",
     b2bsupply: "b2b-supply",
   };
@@ -20,9 +23,13 @@ function slugFor(key: string) {
 export default function AdminSidebar() {
   const { user, logout } = useAdminAuth();
   const { applications } = useCareer();
+  const { orders } = useOrder();
+  const { deliveries } = useDelivery();
   const pathname = usePathname();
   const router = useRouter();
   const newApplicationsCount = applications.filter((a) => a.status === "New").length;
+  const pendingDeliveriesCount =
+    orders.filter((o) => o.status === "Receipt Uploaded").length + deliveries.filter((d) => d.status === "Awaiting Courier").length;
 
   return (
     <div className="w-[200px] shrink-0 bg-[#1A2027] text-white p-5 px-3.5 flex flex-col min-h-screen">
@@ -35,7 +42,12 @@ export default function AdminSidebar() {
           const slug = slugFor(s.key);
           const href = `/admin/${slug}`;
           const active = pathname === href;
-          const badge = s.key === "career" ? { count: newApplicationsCount, color: "#C9962B" } : sidebarBadges[s.key];
+          const badge =
+            s.key === "career"
+              ? { count: newApplicationsCount, color: "#C9962B" }
+              : s.key === "deliveries"
+                ? { count: pendingDeliveriesCount, color: "#D64545" }
+                : sidebarBadges[s.key];
           return (
             <Link
               key={s.key}

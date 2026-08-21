@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import HeaderSearch from "./HeaderSearch";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { siteSettings } from "@/lib/site-settings";
@@ -61,15 +62,7 @@ export default function SiteHeader() {
           <span className="font-heading font-bold text-[15px] text-[#1A2027]">City Pet House</span>
         </Link>
 
-        <div className="flex-1 h-[42px] rounded-lg bg-[#F7F9FA] border-[1.5px] border-primary flex items-center pl-3.5 pr-1.5 gap-2 relative">
-          <input
-            placeholder="Search for dog food, vet booking, puppies…"
-            className="flex-1 text-[13px] text-[#1A2027] bg-transparent outline-none h-full"
-          />
-          <button className="bg-primary text-white h-8 px-[18px] rounded-md flex items-center text-xs font-semibold shrink-0 cursor-pointer">
-            Search
-          </button>
-        </div>
+        <HeaderSearch />
 
         <button onClick={handleTopSignInClick} className="text-[13px] font-semibold text-primary shrink-0 whitespace-nowrap cursor-pointer">
           {isSignedIn ? "Sign Out" : "Pet Owner Sign In"}

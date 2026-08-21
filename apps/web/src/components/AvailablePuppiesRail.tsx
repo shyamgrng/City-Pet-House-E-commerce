@@ -3,10 +3,12 @@
 import Link from "next/link";
 import ImagePlaceholder from "./ImagePlaceholder";
 import { usePets } from "@/context/PetContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { formatRs } from "@/lib/pet-types";
 
 export default function AvailablePuppiesRail() {
   const { pets } = usePets();
+  const { has, toggle } = useWishlist();
   const available = pets.filter((p) => p.status === "Available").slice(0, 6);
 
   return (
@@ -26,7 +28,17 @@ export default function AvailablePuppiesRail() {
             </div>
             <div className="flex justify-between items-center mt-1">
               <div className="text-[13px] font-bold text-primary">{formatRs(p.price)}</div>
-              <div className="text-sm cursor-pointer text-[#C7CDD2]">♥</div>
+              <div
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggle({ id: p.id, kind: "pet", name: p.breed, priceLabel: formatRs(p.price), href: "/pets" });
+                }}
+                className="text-sm cursor-pointer"
+                style={{ color: has(p.id, "pet") ? "#D64545" : "#C7CDD2" }}
+              >
+                {has(p.id, "pet") ? "♥" : "♡"}
+              </div>
             </div>
           </div>
         </Link>

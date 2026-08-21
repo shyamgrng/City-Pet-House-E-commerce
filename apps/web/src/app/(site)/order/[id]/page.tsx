@@ -91,7 +91,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
                 {step.key === "receipt" && (
                   <div className="bg-[#F7F9FA] border border-[#E4E9EC] rounded-lg px-3.5 py-3 mt-2.5 text-xs text-[#3A4652]">
-                    📎 Payment receipt (auto-verified)
+                    📎 Payment receipt uploaded — held for admin review, usually within a few hours
                   </div>
                 )}
 

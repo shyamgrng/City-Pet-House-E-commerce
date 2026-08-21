@@ -31,9 +31,12 @@ export default function ServicesPage() {
               >
                 View Details
               </Link>
-              <button className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+              <Link
+                href={`/contact?service=${encodeURIComponent(svc.name)}`}
+                className="block w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+              >
                 Book Now
-              </button>
+              </Link>
             </div>
           </div>
         ))}

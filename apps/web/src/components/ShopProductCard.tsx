@@ -1,8 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import ImagePlaceholder from "./ImagePlaceholder";
+import { useWishlist } from "@/context/WishlistContext";
 import { badgeColor, formatRs, salePrice, type Product } from "@/lib/catalog-types";
 
 export default function ShopProductCard({ product }: { product: Product }) {
+  const { has, toggle } = useWishlist();
+  const saved = has(product.id, "product");
+
   return (
     <Link href={`/product/${product.id}`} className="block border border-[#E4E9EC] rounded-[10px] overflow-hidden">
       <div className="h-[110px] relative">
@@ -37,7 +43,17 @@ export default function ShopProductCard({ product }: { product: Product }) {
           ) : (
             <div className="text-sm font-bold text-primary">{formatRs(product.price)}</div>
           )}
-          <div className="text-sm cursor-pointer text-[#C7CDD2]">♥</div>
+          <div
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggle({ id: product.id, kind: "product", name: product.name, priceLabel: formatRs(product.price), href: `/product/${product.id}` });
+            }}
+            className="text-sm cursor-pointer"
+            style={{ color: saved ? "#D64545" : "#C7CDD2" }}
+          >
+            {saved ? "♥" : "♡"}
+          </div>
         </div>
       </div>
     </Link>

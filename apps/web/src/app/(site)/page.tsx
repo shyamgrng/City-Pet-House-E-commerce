@@ -1,22 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import AvailablePuppiesRail from "@/components/AvailablePuppiesRail";
+import DealsRail from "@/components/DealsRail";
 import HealthCareRail from "@/components/HealthCareRail";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import LatestBlogRail from "@/components/LatestBlogRail";
 import ProductRail from "@/components/ProductRail";
 import SignInNoticeBanner from "@/components/SignInNoticeBanner";
-import {
-  brands,
-  categories,
-  fashionWear,
-  groomingAccessories,
-  petAccessories,
-  petFood,
-  petToys,
-  testimonials,
-  todaysDeals,
-} from "@/lib/home-data";
+import TestimonialsRail from "@/components/TestimonialsRail";
+import { brands, categories } from "@/lib/home-data";
 
 const heroHeadline = "Pet products, puppies, adoption & vet care";
 const heroSubtext = "Order online, pay by receipt upload — shop, puppies, adoption or vet consults.";
@@ -51,12 +43,12 @@ export default function HomePage() {
             </div>
             <div className="text-[13px] text-[#EDF2F5] mt-2.5 mb-[18px] max-w-[400px]">{heroSubtext}</div>
             <div className="flex gap-2.5 pointer-events-auto">
-              <button className="bg-primary text-white px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
+              <Link href="/shop" className="bg-primary text-white px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
                 Shop Now
-              </button>
-              <button className="bg-white text-[#1A2027] px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
+              </Link>
+              <Link href="/vet" className="bg-white text-[#1A2027] px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
                 Book a Vet
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -73,10 +65,10 @@ export default function HomePage() {
       {/* Categories */}
       <div className="flex flex-wrap gap-3.5 px-8 pt-4 pb-6">
         {categories.map((cat) => (
-          <div key={cat.slug} className="flex-1 min-w-[110px] flex flex-col items-center gap-2 cursor-pointer">
+          <Link key={cat.slug} href={`/pets?species=${encodeURIComponent(cat.name)}`} className="flex-1 min-w-[110px] flex flex-col items-center gap-2 cursor-pointer">
             <ImagePlaceholder label={cat.name} shape="circle" className="w-[115px] h-[115px]" />
             <div className="text-xs font-semibold text-[#1A2027]">{cat.name}</div>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -99,9 +91,9 @@ export default function HomePage() {
           >
             {microchipBannerText}
           </div>
-          <button className="relative bg-primary text-white px-[22px] py-2.5 rounded-[9px] text-[13px] font-semibold cursor-pointer">
+          <Link href="/services/dog-cat-microchipping" className="relative bg-primary text-white px-[22px] py-2.5 rounded-[9px] text-[13px] font-semibold cursor-pointer">
             Book Now
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -122,48 +114,17 @@ export default function HomePage() {
       </div>
 
       {/* Today's Deals */}
-      <div className="px-8 pb-2.5 flex justify-between items-center">
-        <div className="font-heading font-bold text-base text-[#1A2027]">Today&apos;s Deals</div>
-        <div className="text-xs text-primary font-semibold cursor-pointer">See all →</div>
-      </div>
-      {todaysDeals.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-8 pb-8">
-          {todaysDeals.map((p) => (
-            <div key={p.name} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
-              <div className="h-[100px] relative">
-                <ImagePlaceholder label="product photo" className="absolute inset-0 w-full h-full" />
-                <div className="absolute top-1.5 right-1.5 bg-[#D64545] text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                  Hot Sale
-                </div>
-              </div>
-              <div className="p-2.5">
-                <div className="text-[13px] text-[#1A2027] font-medium">{p.name}</div>
-                <div className="flex justify-between items-center mt-1">
-                  <div>
-                    <div className="text-[9px] text-[#8A96A3] line-through">{p.originalPrice}</div>
-                    <div className="text-sm font-bold text-[#D64545]">{p.salePrice}</div>
-                  </div>
-                  <div className="text-sm cursor-pointer text-[#C7CDD2]">♥</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="mx-8 mb-8 p-[22px] border border-dashed border-[#E4E9EC] rounded-[10px] text-center text-xs text-[#8A96A3]">
-          No deals running right now — tick &quot;Today&apos;s Deal&quot; on a product in Admin → Shop to feature it here.
-        </div>
-      )}
+      <DealsRail />
 
       {/* Pet Food / Pet Accessories / Fashion Wear (cream section) */}
       <div className="bg-[#F7F4EF] pt-1">
-        <ProductRail title="Pet Food" products={petFood} />
-        <ProductRail title="Pet Accessories" products={petAccessories} />
-        <ProductRail title="Fashion Wear" products={fashionWear} />
+        <ProductRail title="Pet Food" category="Pet Food" />
+        <ProductRail title="Pet Accessories" category="Pet Accessories" />
+        <ProductRail title="Fashion Wear" category="Fashion Wear" />
       </div>
 
       {/* Toys for Your Pet */}
-      <ProductRail title="Toys for Your Pet" products={petToys} />
+      <ProductRail title="Toys for Your Pet" category="Pet Toys" />
 
       {/* Delivery banner */}
       <div className="mx-8 mb-8 h-[100px] rounded-xl overflow-hidden relative flex items-center justify-center">
@@ -180,13 +141,13 @@ export default function HomePage() {
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 px-8 pb-7">
           {brands.map((b) => (
-            <div key={b} className="flex flex-col items-center gap-2 cursor-pointer">
+            <Link key={b} href={`/shop?brand=${encodeURIComponent(b)}`} className="flex flex-col items-center gap-2 cursor-pointer">
               <ImagePlaceholder label={b} shape="circle" className="w-[88px] h-[88px]" />
               <div className="text-[11px] font-semibold text-[#1A2027]">{b}</div>
-            </div>
+            </Link>
           ))}
         </div>
-        <ProductRail title="Grooming Accessories" products={groomingAccessories} padBottom="pb-9" />
+        <ProductRail title="Grooming Accessories" category="Grooming Supplies" padBottom="pb-9" />
       </div>
 
       {/* Big grooming banner */}
@@ -198,9 +159,9 @@ export default function HomePage() {
         >
           {groomingBannerText}
         </div>
-        <button className="relative bg-[#1F7A4D] text-white px-6 py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer shrink-0">
+        <Link href="/services/pet-grooming" className="relative bg-[#1F7A4D] text-white px-6 py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer shrink-0">
           Book Now
-        </button>
+        </Link>
       </div>
 
       {/* Testimonials + Blog (cream section) */}
@@ -208,14 +169,7 @@ export default function HomePage() {
         <div className="px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Our Happy Customers</div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 px-8 pb-7">
-          {testimonials.map((t) => (
-            <div key={t.name} className="border border-[#E4E9EC] rounded-[10px] p-4">
-              <div className="text-xs text-[#3A4652] leading-relaxed mb-2.5">&quot;{t.quote}&quot;</div>
-              <div className="text-xs font-semibold text-[#1A2027]">{t.name}</div>
-            </div>
-          ))}
-        </div>
+        <TestimonialsRail />
 
         <div className="px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Latest from the Blog</div>

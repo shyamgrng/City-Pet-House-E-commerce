@@ -2,16 +2,17 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { CartItem } from "@/lib/cart-types";
-import type { Product } from "@/lib/catalog-types";
 
 const STORAGE_KEY = "cph_cart";
+
+type CartableItem = { id: string; name: string; price: number };
 
 type CartValue = {
   items: CartItem[];
   ready: boolean;
   count: number;
   subtotal: number;
-  addItem: (product: Product, qty?: number) => void;
+  addItem: (item: CartableItem, qty?: number) => void;
   inc: (productId: string) => void;
   dec: (productId: string) => void;
   remove: (productId: string) => void;
@@ -42,12 +43,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setState({ items, ready: true });
   };
 
-  const addItem = (product: Product, qty = 1) => {
-    const existing = state.items.find((i) => i.productId === product.id);
+  const addItem = (item: CartableItem, qty = 1) => {
+    const existing = state.items.find((i) => i.productId === item.id);
     if (existing) {
-      persist(state.items.map((i) => (i.productId === product.id ? { ...i, qty: i.qty + qty } : i)));
+      persist(state.items.map((i) => (i.productId === item.id ? { ...i, qty: i.qty + qty } : i)));
     } else {
-      persist([...state.items, { productId: product.id, name: product.name, price: product.price, qty }]);
+      persist([...state.items, { productId: item.id, name: item.name, price: item.price, qty }]);
     }
   };
 

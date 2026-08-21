@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
@@ -44,8 +45,11 @@ export default function DoctorLoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
-          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 box-border"
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-1.5 box-border"
         />
+        <Link href="/doctor/forgot-password" className="block text-[11px] text-primary font-semibold text-right mb-3">
+          Forgot ID or Password?
+        </Link>
         {error && <div className="text-xs text-[#D64545] mb-3">{error}</div>}
         <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer">
           Sign In
