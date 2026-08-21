@@ -9,6 +9,17 @@ export type OrderItem = {
 
 export type OrderReview = { rating: number; comment: string };
 
+export type ChecklistItem = { text: string; checked: boolean };
+export type RefundedItem = { productId: string; name: string; price: number; refundId: string };
+
+export function defaultChecklist(): ChecklistItem[] {
+  return [
+    { text: "Items picked from shelf", checked: false },
+    { text: "Packed & labeled", checked: false },
+    { text: "Invoice printed", checked: false },
+  ];
+}
+
 export type Order = {
   id: string;
   ownerId: string;
@@ -27,6 +38,9 @@ export type Order = {
   approvedAt?: number;
   deliveredAt?: number;
   reviews?: Record<string, OrderReview>;
+  checklist: ChecklistItem[];
+  refunded: boolean;
+  refundedItems: RefundedItem[];
 };
 
 export const STATUS_COLORS: Record<OrderStatus, string> = {
@@ -54,7 +68,7 @@ export function orderTimeline(order: Order): TimelineStep[] {
     {
       key: "approved",
       title: "Payment Approved",
-      subtitle: order.status === "Payment Rejected" ? "Receipt was rejected — see reason below" : "Stock committed & invoice issued",
+      subtitle: order.status === "Payment Rejected" ? "Receipt was rejected — see reason below" : "Payment verified — your order is being packed",
       icon: "✓",
       done: r >= 2,
     },

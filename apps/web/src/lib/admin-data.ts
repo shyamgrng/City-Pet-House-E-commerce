@@ -75,11 +75,9 @@ export const recentActivity = [
 ];
 
 // ---- Deliveries ----
-// Payment Queue, Orders, Dispatch, Delivery, Cancelled, Rejected, and Reports (stats, revenue
-// by category, top products, activity log) all now read live from OrderContext + DeliveryContext
-// + CatalogContext — see src/app/admin/(dashboard)/deliveries/page.tsx. Refunds stays static
-// (empty) since no refund flow has been built yet.
-export const refundedOrdersData: { id: string; client: string; amount: string; type: string }[] = [];
+// Payment Queue, Orders, Dispatch, Delivery, Cancelled, Rejected, Refunds, and Reports (stats,
+// revenue by category, top products, activity log) all now read live from OrderContext +
+// DeliveryContext + CatalogContext — see src/app/admin/(dashboard)/deliveries/page.tsx.
 
 // Vet Consults (doctors + bookings) now reads live from VetContext (src/context/VetContext.tsx) —
 // see src/app/admin/(dashboard)/vet-consults/page.tsx and the public /vet booking flow.

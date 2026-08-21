@@ -1,5 +1,5 @@
 import { catalogSeed } from "@/lib/catalog-seed";
-import type { Order } from "@/lib/order-types";
+import { defaultChecklist, type Order } from "@/lib/order-types";
 
 function find(name: string) {
   const p = catalogSeed.find((c) => c.name === name);
@@ -27,6 +27,9 @@ export const orderSeed: Order[] = [
     total: focusPuppyFood.price + 100,
     status: "Receipt Uploaded",
     receiptPhoto: "",
+    checklist: defaultChecklist(),
+    refunded: false,
+    refundedItems: [],
     createdAt: Date.now() - 3 * 60 * 60 * 1000,
   },
   {
@@ -45,6 +48,9 @@ export const orderSeed: Order[] = [
     total: nefrotec.price * 2 + litter.price + 100,
     status: "Receipt Uploaded",
     receiptPhoto: "",
+    checklist: defaultChecklist(),
+    refunded: false,
+    refundedItems: [],
     createdAt: Date.now() - 20 * 60 * 60 * 1000,
   },
   {
@@ -60,6 +66,9 @@ export const orderSeed: Order[] = [
     total: collar.price + 100,
     status: "Payment Rejected",
     receiptPhoto: "",
+    checklist: defaultChecklist(),
+    refunded: false,
+    refundedItems: [],
     rejectReason: "Receipt unreadable — please re-upload a clear screenshot",
     createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
   },
@@ -76,6 +85,9 @@ export const orderSeed: Order[] = [
     total: leash.price + 100,
     status: "Delivered",
     receiptPhoto: "",
+    checklist: defaultChecklist(),
+    refunded: false,
+    refundedItems: [],
     createdAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
     approvedAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
     deliveredAt: Date.now() - 12 * 24 * 60 * 60 * 1000,

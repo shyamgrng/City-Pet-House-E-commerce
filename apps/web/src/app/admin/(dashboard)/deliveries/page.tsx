@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { refundedOrdersData } from "@/lib/admin-data";
 import { courierAccountSeed } from "@/lib/courier-auth-types";
 import { useCatalog } from "@/context/CatalogContext";
 import { useDelivery } from "@/context/DeliveryContext";
 import { useOrder } from "@/context/OrderContext";
 import { STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
-import type { Order } from "@/lib/order-types";
+import { STATUS_COLORS as ORDER_STATUS_COLORS, type Order } from "@/lib/order-types";
+import type { RefundRecord } from "@/lib/refund-types";
 import MediaSlot from "@/components/MediaSlot";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 
 const deliveryTabDefs = [
   { key: "payments", label: "Payment Queue", badgeColor: "#D64545" },
@@ -21,12 +22,12 @@ const deliveryTabDefs = [
   { key: "reports", label: "Reports", badgeColor: "#D64545" },
 ];
 
-const activityFilters = ["All", "Payment", "Rejected", "Dispatch", "Delivered"];
+const activityFilters = ["All", "Payment", "Rejected", "Dispatch", "Delivered", "Refund"];
 const IN_PROGRESS_STATUSES = ["Dispatched", "Received", "Processing"];
 
 type ActivityEntry = { ts: number; activity: string; order: string; type: string };
 
-function buildActivityLog(orders: Order[], deliveries: Delivery[]): ActivityEntry[] {
+function buildActivityLog(orders: Order[], deliveries: Delivery[], refunds: RefundRecord[]): ActivityEntry[] {
   const entries: ActivityEntry[] = [];
   for (const o of orders) {
     entries.push({ ts: o.createdAt, activity: `Receipt submitted for review — Rs. ${o.total.toLocaleString("en-IN")}`, order: o.id, type: "Payment" });
@@ -41,6 +42,9 @@ function buildActivityLog(orders: Order[], deliveries: Delivery[]): ActivityEntr
     if (d.dispatchedAt) entries.push({ ts: d.dispatchedAt, activity: `Forwarded to dispatch — Rs. ${d.amount.toLocaleString("en-IN")}`, order: d.id, type: "Dispatch" });
     if (d.deliveredAt) entries.push({ ts: d.deliveredAt, activity: `Order marked delivered — Rs. ${d.amount.toLocaleString("en-IN")}`, order: d.id, type: "Delivered" });
   }
+  for (const r of refunds) {
+    entries.push({ ts: r.createdAt, activity: `${r.type} refunded — Rs. ${r.amount.toLocaleString("en-IN")}`, order: r.orderId, type: "Refund" });
+  }
   return entries.sort((a, b) => b.ts - a.ts);
 }
 
@@ -48,8 +52,10 @@ export default function DeliveriesPage() {
   const [tab, setTab] = useState("payments");
   const [typeFilter, setTypeFilter] = useState("All");
   const [receiptOrderId, setReceiptOrderId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [refundDraftKey, setRefundDraftKey] = useState<{ orderId: string; kind: "item" | "full"; itemIndex?: number } | null>(null);
   const { deliveries, assignCourier, addDelivery } = useDelivery();
-  const { orders, approveOrder, rejectOrder, markOnTheWay } = useOrder();
+  const { orders, refunds, approveOrder, rejectOrder, markOnTheWay, toggleChecklistItem, refundItem, refundWholeOrder } = useOrder();
   const { products, updateProduct } = useCatalog();
 
   const awaitingCourier = deliveries.filter((d) => d.status === "Awaiting Courier");
@@ -68,7 +74,7 @@ export default function DeliveriesPage() {
     rejected: rejectedOrders.length,
   };
 
-  const activityLog = buildActivityLog(orders, deliveries);
+  const activityLog = buildActivityLog(orders, deliveries, refunds);
   const filteredLog = activityLog.filter((a) => typeFilter === "All" || a.type === typeFilter);
 
   const deliveryActivityStats = [
@@ -78,6 +84,8 @@ export default function DeliveriesPage() {
     { label: "On the Way", value: inProgress.length, color: "#1996C8" },
     { label: "Delivered", value: deliveredLive.length, color: "#1F7A4D" },
   ];
+
+  const totalRefunded = refunds.reduce((sum, r) => sum + r.amount, 0);
 
   const approvedOrders = orders.filter((o) => o.status === "Payment Approved" || o.status === "On the Way" || o.status === "Delivered");
   const revenueByCategory = (() => {
@@ -105,14 +113,15 @@ export default function DeliveriesPage() {
       .map(([name, sold]) => ({ name, sold }));
   })();
 
-  const approve = (order: Order) => {
+  const approvePayment = (order: Order) => approveOrder(order.id);
+
+  const forwardToDispatch = (order: Order) => {
     for (const it of order.items) {
       const product = products.find((p) => p.id === it.productId);
       if (!product) continue;
       const newQty = Math.max(0, product.qty - it.qty);
       updateProduct(product.id, { ...product, qty: newQty, outOfStock: newQty === 0 });
     }
-    approveOrder(order.id);
     addDelivery({
       id: order.id,
       client: order.ownerName,
@@ -122,6 +131,7 @@ export default function DeliveriesPage() {
       checklist: order.items.map((it) => `${it.name} ×${it.qty}`),
       status: "Awaiting Courier",
     });
+    setSelectedOrderId(null);
   };
 
   const dispatch = (id: string, courierId: string, courierName: string) => {
@@ -130,6 +140,18 @@ export default function DeliveriesPage() {
   };
 
   const receiptOrder = orders.find((o) => o.id === receiptOrderId) ?? null;
+  const selectedOrder = orders.find((o) => o.id === selectedOrderId) ?? null;
+
+  const refundDraftOrder = refundDraftKey ? (orders.find((o) => o.id === refundDraftKey.orderId) ?? null) : null;
+  const saveRefundDraft = (proofPhoto: string) => {
+    if (!refundDraftKey) return;
+    if (refundDraftKey.kind === "item" && refundDraftKey.itemIndex !== undefined) {
+      refundItem(refundDraftKey.orderId, refundDraftKey.itemIndex, proofPhoto);
+    } else {
+      refundWholeOrder(refundDraftKey.orderId, proofPhoto);
+    }
+    setRefundDraftKey(null);
+  };
 
   return (
     <div>
@@ -159,13 +181,13 @@ export default function DeliveriesPage() {
       </div>
 
       {tab === "payments" && (
-        <Section title="Payment Queue" subtitle="Receipts awaiting verification — approve to commit stock & issue invoice">
+        <Section title="Payment Queue" subtitle="Receipts awaiting verification — approve to move to Orders for packing">
           {paymentQueue.length === 0 ? (
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">No receipts awaiting review</div>
           ) : (
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
               {paymentQueue.map((o) => (
-                <PaymentQueueRow key={o.id} order={o} onApprove={approve} onReject={rejectOrder} onViewReceipt={() => setReceiptOrderId(o.id)} />
+                <PaymentQueueRow key={o.id} order={o} onApprove={approvePayment} onReject={rejectOrder} onViewReceipt={() => setReceiptOrderId(o.id)} />
               ))}
             </div>
           )}
@@ -179,12 +201,14 @@ export default function DeliveriesPage() {
               <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No orders placed yet</div>
             ) : (
               allOrders.map((o) => (
-                <Row key={o.id} cols={5}>
+                <Row key={o.id} cols={5} onClick={() => setSelectedOrderId(o.id)} testId={`order-row-${o.id}`}>
                   <div className="font-semibold">{o.id}</div>
                   <div>{o.ownerName}</div>
                   <div className="text-[#5B6773]">{new Date(o.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
                   <div className="font-semibold">Rs. {o.total.toLocaleString("en-IN")}</div>
-                  <div className="font-semibold text-[#1F7A4D]">{o.status}</div>
+                  <div className="font-semibold" style={{ color: o.refunded ? "#D64545" : o.refundedItems.length > 0 ? "#C9962B" : ORDER_STATUS_COLORS[o.status] }}>
+                    {o.refunded ? "Refunded" : o.refundedItems.length > 0 ? "Partial Refund" : o.status}
+                  </div>
                 </Row>
               ))
             )}
@@ -286,7 +310,22 @@ export default function DeliveriesPage() {
 
       {tab === "refunds" && (
         <Section title="Refunds" subtitle="Full-order and item-level refunds processed">
-          <EmptyRow show={refundedOrdersData.length === 0} />
+          {refunds.length === 0 ? (
+            <EmptyRow show />
+          ) : (
+            <Table headers={["Refund", "Order", "Client", "Type", "Amount", "Date"]}>
+              {refunds.map((r) => (
+                <Row key={r.id} cols={6}>
+                  <div className="font-semibold">{r.id}</div>
+                  <div>{r.orderId}</div>
+                  <div>{r.clientName}</div>
+                  <div className="text-[#5B6773]">{r.type}</div>
+                  <div className="font-semibold text-[#D64545]">-Rs. {r.amount.toLocaleString("en-IN")}</div>
+                  <div className="text-[#8A96A3]">{new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</div>
+                </Row>
+              ))}
+            </Table>
+          )}
         </Section>
       )}
 
@@ -307,9 +346,9 @@ export default function DeliveriesPage() {
           <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-[18px] flex justify-between items-center mb-4">
             <div>
               <div className="text-[13px] font-bold text-[#1A2027]">Total Refunds Issued</div>
-              <div className="text-[11px] text-[#8A96A3]">0 refunds — deducted from gross revenue</div>
+              <div className="text-[11px] text-[#8A96A3]">{refunds.length} refund{refunds.length === 1 ? "" : "s"} — deducted from gross revenue</div>
             </div>
-            <div className="text-sm font-bold text-[#D64545]">-Rs. 0</div>
+            <div className="text-sm font-bold text-[#D64545]">-Rs. {totalRefunded.toLocaleString("en-IN")}</div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 mb-4">
@@ -376,13 +415,35 @@ export default function DeliveriesPage() {
           order={receiptOrder}
           onClose={() => setReceiptOrderId(null)}
           onApprove={() => {
-            approve(receiptOrder);
+            approvePayment(receiptOrder);
             setReceiptOrderId(null);
           }}
           onReject={(reason) => {
             rejectOrder(receiptOrder.id, reason);
             setReceiptOrderId(null);
           }}
+        />
+      )}
+
+      {selectedOrder && (
+        <OrderDetailModal
+          order={selectedOrder}
+          products={products}
+          alreadyForwarded={deliveries.some((d) => d.id === selectedOrder.id)}
+          onClose={() => setSelectedOrderId(null)}
+          onToggleChecklist={(index) => toggleChecklistItem(selectedOrder.id, index)}
+          onForward={() => forwardToDispatch(selectedOrder)}
+          onOpenItemRefund={(itemIndex) => setRefundDraftKey({ orderId: selectedOrder.id, kind: "item", itemIndex })}
+          onOpenWholeRefund={() => setRefundDraftKey({ orderId: selectedOrder.id, kind: "full" })}
+        />
+      )}
+
+      {refundDraftOrder && refundDraftKey && (
+        <RefundDraftModal
+          order={refundDraftOrder}
+          draftKey={refundDraftKey}
+          onClose={() => setRefundDraftKey(null)}
+          onSave={saveRefundDraft}
         />
       )}
     </div>
@@ -415,10 +476,12 @@ function Table({ headers, children }: { headers: string[]; children: React.React
   );
 }
 
-function Row({ cols, children }: { cols: number; children: React.ReactNode }) {
+function Row({ cols, children, onClick, testId }: { cols: number; children: React.ReactNode; onClick?: () => void; testId?: string }) {
   return (
     <div
-      className="grid px-4 py-3.5 text-xs text-[#1A2027] items-center border-b border-[#F0F2F4] last:border-0"
+      onClick={onClick}
+      data-testid={testId}
+      className={`grid px-4 py-3.5 text-xs text-[#1A2027] items-center border-b border-[#F0F2F4] last:border-0 ${onClick ? "cursor-pointer" : ""}`}
       style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
     >
       {children}
@@ -635,5 +698,192 @@ function FilterPill({ children, active, onClick }: { children: React.ReactNode; 
     >
       {children}
     </button>
+  );
+}
+
+function OrderDetailModal({
+  order,
+  products,
+  alreadyForwarded,
+  onClose,
+  onToggleChecklist,
+  onForward,
+  onOpenItemRefund,
+  onOpenWholeRefund,
+}: {
+  order: Order;
+  products: import("@/lib/catalog-types").Product[];
+  alreadyForwarded: boolean;
+  onClose: () => void;
+  onToggleChecklist: (index: number) => void;
+  onForward: () => void;
+  onOpenItemRefund: (itemIndex: number) => void;
+  onOpenWholeRefund: () => void;
+}) {
+  const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const allChecked = order.checklist.every((c) => c.checked);
+  const itemAvailable = (productId: string) => products.find((p) => p.id === productId)?.outOfStock !== true;
+  const allAvailable = order.items.every((it) => itemAvailable(it.productId));
+  const canForward = allChecked && allAvailable && order.status === "Payment Approved" && !alreadyForwarded;
+
+  return (
+    <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-[420px] max-h-[88vh] overflow-auto">
+        <div className="flex justify-between items-center mb-1">
+          <div className="text-base font-bold text-[#1A2027]">{order.id}</div>
+          <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">✕</div>
+        </div>
+        <div className="text-xs text-[#8A96A3] mb-4">{fmtDate(order.createdAt)}</div>
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-1.5">Client Details</div>
+        <div className="text-[13px] font-semibold text-[#1A2027] mb-0.5">{order.ownerName}</div>
+        <div className="text-xs text-[#5B6773] mb-0.5">📞 {order.ownerPhone}</div>
+        <div className="text-xs text-[#5B6773] mb-3.5">📍 {order.address}</div>
+
+        <div className="flex justify-between items-center py-2.5 border-t border-b border-[#EEF1F3] mb-3.5">
+          <div className="text-xs text-[#5B6773]">Payment</div>
+          <div className="text-xs font-semibold" style={{ color: ORDER_STATUS_COLORS[order.status] }}>
+            {order.status}
+          </div>
+        </div>
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-2">Product List</div>
+        {order.items.map((it, i) => (
+          <div key={i} className="flex justify-between items-center py-1.5 text-xs">
+            <div className="text-[#3A4652]">{it.name}</div>
+            <div className="flex items-center gap-2">
+              {!itemAvailable(it.productId) && (
+                <div className="text-[10px] font-semibold text-[#D64545] bg-[#FDEDEC] px-1.5 py-0.5 rounded">Out of Stock</div>
+              )}
+              <div className="font-semibold text-[#1A2027]">Rs. {(it.price * it.qty).toLocaleString("en-IN")}</div>
+              {order.status === "Payment Approved" && !order.refunded && (
+                <div onClick={() => onOpenItemRefund(i)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
+                  Send for Refund
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {order.refundedItems.length > 0 && (
+          <>
+            <div className="text-[11px] font-bold text-[#8A96A3] uppercase mt-2.5 mb-1.5">Refunded</div>
+            {order.refundedItems.map((ri, i) => (
+              <div key={i} className="flex justify-between items-center py-1 text-xs">
+                <div className="text-[#8A96A3] line-through">{ri.name}</div>
+                <div className="flex items-center gap-2">
+                  <div className="font-semibold text-[#D64545] line-through">Rs. {ri.price.toLocaleString("en-IN")}</div>
+                  <div className="text-[10px] font-semibold text-[#D64545] bg-[#FDEDEC] px-1.5 py-0.5 rounded">Refunded</div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mt-3.5 mb-2">Order Checklist</div>
+        {order.checklist.map((c, i) => (
+          <div key={i} onClick={() => onToggleChecklist(i)} className="flex items-center gap-2 py-1 cursor-pointer">
+            <div
+              className="w-4 h-4 rounded border-2 border-primary flex items-center justify-center shrink-0"
+              style={{ background: c.checked ? "#EAF4F9" : "#fff" }}
+            >
+              {c.checked && <span className="text-primary text-[11px] font-bold">✓</span>}
+            </div>
+            <div className="text-xs text-[#3A4652]">{c.text}</div>
+          </div>
+        ))}
+
+        <div className="flex justify-between items-center py-3 mt-2.5 border-t border-[#EEF1F3]">
+          <div className="text-xs text-[#8A96A3]">Total</div>
+          <div className="text-sm font-bold text-[#1A2027]">Rs. {order.total.toLocaleString("en-IN")}</div>
+        </div>
+
+        {order.refunded ? (
+          <div className="bg-[#FDEDEC] text-[#D64545] text-center py-2.5 rounded-lg text-[13px] font-bold mt-2">Refund Processed</div>
+        ) : alreadyForwarded ? (
+          <div className="bg-[#EAF6EE] text-[#1F7A4D] text-center py-2.5 rounded-lg text-xs font-semibold mt-2">
+            ✓ Forwarded to Dispatch — awaiting courier assignment
+          </div>
+        ) : order.status !== "Payment Approved" ? null : canForward ? (
+          <button onClick={onForward} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer mt-2">
+            Forward to Dispatch
+          </button>
+        ) : (
+          <>
+            <div className="bg-[#F0F2F4] text-[#8A96A3] text-center py-2.5 rounded-lg text-xs font-semibold mt-2">
+              Complete checklist &amp; confirm stock to forward
+            </div>
+            <button
+              onClick={onOpenWholeRefund}
+              className="w-full bg-white border border-[#D64545] text-[#D64545] text-center py-2 rounded-lg text-xs font-semibold cursor-pointer mt-2"
+            >
+              Refund Whole Order
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RefundDraftModal({
+  order,
+  draftKey,
+  onClose,
+  onSave,
+}: {
+  order: Order;
+  draftKey: { orderId: string; kind: "item" | "full"; itemIndex?: number };
+  onClose: () => void;
+  onSave: (proofPhoto: string) => void;
+}) {
+  const [approved, setApproved] = useState(false);
+  const [proofPhoto, setProofPhoto] = useState("");
+
+  const item = draftKey.kind === "item" && draftKey.itemIndex !== undefined ? order.items[draftKey.itemIndex] : null;
+  const label = item ? item.name : `Full order — ${order.items.map((i) => i.name).join(", ")}`;
+  const amount = item ? item.price * item.qty : order.total;
+
+  return (
+    <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-[22px] w-[380px]">
+        <div className="flex justify-between items-center mb-1">
+          <div className="text-[15px] font-bold text-[#1A2027]">Process Refund</div>
+          <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">✕</div>
+        </div>
+        <div className="text-xs text-[#8A96A3] mb-4">
+          {order.id} · {order.ownerName}
+        </div>
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-1.5">Review</div>
+        <div className="flex justify-between py-2.5 border-t border-b border-[#EEF1F3] mb-4">
+          <div className="text-[13px] text-[#3A4652]">{label}</div>
+          <div className="text-[13px] font-bold text-[#1A2027]">Rs. {amount.toLocaleString("en-IN")}</div>
+        </div>
+
+        <div onClick={() => setApproved((v) => !v)} className="flex items-center gap-2 mb-4 cursor-pointer">
+          <div
+            className="w-4 h-4 rounded border-2 border-primary flex items-center justify-center shrink-0"
+            style={{ background: approved ? "#EAF4F9" : "#fff" }}
+          >
+            {approved && <span className="text-primary text-[11px] font-bold">✓</span>}
+          </div>
+          <div className="text-xs text-[#3A4652]">I have reviewed the items and approved this refund for payment</div>
+        </div>
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-2">Upload Payment Screenshot</div>
+        <div className="mb-4">
+          <ImageUploadField value={proofPhoto} onChange={setProofPhoto} label="refund payment proof" height="h-[140px]" maxWidth={1000} maxHeight={1400} />
+        </div>
+
+        {approved ? (
+          <button onClick={() => onSave(proofPhoto)} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+            Save Refund Record
+          </button>
+        ) : (
+          <div className="bg-[#F0F2F4] text-[#8A96A3] text-center py-2.5 rounded-lg text-xs font-semibold">Approve the refund to save</div>
+        )}
+      </div>
+    </div>
   );
 }
