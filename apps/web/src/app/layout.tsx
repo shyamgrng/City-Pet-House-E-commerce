@@ -15,6 +15,7 @@ import { DeliveryProvider } from "@/context/DeliveryContext";
 import { DogBreedProvider } from "@/context/DogBreedContext";
 import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
 import { FaqProvider } from "@/context/FaqContext";
+import { HomeContentProvider } from "@/context/HomeContentContext";
 import { HowToBuyProvider } from "@/context/HowToBuyContext";
 import { LegalProvider } from "@/context/LegalContext";
 import { MicrochipProvider } from "@/context/MicrochipContext";
@@ -73,7 +74,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                                                   <HowToBuyProvider>
                                                     <ContactProvider>
                                                       <TestimonialProvider>
-                                                        <WishlistProvider>{children}</WishlistProvider>
+                                                        <HomeContentProvider>
+                                                          <WishlistProvider>{children}</WishlistProvider>
+                                                        </HomeContentProvider>
                                                       </TestimonialProvider>
                                                     </ContactProvider>
                                                   </HowToBuyProvider>

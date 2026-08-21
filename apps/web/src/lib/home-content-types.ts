@@ -1,0 +1,20 @@
+export type HomeContent = {
+  heroImage: string;
+  heroHeadline: string;
+  heroSubtext: string;
+  banner1Image: string;
+  banner1Text: string;
+  banner2Image: string;
+  banner2Text: string;
+  metaTitle: string;
+  metaDescription: string;
+  categoryImages: Record<string, string>;
+  brandImages: Record<string, string>;
+  hotSaleBannerImage: string;
+  microchipBannerImage: string;
+  microchipBannerText: string;
+  deliveryBannerImage: string;
+  deliveryBannerText: string;
+  groomingBannerImage: string;
+  groomingBannerText: string;
+};

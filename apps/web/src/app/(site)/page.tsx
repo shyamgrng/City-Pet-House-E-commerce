@@ -1,22 +1,23 @@
+"use client";
+
 import Link from "next/link";
 import { Suspense } from "react";
 import AvailablePuppiesRail from "@/components/AvailablePuppiesRail";
 import DealsRail from "@/components/DealsRail";
 import HealthCareRail from "@/components/HealthCareRail";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
 import LatestBlogRail from "@/components/LatestBlogRail";
+import MediaSlot from "@/components/MediaSlot";
 import ProductRail from "@/components/ProductRail";
 import SignInNoticeBanner from "@/components/SignInNoticeBanner";
 import TestimonialsRail from "@/components/TestimonialsRail";
+import { useHomeContent } from "@/context/HomeContentContext";
 import { brands, categories } from "@/lib/home-data";
 
-const heroHeadline = "Pet products, puppies, adoption & vet care";
-const heroSubtext = "Order online, pay by receipt upload — shop, puppies, adoption or vet consults.";
-const microchipBannerText = "Dog & Cat Microchipping — quick, permanent ID for your pet.";
-const groomingBannerText = "Professional dog grooming — book your slot today";
-const deliveryBannerText = "Delivery available across Kathmandu Valley — Kathmandu · Lalitpur · Bhaktapur";
-
 export default function HomePage() {
+  const { content, ready } = useHomeContent();
+  if (!ready) return null;
+  const { heroHeadline, heroSubtext, microchipBannerText, deliveryBannerText, groomingBannerText } = content;
+
   return (
     <div>
       <Suspense fallback={null}>
@@ -26,7 +27,7 @@ export default function HomePage() {
       {/* Hero */}
       <div className="flex flex-col lg:flex-row gap-3.5 px-8 pt-5 pb-2">
         <div className="flex-[2.2] relative h-[300px] rounded-xl overflow-hidden">
-          <ImagePlaceholder label="cover photo — shop & clinic" className="absolute inset-0 w-full h-full" />
+          <MediaSlot src={content.heroImage} label="cover photo — shop & clinic" className="absolute inset-0 w-full h-full" />
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -54,10 +55,20 @@ export default function HomePage() {
         </div>
         <div className="flex-1 flex flex-col gap-3.5">
           <div className="flex-1 relative rounded-xl overflow-hidden">
-            <ImagePlaceholder label="promo — hot sale, shop deals" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={content.banner1Image} label="promo — hot sale, shop deals" className="absolute inset-0 w-full h-full" />
+            {content.banner1Text && (
+              <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                {content.banner1Text}
+              </div>
+            )}
           </div>
           <div className="flex-1 relative rounded-xl overflow-hidden">
-            <ImagePlaceholder label="promo — vet consult booking" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={content.banner2Image} label="promo — vet consult booking" className="absolute inset-0 w-full h-full" />
+            {content.banner2Text && (
+              <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                {content.banner2Text}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -66,7 +77,7 @@ export default function HomePage() {
       <div className="flex flex-wrap gap-3.5 px-8 pt-4 pb-6">
         {categories.map((cat) => (
           <Link key={cat.slug} href={`/pets?species=${encodeURIComponent(cat.name)}`} className="flex-1 min-w-[110px] flex flex-col items-center gap-2 cursor-pointer">
-            <ImagePlaceholder label={cat.name} shape="circle" className="w-[115px] h-[115px]" />
+            <MediaSlot src={content.categoryImages[cat.name]} label={cat.name} shape="circle" className="w-[115px] h-[115px]" />
             <div className="text-xs font-semibold text-[#1A2027]">{cat.name}</div>
           </Link>
         ))}
@@ -84,7 +95,7 @@ export default function HomePage() {
 
         {/* Microchip banner */}
         <div className="mx-8 mb-7 h-[140px] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-8 gap-3">
-          <ImagePlaceholder label="banner — pet microchipping" className="absolute inset-0 w-full h-full" />
+          <MediaSlot src={content.microchipBannerImage} label="banner — pet microchipping" className="absolute inset-0 w-full h-full" />
           <div
             className="relative text-white font-heading font-bold text-[19px]"
             style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
@@ -110,7 +121,7 @@ export default function HomePage() {
 
       {/* Hot Sales Banner */}
       <div className="mx-8 mt-[22px] mb-3.5 h-[110px] rounded-xl overflow-hidden relative">
-        <ImagePlaceholder label="banner" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={content.hotSaleBannerImage} label="banner" className="absolute inset-0 w-full h-full" />
       </div>
 
       {/* Today's Deals */}
@@ -128,7 +139,7 @@ export default function HomePage() {
 
       {/* Delivery banner */}
       <div className="mx-8 mb-8 h-[100px] rounded-xl overflow-hidden relative flex items-center justify-center">
-        <ImagePlaceholder label="delivery banner" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={content.deliveryBannerImage} label="delivery banner" className="absolute inset-0 w-full h-full" />
         <div className="relative flex items-center gap-2.5 text-primary text-sm font-semibold bg-white/85 px-[18px] py-2 rounded-lg">
           🚚 {deliveryBannerText}
         </div>
@@ -142,7 +153,7 @@ export default function HomePage() {
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 px-8 pb-7">
           {brands.map((b) => (
             <Link key={b} href={`/shop?brand=${encodeURIComponent(b)}`} className="flex flex-col items-center gap-2 cursor-pointer">
-              <ImagePlaceholder label={b} shape="circle" className="w-[88px] h-[88px]" />
+              <MediaSlot src={content.brandImages[b]} label={b} shape="circle" className="w-[88px] h-[88px]" />
               <div className="text-[11px] font-semibold text-[#1A2027]">{b}</div>
             </Link>
           ))}
@@ -152,7 +163,7 @@ export default function HomePage() {
 
       {/* Big grooming banner */}
       <div className="mx-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center justify-between px-8">
-        <ImagePlaceholder label="big banner — dog grooming services" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={content.groomingBannerImage} label="big banner — dog grooming services" className="absolute inset-0 w-full h-full" />
         <div
           className="relative text-white font-heading font-bold text-xl"
           style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}

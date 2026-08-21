@@ -179,6 +179,7 @@ export const notifTopCampaigns = [{ name: "July Vaccination Reminder Push", stat
 
 // ---- Pages list ----
 export const pageEditorList = [
+  { title: "Home", desc: "Hero, banners, headline & SEO", href: "/admin/pages/home" },
   { title: "Testimonials", desc: "Customer quotes shown on Home", href: "/admin/pages/testimonials" },
   { title: "Services", desc: "Add, edit & image services shown site-wide", href: "/admin/pages/services" },
   { title: "Blog", desc: "Add, edit & image blog articles", href: "/admin/pages/blog" },
