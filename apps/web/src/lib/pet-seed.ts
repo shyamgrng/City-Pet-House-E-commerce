@@ -17,7 +17,7 @@ const rows: SeedRow[] = [
   ["Betta Fish", "Fish", "Male", "3 months", 600, 200, [], 2, 0],
 ];
 
-export const petSeed: Pet[] = rows.map(([breed, species, sex, age, price, deliveryFee, tags, photos, videos]) => ({
+export const petSeed: Pet[] = rows.map(([breed, species, sex, age, price, deliveryFee, tags, , videos]) => ({
   id: slugify(breed),
   breed,
   species,
@@ -27,6 +27,6 @@ export const petSeed: Pet[] = rows.map(([breed, species, sex, age, price, delive
   deliveryFee,
   tags,
   status: "Available",
-  photos,
+  photo: "",
   videos,
 }));

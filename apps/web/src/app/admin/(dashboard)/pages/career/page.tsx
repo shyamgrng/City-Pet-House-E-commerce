@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import { useCareer } from "@/context/CareerContext";
 
 export default function AdminCareerPagePage() {
-  const { content, setHeadline, setCtaLabel, addJob, updateJob, removeJob } = useCareer();
+  const { content, setHeadline, setCtaLabel, setBannerImage, setTeamPhoto, addJob, updateJob, removeJob } = useCareer();
   const [saved, setSaved] = useState(false);
 
   const update = () => {
@@ -23,8 +24,28 @@ export default function AdminCareerPagePage() {
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-3.5">
         <div className="text-[11px] font-bold text-[#8A96A3] mb-2">BANNER IMAGE</div>
-        <div className="text-[11px] text-[#8A96A3] mb-2">Recommended size: 1600×400px, JPG/WEBP under 500KB.</div>
-        <div className="w-full h-[100px] rounded-lg bg-[#EDEFF1] flex items-center justify-center text-[10px] text-[#8A96A3]">career banner image</div>
+        <ImageUploadField
+          value={content.bannerImage}
+          onChange={setBannerImage}
+          label="career banner image"
+          hint="Recommended size: 1600×400px, JPG/WEBP under 500KB."
+          height="h-[100px]"
+          maxWidth={1600}
+          maxHeight={400}
+        />
+      </div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-3.5">
+        <div className="text-[11px] font-bold text-[#8A96A3] mb-2">TEAM / STORE PHOTO</div>
+        <ImageUploadField
+          value={content.teamPhoto}
+          onChange={setTeamPhoto}
+          label="team / store photo"
+          hint="Recommended size: 700×600px."
+          height="h-[110px]"
+          maxWidth={700}
+          maxHeight={600}
+        />
       </div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-3.5">
@@ -46,8 +67,15 @@ export default function AdminCareerPagePage() {
       {content.jobs.map((job) => (
         <div key={job.id} className="bg-white border border-[#E4E9EC] rounded-[10px] p-4 mb-2.5">
           <div className="flex gap-2.5 mb-2 items-start">
-            <div className="w-14 h-14 rounded-lg bg-[#EDEFF1] flex items-center justify-center text-[8px] text-[#8A96A3] text-center shrink-0">
-              job photo
+            <div className="w-14 shrink-0">
+              <ImageUploadField
+                value={job.photo}
+                onChange={(v) => updateJob(job.id, { photo: v })}
+                label="job photo"
+                height="h-14"
+                maxWidth={600}
+                maxHeight={400}
+              />
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start gap-2 mb-2">

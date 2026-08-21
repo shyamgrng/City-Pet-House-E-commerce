@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import ImagePlaceholder from "./ImagePlaceholder";
+import MediaSlot from "./MediaSlot";
 import { useWishlist } from "@/context/WishlistContext";
 import { badgeColor, formatRs, salePrice, type Product } from "@/lib/catalog-types";
 
@@ -12,7 +12,7 @@ export default function ShopProductCard({ product }: { product: Product }) {
   return (
     <Link href={`/product/${product.id}`} className="block border border-[#E4E9EC] rounded-[10px] overflow-hidden">
       <div className="h-[110px] relative">
-        <ImagePlaceholder label="product photo" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={product.photo} label="product photo" className="absolute inset-0 w-full h-full" />
         {product.badge && (
           <div
             className="absolute top-1.5 left-1.5 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded"

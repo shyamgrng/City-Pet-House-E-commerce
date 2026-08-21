@@ -4,6 +4,7 @@ export const blogSeed: BlogPost[] = [
   {
     id: "spring-alert-is-your-dog-itching-managing-skin-allergies",
     title: "Spring Alert: Is Your Dog Itching? Managing Skin Allergies",
+    photo: "",
     date: "Mar 20, 2026",
     author: "Dr. Sujata Rai",
     isDoctorPost: true,
@@ -14,6 +15,7 @@ export const blogSeed: BlogPost[] = [
   {
     id: "parasite-prevention-5-critical-tips-to-protect-your-pet",
     title: "Parasite Prevention: 5 Critical Tips to Protect Your Pet",
+    photo: "",
     date: "Mar 8, 2026",
     author: "Dr. Bikash Shrestha",
     isDoctorPost: true,
@@ -24,6 +26,7 @@ export const blogSeed: BlogPost[] = [
   {
     id: "first-aid-tips-every-pet-owner-should-know",
     title: "First Aid Tips Every Pet Owner Should Know",
+    photo: "",
     date: "Feb 26, 2026",
     author: "Dr. Anjali Gurung",
     isDoctorPost: true,
@@ -34,6 +37,7 @@ export const blogSeed: BlogPost[] = [
   {
     id: "new-puppy-checklist-vaccination-schedule-what-to-buy",
     title: "New Puppy Checklist: Vaccination Schedule & What to Buy",
+    photo: "",
     date: "Feb 12, 2026",
     author: "City Pet House Team",
     isDoctorPost: false,

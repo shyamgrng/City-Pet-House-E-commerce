@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import { useServices } from "@/context/ServiceContext";
 
 export default function ServiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,7 +29,7 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
       <div className="text-xs text-[#8A96A3] mb-3.5">Home / Services / {service.name}</div>
 
       <div className="h-[260px] rounded-2xl relative overflow-hidden mb-5">
-        <ImagePlaceholder label="service photo" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={service.photo} label="service photo" className="absolute inset-0 w-full h-full" />
       </div>
 
       <div className="font-heading font-bold text-[22px] text-[#1A2027] mb-2.5 leading-tight">{service.seoTitle}</div>

@@ -3,6 +3,7 @@ export type ScheduleRow = { age: string; vaccine: string };
 export type Service = {
   id: string;
   name: string;
+  photo: string;
   desc: string;
   seoTitle: string;
   metaDescription: string;

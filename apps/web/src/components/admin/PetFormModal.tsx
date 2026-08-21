@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import PriceInput from "@/components/PriceInput";
 import { petSpeciesList, type Pet, type PetStatus } from "@/lib/pet-types";
 
@@ -15,7 +16,7 @@ const emptyDraft: Draft = {
   deliveryFee: 0,
   tags: [],
   status: "Available",
-  photos: 0,
+  photo: "",
   videos: 0,
 };
 
@@ -96,16 +97,20 @@ export default function PetFormModal({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 mb-3">
-          <div>
-            <Label>Photos</Label>
-            <Input type="number" value={String(draft.photos)} onChange={(v) => set("photos", Number(v) || 0)} />
-          </div>
-          <div>
-            <Label>Videos</Label>
-            <Input type="number" value={String(draft.videos)} onChange={(v) => set("videos", Number(v) || 0)} />
-          </div>
+        <div className="mb-3">
+          <ImageUploadField
+            value={draft.photo}
+            onChange={(v) => set("photo", v)}
+            label="pet photo"
+            hint="Recommended size: 800×800px (square), JPG/WEBP."
+            height="h-[140px]"
+            maxWidth={800}
+            maxHeight={800}
+          />
         </div>
+        <Label>Video Count</Label>
+        <div className="text-[11px] text-[#8A96A3] mb-1.5">Shown as a 🎥 count on the listing — video files aren&apos;t uploaded/stored.</div>
+        <Input type="number" value={String(draft.videos)} onChange={(v) => set("videos", Number(v) || 0)} />
 
         <Label>Tags</Label>
         <div className="flex gap-2 mb-3 flex-wrap">

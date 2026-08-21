@@ -19,6 +19,7 @@ export default function B2BSupplyPage() {
     addProduct({
       name: sub.name,
       desc: sub.desc,
+      photo: "",
       category: sub.category,
       brand: sub.brand,
       price: sub.price,

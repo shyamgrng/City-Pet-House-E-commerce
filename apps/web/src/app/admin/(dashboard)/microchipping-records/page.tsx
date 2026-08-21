@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
+import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { microchipAddress, useMicrochip } from "@/context/MicrochipContext";
 import { isValidNepalPhone } from "@/lib/phone";
@@ -21,6 +23,7 @@ const EMPTY: McForm = {
   zone: "",
   mapLink: "",
   petName: "",
+  photo: "",
   sex: "Male",
   age: "",
   color: "",
@@ -64,6 +67,7 @@ export default function MicrochippingRecordsPage() {
       zone: m.zone,
       mapLink: m.mapLink,
       petName: m.petName,
+      photo: m.photo,
       sex: m.sex,
       age: m.age,
       color: m.color,
@@ -170,8 +174,15 @@ export default function MicrochippingRecordsPage() {
               <Input value={form.breed} onChange={(v) => setForm((f) => ({ ...f, breed: v }))} placeholder="e.g. Labrador" />
             </Field>
           </div>
-          <div className="w-[200px] h-[100px] mb-3.5 rounded-lg bg-[#EDEFF1] flex items-center justify-center text-[10px] text-[#8A96A3]">
-            Upload photo
+          <div className="w-[200px] mb-3.5">
+            <ImageUploadField
+              value={form.photo}
+              onChange={(v) => setForm((f) => ({ ...f, photo: v }))}
+              label="pet photo"
+              height="h-[100px]"
+              maxWidth={600}
+              maxHeight={600}
+            />
           </div>
           <Field label="Notes">
             <textarea
@@ -260,7 +271,11 @@ export default function MicrochippingRecordsPage() {
         ) : (
           filtered.map((m) => (
             <div key={m.id} className="grid grid-cols-[0.6fr_1.6fr_1.4fr_1.6fr_1.4fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-              <div className="w-9 h-9 rounded-full bg-[#EEF1F3] flex items-center justify-center">🐾</div>
+              {m.photo ? (
+                <MediaSlot src={m.photo} label="pet photo" shape="circle" className="w-9 h-9" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[#EEF1F3] flex items-center justify-center">🐾</div>
+              )}
               <div>
                 <div className="font-bold text-[#7A56C8]">{m.mcNumber}</div>
                 <div className="text-[#8A96A3]">

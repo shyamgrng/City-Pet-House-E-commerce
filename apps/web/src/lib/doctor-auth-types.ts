@@ -6,6 +6,7 @@ export type DoctorAccount = {
   phone: string;
   emergencyPhone: string;
   address: string;
+  photo: string;
 };
 
 export const doctorAccountSeed: DoctorAccount[] = [
@@ -17,6 +18,7 @@ export const doctorAccountSeed: DoctorAccount[] = [
     phone: "+977 9841001042",
     emergencyPhone: "+977 9841009999",
     address: "Baneshwor, Kathmandu",
+    photo: "",
   },
   {
     doctorId: "DR-0876",
@@ -26,6 +28,7 @@ export const doctorAccountSeed: DoctorAccount[] = [
     phone: "+977 9841000876",
     emergencyPhone: "+977 9841008888",
     address: "Patan, Lalitpur",
+    photo: "",
   },
   {
     doctorId: "DR-1213",
@@ -35,5 +38,6 @@ export const doctorAccountSeed: DoctorAccount[] = [
     phone: "+977 9841001213",
     emergencyPhone: "+977 9841007777",
     address: "Boudha, Kathmandu",
+    photo: "",
   },
 ];

@@ -1,6 +1,7 @@
 export type CareerJob = {
   id: string;
   title: string;
+  photo: string;
   tag: string;
   desc: string;
 };
@@ -23,6 +24,8 @@ export type CareerApplication = {
 export type CareerContent = {
   headline: string;
   ctaLabel: string;
+  bannerImage: string;
+  teamPhoto: string;
   jobs: CareerJob[];
 };
 

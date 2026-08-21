@@ -10,7 +10,7 @@ export type Pet = {
   deliveryFee: number;
   tags: string[];
   status: PetStatus;
-  photos: number;
+  photo: string;
   videos: number;
 };
 

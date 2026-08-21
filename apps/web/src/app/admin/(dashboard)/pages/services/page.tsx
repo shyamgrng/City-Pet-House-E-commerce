@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import { useServices } from "@/context/ServiceContext";
 import type { Service } from "@/lib/service-types";
 
@@ -22,6 +23,7 @@ export default function AdminServicesPage() {
   const handleAdd = () => {
     addService({
       name: "New Service",
+      photo: "",
       desc: "Short description",
       seoTitle: "New Service",
       metaDescription: "Short description",
@@ -45,8 +47,15 @@ export default function AdminServicesPage() {
 
       {services.map((svc) => (
         <div key={svc.id} className="bg-white border border-[#E4E9EC] rounded-[10px] p-4 mb-3 flex gap-3.5">
-          <div className="w-[120px] h-[90px] rounded-lg bg-[#EDEFF1] flex items-center justify-center text-[9px] text-[#8A96A3] shrink-0">
-            service photo
+          <div className="w-[120px] shrink-0">
+            <ImageUploadField
+              value={svc.photo}
+              onChange={(v) => patch(svc, { photo: v })}
+              label="service photo"
+              height="h-[90px]"
+              maxWidth={800}
+              maxHeight={450}
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start">

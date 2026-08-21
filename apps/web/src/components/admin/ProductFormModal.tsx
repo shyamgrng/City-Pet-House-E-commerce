@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import PriceInput from "@/components/PriceInput";
 import { brandNames, shopCategories, type Product } from "@/lib/catalog-types";
 
@@ -9,6 +10,7 @@ type Draft = Omit<Product, "id">;
 const emptyDraft: Draft = {
   name: "",
   desc: "",
+  photo: "",
   category: shopCategories[1],
   brand: brandNames[0],
   price: 0,
@@ -40,6 +42,18 @@ export default function ProductFormModal({
         <div className="flex justify-between items-center mb-4">
           <div className="text-[15px] font-bold text-[#1A2027]">{initial ? "Edit Product" : "Add Product"}</div>
           <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">✕</div>
+        </div>
+
+        <div className="mb-3">
+          <ImageUploadField
+            value={draft.photo}
+            onChange={(v) => set("photo", v)}
+            label="product photo"
+            hint="Recommended size: 800×800px (square), JPG/WEBP."
+            height="h-[140px]"
+            maxWidth={800}
+            maxHeight={800}
+          />
         </div>
 
         <Label>Product Name *</Label>

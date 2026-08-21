@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import PriceInput from "@/components/PriceInput";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
 import type { Doctor } from "@/lib/vet-types";
 
 export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | undefined }) {
-  const { doctor, updateAddress, changePassword } = useDoctorAuth();
+  const { doctor, updateAddress, updatePhoto, changePassword } = useDoctorAuth();
   const { setDoctorFee } = useVet();
 
   const [addressEditing, setAddressEditing] = useState(false);
@@ -69,10 +70,15 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
       <div className="flex gap-4 flex-wrap items-start">
         <div className="flex-1 min-w-[280px] border border-[#E4E9EC] rounded-xl p-5">
           <div className="text-[13px] font-bold text-[#1A2027] mb-3.5">Personal &amp; Qualification Details</div>
-          <div className="w-[100px] h-[130px] mb-3.5 rounded-lg bg-[#EDEFF1] flex items-center justify-center text-[9px] text-[#8A96A3] text-center">
-            Passport
-            <br />
-            Photo
+          <div className="w-[100px] mb-3.5">
+            <ImageUploadField
+              value={doctor.photo}
+              onChange={updatePhoto}
+              label="passport photo"
+              height="h-[130px]"
+              maxWidth={400}
+              maxHeight={520}
+            />
           </div>
           <div className="text-base font-bold text-[#1A2027] mb-3">{doctor.name}</div>
 

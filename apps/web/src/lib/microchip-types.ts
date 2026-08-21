@@ -12,6 +12,7 @@ export type MicrochipRecord = {
   zone: string;
   mapLink: string;
   petName: string;
+  photo: string;
   sex: "Male" | "Female";
   age: string;
   color: string;

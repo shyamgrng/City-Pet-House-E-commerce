@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import { usePetTag } from "@/context/PetTagContext";
 import type { PetTag } from "@/lib/pet-tag-types";
 
@@ -62,7 +63,7 @@ function PetTagArchiveContent() {
           <div className="w-full max-w-[520px] -mt-14">
             <div className="bg-white rounded-2xl p-7 text-center mb-5" style={{ boxShadow: "0 12px 30px rgba(0,0,0,0.1)" }}>
               <div className="w-[100px] h-[100px] -mt-[72px] mb-3 mx-auto rounded-full border-[5px] border-white shadow-[0_6px_14px_rgba(0,0,0,0.14)]">
-                <ImagePlaceholder label="🐾" shape="circle" className="w-full h-full" />
+                <MediaSlot src={result.photo} label="🐾" shape="circle" className="w-full h-full" />
               </div>
               <div className="font-heading font-bold text-[22px] text-[#1A2027]">{result.petName}</div>
               <div className="text-[13px] text-[#8A96A3] mt-1">

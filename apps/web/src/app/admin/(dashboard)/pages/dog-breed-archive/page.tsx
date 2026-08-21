@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
+import ImageUploadField from "@/components/admin/ImageUploadField";
+import MediaSlot from "@/components/MediaSlot";
 import { useDogBreeds } from "@/context/DogBreedContext";
 import type { DogBreed } from "@/lib/dog-breed-types";
 
@@ -10,6 +11,7 @@ type BreedForm = Omit<DogBreed, "id">;
 
 const EMPTY: BreedForm = {
   name: "",
+  photo: "",
   origin: "",
   size: "",
   lifespan: "",
@@ -38,6 +40,7 @@ export default function AdminDogBreedArchivePage() {
   const openEdit = (b: DogBreed) => {
     setForm({
       name: b.name,
+      photo: b.photo,
       origin: b.origin,
       size: b.size,
       lifespan: b.lifespan,
@@ -72,8 +75,17 @@ export default function AdminDogBreedArchivePage() {
         <div className="font-heading font-bold text-[17px] text-[#1A2027] mb-4">{editingId ? "Edit Breed" : "Add Breed"}</div>
 
         <div className="bg-white border border-[#E4E9EC] rounded-xl p-5">
-          <Label>Photo (recommended 800×600px, 4:3)</Label>
-          <ImagePlaceholder label="Upload dog photo" className="w-full h-[100px] rounded-lg mb-3.5" />
+          <div className="mb-3.5">
+            <ImageUploadField
+              value={form.photo}
+              onChange={(v) => setForm((f) => ({ ...f, photo: v }))}
+              label="dog photo"
+              hint="Recommended size: 800×600px (4:3)."
+              height="h-[130px]"
+              maxWidth={800}
+              maxHeight={600}
+            />
+          </div>
 
           <Label>Breed Name *</Label>
           <Input value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} />
@@ -171,7 +183,7 @@ export default function AdminDogBreedArchivePage() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
         {breeds.map((b) => (
           <div key={b.id} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden bg-white">
-            <ImagePlaceholder label="dog photo" className="w-full h-[100px]" />
+            <MediaSlot src={b.photo} label="dog photo" className="w-full h-[100px]" />
             <div className="p-3">
               <div className="text-[13px] font-bold text-[#1A2027] mb-0.5">{b.name}</div>
               <div className="text-[11px] text-[#8A96A3] mb-2.5">{b.size}</div>

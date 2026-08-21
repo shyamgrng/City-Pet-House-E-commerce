@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import type { BlogPost } from "@/lib/blog-types";
 
 type Draft = Omit<BlogPost, "id">;
@@ -19,6 +20,7 @@ export default function BlogFormModal({
 }) {
   const emptyDraft: Draft = {
     title: "",
+    photo: "",
     date: "",
     author: lockAuthorAs ?? "City Pet House Team",
     isDoctorPost: !!lockAuthorAs,
@@ -36,6 +38,18 @@ export default function BlogFormModal({
         <div className="flex justify-between items-center mb-4">
           <div className="text-[15px] font-bold text-[#1A2027]">{initial ? "Edit Article" : "New Article"}</div>
           <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">✕</div>
+        </div>
+
+        <div className="mb-3">
+          <ImageUploadField
+            value={draft.photo}
+            onChange={(v) => set("photo", v)}
+            label="cover photo"
+            hint="Recommended size: 1000×560px (16:9)."
+            height="h-[130px]"
+            maxWidth={1000}
+            maxHeight={560}
+          />
         </div>
 
         <Label>Title *</Label>

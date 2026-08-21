@@ -23,6 +23,8 @@ type CareerValue = {
   ready: boolean;
   setHeadline: (headline: string) => void;
   setCtaLabel: (ctaLabel: string) => void;
+  setBannerImage: (bannerImage: string) => void;
+  setTeamPhoto: (teamPhoto: string) => void;
   addJob: () => void;
   updateJob: (id: string, patch: Partial<Omit<CareerJob, "id">>) => void;
   removeJob: (id: string) => void;
@@ -86,10 +88,15 @@ export function CareerProvider({ children }: { children: React.ReactNode }) {
         ready: state.ready,
         setHeadline: (headline) => persistContent({ ...state.content, headline }),
         setCtaLabel: (ctaLabel) => persistContent({ ...state.content, ctaLabel }),
+        setBannerImage: (bannerImage) => persistContent({ ...state.content, bannerImage }),
+        setTeamPhoto: (teamPhoto) => persistContent({ ...state.content, teamPhoto }),
         addJob: () =>
           persistContent({
             ...state.content,
-            jobs: [...state.content.jobs, { id: "job-" + Math.random().toString(36).slice(2, 8), title: "New Position", tag: "Full-time", desc: "Role description" }],
+            jobs: [
+              ...state.content.jobs,
+              { id: "job-" + Math.random().toString(36).slice(2, 8), title: "New Position", photo: "", tag: "Full-time", desc: "Role description" },
+            ],
           }),
         updateJob: (id, patch) => persistContent({ ...state.content, jobs: state.content.jobs.map((j) => (j.id === id ? { ...j, ...patch } : j)) }),
         removeJob: (id) => persistContent({ ...state.content, jobs: state.content.jobs.filter((j) => j.id !== id) }),

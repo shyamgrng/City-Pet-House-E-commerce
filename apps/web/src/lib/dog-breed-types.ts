@@ -1,6 +1,7 @@
 export type DogBreed = {
   id: string;
   name: string;
+  photo: string;
   origin: string;
   size: string;
   lifespan: string;

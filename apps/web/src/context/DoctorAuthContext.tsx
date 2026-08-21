@@ -10,7 +10,7 @@ const RESETS_KEY = "cph_doctor_password_resets";
 const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 
 type Result = { ok: true } | { ok: false; error: string };
-type Overrides = Record<string, Partial<Pick<DoctorAccount, "password" | "address">>>;
+type Overrides = Record<string, Partial<Pick<DoctorAccount, "password" | "address" | "photo">>>;
 type ResetRecord = { code: string; expiresAt: number };
 
 type DoctorAuthValue = {
@@ -19,6 +19,7 @@ type DoctorAuthValue = {
   signIn: (doctorId: string, password: string) => Result;
   signOut: () => void;
   updateAddress: (address: string) => void;
+  updatePhoto: (photo: string) => void;
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (doctorId: string) => Result;
   resetPassword: (doctorId: string, code: string, newPassword: string) => Result;
@@ -71,7 +72,7 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
     setState({ accounts, doctor: loadSession(accounts), ready: true });
   }, []);
 
-  const persistOverride = (doctorId: string, patch: Partial<Pick<DoctorAccount, "password" | "address">>) => {
+  const persistOverride = (doctorId: string, patch: Partial<Pick<DoctorAccount, "password" | "address" | "photo">>) => {
     const overrides = loadOverrides();
     overrides[doctorId] = { ...overrides[doctorId], ...patch };
     window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
@@ -139,9 +140,19 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
     });
   };
 
+  const updatePhoto = (photo: string) => {
+    setState((s) => {
+      if (!s.doctor) return s;
+      persistOverride(s.doctor.doctorId, { photo });
+      const updated = { ...s.doctor, photo };
+      const accounts = s.accounts.map((a) => (a.doctorId === updated.doctorId ? updated : a));
+      return { accounts, doctor: updated, ready: true };
+    });
+  };
+
   return (
     <DoctorAuthContext.Provider
-      value={{ doctor: state.doctor, ready: state.ready, signIn, signOut, updateAddress, changePassword, requestPasswordReset, resetPassword }}
+      value={{ doctor: state.doctor, ready: state.ready, signIn, signOut, updateAddress, updatePhoto, changePassword, requestPasswordReset, resetPassword }}
     >
       {children}
     </DoctorAuthContext.Provider>

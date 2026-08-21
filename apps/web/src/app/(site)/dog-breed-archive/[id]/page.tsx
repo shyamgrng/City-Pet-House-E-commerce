@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import { useDogBreeds } from "@/context/DogBreedContext";
 
 export default function DogBreedDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,7 +30,7 @@ export default function DogBreedDetailPage({ params }: { params: Promise<{ id: s
         ← Back to Dog Breed Archive
       </Link>
       <div className="flex gap-7 flex-wrap">
-        <ImagePlaceholder label="dog photo" className="w-[336px] h-[264px] shrink-0 rounded-xl" />
+        <MediaSlot src={breed.photo} label="dog photo" className="w-[336px] h-[264px] shrink-0 rounded-xl" />
         <div className="flex-1 min-w-[280px]">
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-1">{breed.name}</div>
           <div className="text-[13px] text-[#8A96A3] mb-4">Origin: {breed.origin}</div>

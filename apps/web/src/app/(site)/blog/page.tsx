@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import { useBlog } from "@/context/BlogContext";
 
 export default function BlogPage() {
@@ -17,7 +17,7 @@ export default function BlogPage() {
         {posts.map((post) => (
           <Link key={post.id} href={`/blog/${post.id}`} className="block border border-[#E4E9EC] rounded-xl overflow-hidden cursor-pointer">
             <div className="h-[150px] relative">
-              <ImagePlaceholder label="article photo" className="absolute inset-0 w-full h-full" />
+              <MediaSlot src={post.photo} label="article photo" className="absolute inset-0 w-full h-full" />
             </div>
             <div className="p-4">
               <div className="text-[11px] text-[#8A96A3] mb-1.5">

@@ -66,6 +66,7 @@ export const catalogSeed: Product[] = rows.map(([name, category, price, qty, bad
   id: slugify(name),
   name,
   desc: "",
+  photo: "",
   category,
   brand: brandNames[i % brandNames.length],
   price,

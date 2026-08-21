@@ -1,6 +1,7 @@
 export type BlogPost = {
   id: string;
   title: string;
+  photo: string;
   date: string;
   author: string;
   isDoctorPost: boolean;

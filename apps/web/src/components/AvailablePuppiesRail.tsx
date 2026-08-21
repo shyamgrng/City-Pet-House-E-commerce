@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import ImagePlaceholder from "./ImagePlaceholder";
+import MediaSlot from "./MediaSlot";
 import { usePets } from "@/context/PetContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { formatRs } from "@/lib/pet-types";
@@ -16,7 +16,7 @@ export default function AvailablePuppiesRail() {
       {available.map((p) => (
         <Link key={p.id} href="/pets" className="block border border-[#E4E9EC] rounded-[10px] overflow-hidden">
           <div className="h-[100px] relative">
-            <ImagePlaceholder label="product photo" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={p.photo} label="puppy photo" className="absolute inset-0 w-full h-full" />
             <div className="absolute top-1.5 left-1.5 bg-[#1F7A4D] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
               Available
             </div>

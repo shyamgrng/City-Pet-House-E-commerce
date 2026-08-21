@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import { useServices } from "@/context/ServiceContext";
 
 export default function ServicesPage() {
@@ -18,7 +18,7 @@ export default function ServicesPage() {
         {services.map((svc) => (
           <div key={svc.id} className="border border-[#E4E9EC] rounded-xl overflow-hidden">
             <Link href={`/services/${svc.id}`} className="block h-[190px] relative cursor-pointer">
-              <ImagePlaceholder label="service photo" className="absolute inset-0 w-full h-full" />
+              <MediaSlot src={svc.photo} label="service photo" className="absolute inset-0 w-full h-full" />
             </Link>
             <div className="p-[18px]">
               <Link href={`/services/${svc.id}`} className="block text-base font-bold text-[#1A2027] mb-2 cursor-pointer">

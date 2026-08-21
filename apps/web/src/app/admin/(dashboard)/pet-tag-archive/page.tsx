@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
+import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { usePetTag } from "@/context/PetTagContext";
 import { isValidNepalPhone } from "@/lib/phone";
@@ -8,6 +10,7 @@ import type { PetTag } from "@/lib/pet-tag-types";
 
 type TagForm = {
   petName: string;
+  photo: string;
   age: string;
   sex: "Male" | "Female";
   color: string;
@@ -23,6 +26,7 @@ type TagForm = {
 
 const EMPTY: TagForm = {
   petName: "",
+  photo: "",
   age: "",
   sex: "Male",
   color: "",
@@ -71,6 +75,7 @@ export default function AdminPetTagArchivePage() {
   const openEdit = (p: PetTag) => {
     setForm({
       petName: p.petName,
+      photo: p.photo,
       age: p.age,
       sex: p.sex,
       color: p.color,
@@ -134,8 +139,15 @@ export default function AdminPetTagArchivePage() {
               <Input value={form.microchip} onChange={(v) => setForm((f) => ({ ...f, microchip: v }))} placeholder="15-digit number" />
             </Field>
           </div>
-          <div className="w-[200px] h-[100px] mb-3.5 rounded-lg bg-[#EDEFF1] flex items-center justify-center text-[10px] text-[#8A96A3]">
-            Upload photo
+          <div className="w-[200px] mb-3.5">
+            <ImageUploadField
+              value={form.photo}
+              onChange={(v) => setForm((f) => ({ ...f, photo: v }))}
+              label="pet photo"
+              height="h-[100px]"
+              maxWidth={600}
+              maxHeight={600}
+            />
           </div>
           <Field label="Notes">
             <textarea
@@ -236,7 +248,11 @@ export default function AdminPetTagArchivePage() {
         ) : (
           filtered.map((p) => (
             <div key={p.id} className="grid grid-cols-[0.6fr_1.4fr_1.4fr_1.6fr_0.6fr_0.8fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-              <div className="w-9 h-9 rounded-full bg-[#EEF1F3] flex items-center justify-center">🐾</div>
+              {p.photo ? (
+                <MediaSlot src={p.photo} label="pet photo" shape="circle" className="w-9 h-9" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[#EEF1F3] flex items-center justify-center">🐾</div>
+              )}
               <div>
                 <div className="font-bold text-[#1A2027]">{p.petName}</div>
                 <div className="text-[#8A96A3]">

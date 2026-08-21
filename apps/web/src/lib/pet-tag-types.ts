@@ -2,6 +2,7 @@ export type PetTag = {
   id: string;
   tagId: string;
   petName: string;
+  photo: string;
   sex: "Male" | "Female";
   age: string;
   breed: string;

@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import ShopProductCard from "@/components/ShopProductCard";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
@@ -33,7 +33,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="flex gap-8 px-8 py-7">
         <div className="flex-1">
           <div className="h-[380px] rounded-2xl relative overflow-hidden mb-2.5">
-            <ImagePlaceholder label="product gallery" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={product.photo} label="product gallery" className="absolute inset-0 w-full h-full" />
           </div>
         </div>
         <div className="flex-1 min-w-0">

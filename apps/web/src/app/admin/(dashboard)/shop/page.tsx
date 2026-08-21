@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
+import MediaSlot from "@/components/MediaSlot";
 import { useCatalog } from "@/context/CatalogContext";
 import { formatRs, salePrice, shopCategories, type Product } from "@/lib/catalog-types";
 
@@ -168,7 +169,7 @@ export default function ShopPage() {
                 const status = stockStatus(p);
                 return (
                   <div key={p.id} className="grid grid-cols-[88px_1.6fr_1fr_0.8fr_1fr_0.9fr_0.9fr] px-4 py-2.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-                    <div className="w-[72px] h-[72px] rounded-lg bg-[#EEF1F3]" />
+                    <MediaSlot src={p.photo} label="product photo" className="w-[72px] h-[72px] rounded-lg" />
                     <div>
                       <div className="font-semibold text-[#1A2027]">{p.name}</div>
                     </div>

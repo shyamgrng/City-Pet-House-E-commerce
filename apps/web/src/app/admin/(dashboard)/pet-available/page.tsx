@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
 import AdoptionFormModal from "@/components/admin/AdoptionFormModal";
 import PetFormModal from "@/components/admin/PetFormModal";
+import MediaSlot from "@/components/MediaSlot";
 import { useAdoption } from "@/context/AdoptionContext";
 import { usePets } from "@/context/PetContext";
 import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
@@ -220,7 +220,7 @@ export default function PetAvailablePage() {
                   {items.map((p) => (
                     <div key={p.id} className="border-t-2 rounded-[10px] border border-[#E4E9EC] overflow-hidden" style={{ borderTopColor: c.color }}>
                       <div className="h-[100px] relative">
-                        <ImagePlaceholder label="photo" className="absolute inset-0 w-full h-full" />
+                        <MediaSlot src={p.photo} label="pet photo" className="absolute inset-0 w-full h-full" />
                         <div
                           className="absolute top-1.5 left-1.5 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded"
                           style={{ background: STATUS_COLORS[p.status] }}

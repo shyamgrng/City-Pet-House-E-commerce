@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import { useBlog } from "@/context/BlogContext";
 
 export default function BlogPostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +31,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
       </div>
       <div className="font-heading font-bold text-2xl text-[#1A2027] leading-tight mb-[18px]">{post.title}</div>
       <div className="h-[280px] rounded-xl relative overflow-hidden mb-5">
-        <ImagePlaceholder label="article photo" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={post.photo} label="article photo" className="absolute inset-0 w-full h-full" />
       </div>
       <div className="text-sm text-[#3A4652] leading-loose whitespace-pre-line">{post.content}</div>
     </div>

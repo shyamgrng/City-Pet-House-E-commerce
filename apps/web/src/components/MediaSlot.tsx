@@ -5,15 +5,17 @@ export default function MediaSlot({
   label,
   shape = "rect",
   className = "",
+  striped = false,
 }: {
   src?: string;
   label: string;
   shape?: "rect" | "circle";
   className?: string;
+  striped?: boolean;
 }) {
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URLs, not optimizable by next/image
     return <img src={src} alt={label} className={`object-cover ${shape === "circle" ? "rounded-full" : ""} ${className}`} />;
   }
-  return <ImagePlaceholder label={label} shape={shape} className={className} />;
+  return <ImagePlaceholder label={label} shape={shape} className={className} striped={striped} />;
 }

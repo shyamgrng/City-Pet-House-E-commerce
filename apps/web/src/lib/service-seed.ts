@@ -4,6 +4,7 @@ export const serviceSeed: Service[] = [
   {
     id: "dog-cat-microchipping",
     name: "Dog & Cat Microchipping",
+    photo: "",
     desc: "Quick, permanent ID for your pet's safety.",
     seoTitle: "Dog & Cat Microchipping in Kathmandu — Safe, Permanent Pet ID",
     metaDescription: "Quick, permanent ID for your pet's safety.",
@@ -21,6 +22,7 @@ export const serviceSeed: Service[] = [
   {
     id: "dog-cat-vaccination",
     name: "Dog & Cat Vaccination",
+    photo: "",
     desc: "Routine shots to protect against serious illness.",
     seoTitle: "Dog & Cat Vaccination in Kathmandu — Protect Your Pet from Day One",
     metaDescription: "Routine shots to protect against serious illness.",
@@ -44,6 +46,7 @@ export const serviceSeed: Service[] = [
   {
     id: "pet-grooming",
     name: "Pet Grooming",
+    photo: "",
     desc: "Bathing, trimming and coat care.",
     seoTitle: "Pet Grooming in Kathmandu — Bath, Trim & Coat Care",
     metaDescription: "Bathing, trimming and coat care.",
@@ -61,6 +64,7 @@ export const serviceSeed: Service[] = [
   {
     id: "surgery",
     name: "Surgery",
+    photo: "",
     desc: "Safe, professional veterinary surgery.",
     seoTitle: "Pet Surgery in Kathmandu — Safe, Monitored Veterinary Care",
     metaDescription: "Safe, professional veterinary surgery.",
@@ -78,6 +82,7 @@ export const serviceSeed: Service[] = [
   {
     id: "puppies-buying-selling",
     name: "Puppies Buying & Selling",
+    photo: "",
     desc: "Browse verified breeds available now.",
     seoTitle: "Buy Puppies in Kathmandu — Verified, Vaccinated Breeds",
     metaDescription: "Browse verified breeds available now.",
@@ -95,6 +100,7 @@ export const serviceSeed: Service[] = [
   {
     id: "clinical-treatment",
     name: "Clinical Treatment",
+    photo: "",
     desc: "Diagnosis and treatment at the clinic.",
     seoTitle: "Pet Clinical Treatment in Kathmandu — Diagnosis & Care",
     metaDescription: "Diagnosis and treatment at the clinic.",
@@ -112,6 +118,7 @@ export const serviceSeed: Service[] = [
   {
     id: "home-treatment",
     name: "Home Treatment",
+    photo: "",
     desc: "We come to you for a calmer visit.",
     seoTitle: "Home Visit Vet Service in Kathmandu Valley",
     metaDescription: "We come to you for a calmer visit.",
@@ -129,6 +136,7 @@ export const serviceSeed: Service[] = [
   {
     id: "lab-test",
     name: "Lab Test",
+    photo: "",
     desc: "Blood, urine and other diagnostic tests.",
     seoTitle: "Pet Lab Tests in Kathmandu — Blood, Urine & Diagnostic Panels",
     metaDescription: "Blood, urine and other diagnostic tests.",

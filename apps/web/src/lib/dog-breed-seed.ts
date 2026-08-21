@@ -4,6 +4,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-labrador",
     name: "Labrador Retriever",
+    photo: "",
     origin: "United Kingdom",
     size: "Large",
     lifespan: "10–12 years",
@@ -18,6 +19,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-gsd",
     name: "German Shepherd",
+    photo: "",
     origin: "Germany",
     size: "Large",
     lifespan: "9–13 years",
@@ -32,6 +34,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-golden",
     name: "Golden Retriever",
+    photo: "",
     origin: "Scotland",
     size: "Large",
     lifespan: "10–12 years",
@@ -46,6 +49,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-pomeranian",
     name: "Pomeranian",
+    photo: "",
     origin: "Germany/Poland",
     size: "Small (toy)",
     lifespan: "12–16 years",
@@ -60,6 +64,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-lhasa",
     name: "Lhasa Apso",
+    photo: "",
     origin: "Tibet",
     size: "Small",
     lifespan: "12–15 years",
@@ -74,6 +79,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-pug",
     name: "Pug",
+    photo: "",
     origin: "China",
     size: "Small",
     lifespan: "12–15 years",
@@ -88,6 +94,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-rottweiler",
     name: "Rottweiler",
+    photo: "",
     origin: "Germany",
     size: "Large",
     lifespan: "9–10 years",
@@ -102,6 +109,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-husky",
     name: "Siberian Husky",
+    photo: "",
     origin: "Siberia, Russia",
     size: "Medium to large",
     lifespan: "12–14 years",
@@ -116,6 +124,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-beagle",
     name: "Beagle",
+    photo: "",
     origin: "United Kingdom",
     size: "Small to medium",
     lifespan: "12–15 years",
@@ -130,6 +139,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-dachshund",
     name: "Dachshund",
+    photo: "",
     origin: "Germany",
     size: "Small",
     lifespan: "12–16 years",
@@ -144,6 +154,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-bhotekukur",
     name: "Himalayan Sheepdog (Bhote Kukur)",
+    photo: "",
     origin: "Nepal",
     size: "Large",
     lifespan: "10–12 years",
@@ -158,6 +169,7 @@ export const dogBreedSeed: DogBreed[] = [
   {
     id: "breed-chowchow",
     name: "Chow Chow",
+    photo: "",
     origin: "China",
     size: "Medium to large",
     lifespan: "9–15 years",
