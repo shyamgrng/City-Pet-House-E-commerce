@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -10,6 +10,7 @@ import { useOrder } from "@/context/OrderContext";
 import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import type { CartItem } from "@/lib/cart-types";
+import { resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
 const DELIVERY_FEE = 100;
@@ -101,8 +102,24 @@ function CheckoutSection({
   const router = useRouter();
   const [address, setAddress] = useState(user.address);
   const [phone, setPhone] = useState(user.phone);
-  const [uploaded, setUploaded] = useState(false);
+  const [receiptPhoto, setReceiptPhoto] = useState("");
   const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file.");
+      return;
+    }
+    try {
+      const dataUrl = await resizeImageFile(file, 1000, 1400);
+      setReceiptPhoto(dataUrl);
+    } catch {
+      setError("Could not process that image — try a different file.");
+    }
+  };
 
   const submit = () => {
     if (items.length === 0) {
@@ -117,7 +134,7 @@ function CheckoutSection({
       setError("Enter a valid 10-digit phone number.");
       return;
     }
-    if (!uploaded) {
+    if (!receiptPhoto) {
       setError("Please upload your payment receipt to continue.");
       return;
     }
@@ -131,6 +148,7 @@ function CheckoutSection({
       subtotal,
       deliveryFee: DELIVERY_FEE,
       total,
+      receiptPhoto,
     });
     clear();
     router.push(`/order/${id}`);
@@ -181,13 +199,23 @@ function CheckoutSection({
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
           Upload Payment Receipt <span className="text-[#D64545]">*</span>
         </div>
-        <button
-          onClick={() => setUploaded(true)}
-          className="w-full h-[120px] mb-1 rounded-lg border-2 border-dashed border-[#C7DCE6] bg-white flex items-center justify-center text-xs cursor-pointer"
-          style={{ color: uploaded ? "#1F7A4D" : "#8A96A3" }}
-        >
-          {uploaded ? "✓ receipt-screenshot.png uploaded" : "Drop your payment receipt screenshot"}
-        </button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+        {receiptPhoto ? (
+          <div className="mb-1">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={receiptPhoto} alt="payment receipt" className="w-full max-h-[220px] object-contain rounded-lg border border-[#C7DCE6] bg-white mb-2" />
+            <button onClick={() => fileRef.current?.click()} className="text-xs font-semibold text-primary cursor-pointer">
+              Replace
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="w-full h-[120px] mb-1 rounded-lg border-2 border-dashed border-[#C7DCE6] bg-white flex items-center justify-center text-xs text-[#8A96A3] cursor-pointer"
+          >
+            Drop your payment receipt screenshot
+          </button>
+        )}
       </div>
 
       {error && <div className="text-xs text-[#D64545] mb-3">{error}</div>}

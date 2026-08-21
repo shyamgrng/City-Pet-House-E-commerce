@@ -8,6 +8,7 @@ import { useDelivery } from "@/context/DeliveryContext";
 import { useOrder } from "@/context/OrderContext";
 import { STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
 import type { Order } from "@/lib/order-types";
+import MediaSlot from "@/components/MediaSlot";
 
 const deliveryTabDefs = [
   { key: "payments", label: "Payment Queue", badgeColor: "#D64545" },
@@ -46,6 +47,7 @@ function buildActivityLog(orders: Order[], deliveries: Delivery[]): ActivityEntr
 export default function DeliveriesPage() {
   const [tab, setTab] = useState("payments");
   const [typeFilter, setTypeFilter] = useState("All");
+  const [receiptOrderId, setReceiptOrderId] = useState<string | null>(null);
   const { deliveries, assignCourier, addDelivery } = useDelivery();
   const { orders, approveOrder, rejectOrder, markOnTheWay } = useOrder();
   const { products, updateProduct } = useCatalog();
@@ -127,6 +129,8 @@ export default function DeliveriesPage() {
     markOnTheWay(id);
   };
 
+  const receiptOrder = orders.find((o) => o.id === receiptOrderId) ?? null;
+
   return (
     <div>
       <div className="flex gap-2 mb-5 flex-wrap">
@@ -161,7 +165,7 @@ export default function DeliveriesPage() {
           ) : (
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
               {paymentQueue.map((o) => (
-                <PaymentQueueRow key={o.id} order={o} onApprove={approve} onReject={rejectOrder} />
+                <PaymentQueueRow key={o.id} order={o} onApprove={approve} onReject={rejectOrder} onViewReceipt={() => setReceiptOrderId(o.id)} />
               ))}
             </div>
           )}
@@ -366,6 +370,21 @@ export default function DeliveriesPage() {
           </Table>
         </Section>
       )}
+
+      {receiptOrder && (
+        <PaymentReceiptModal
+          order={receiptOrder}
+          onClose={() => setReceiptOrderId(null)}
+          onApprove={() => {
+            approve(receiptOrder);
+            setReceiptOrderId(null);
+          }}
+          onReject={(reason) => {
+            rejectOrder(receiptOrder.id, reason);
+            setReceiptOrderId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -425,7 +444,17 @@ function EmptyRow({ show }: { show: boolean }) {
   return <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">Nothing here yet</div>;
 }
 
-function PaymentQueueRow({ order, onApprove, onReject }: { order: Order; onApprove: (order: Order) => void; onReject: (id: string, reason: string) => void }) {
+function PaymentQueueRow({
+  order,
+  onApprove,
+  onReject,
+  onViewReceipt,
+}: {
+  order: Order;
+  onApprove: (order: Order) => void;
+  onReject: (id: string, reason: string) => void;
+  onViewReceipt: () => void;
+}) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const fmtTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -437,7 +466,9 @@ function PaymentQueueRow({ order, onApprove, onReject }: { order: Order; onAppro
         <div>{order.ownerName}</div>
         <div className="font-semibold">Rs. {order.total.toLocaleString("en-IN")}</div>
         <div className="text-[11px] text-[#5B6773]">{fmtTime(order.createdAt)}</div>
-        <div className="w-9 h-9 border border-dashed border-[#C7CDD3] rounded-md flex items-center justify-center text-[#8A96A3]">📄</div>
+        <button onClick={onViewReceipt} className="w-9 h-9 rounded-md overflow-hidden border border-[#E4E9EC] cursor-pointer relative">
+          <MediaSlot src={order.receiptPhoto} label="receipt" className="absolute inset-0 w-full h-full" />
+        </button>
         <div className="flex gap-2">
           <ActionBtn color="#1F7A4D" onClick={() => onApprove(order)}>
             Approve
@@ -520,6 +551,77 @@ function DispatchCard({ delivery, onDispatch }: { delivery: Delivery; onDispatch
       >
         Mark Dispatched
       </button>
+    </div>
+  );
+}
+
+function PaymentReceiptModal({
+  order,
+  onClose,
+  onApprove,
+  onReject,
+}: {
+  order: Order;
+  onClose: () => void;
+  onApprove: () => void;
+  onReject: (reason: string) => void;
+}) {
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState("");
+  const fmtTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+  return (
+    <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-[420px] max-h-[88vh] overflow-auto">
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-[15px] font-bold text-[#1A2027]">Payment Receipt — {order.id}</div>
+          <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">✕</div>
+        </div>
+
+        <div className="h-[280px] mb-4 rounded-lg overflow-hidden bg-[#F7F9FA] border border-dashed border-[#C7CDD3] flex items-center justify-center">
+          {order.receiptPhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={order.receiptPhoto} alt="payment receipt" className="w-full h-full object-contain" />
+          ) : (
+            <span className="text-xs text-[#8A96A3]">No screenshot uploaded</span>
+          )}
+        </div>
+
+        <div className="text-[13px] text-[#1A2027] mb-1">
+          {order.ownerName} · Rs. {order.total.toLocaleString("en-IN")}
+        </div>
+        <div className="text-xs text-[#8A96A3] mb-4">Submitted {fmtTime(order.createdAt)}</div>
+
+        {!rejecting ? (
+          <div className="flex gap-2.5">
+            <button onClick={onApprove} className="flex-1 text-center bg-[#1F7A4D] text-white py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer">
+              Approve
+            </button>
+            <button
+              onClick={() => setRejecting(true)}
+              className="bg-[#FCEAEA] text-[#D64545] px-[18px] py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer"
+            >
+              Reject
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Reason for rejection"
+              className="flex-1 px-2.5 py-2 rounded-lg border border-[#E4E9EC] text-xs box-border"
+            />
+            <button
+              onClick={() => reason.trim() && onReject(reason.trim())}
+              disabled={!reason.trim()}
+              className="bg-[#D64545] text-white px-3.5 py-2 rounded-md text-[11px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Confirm Reject
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

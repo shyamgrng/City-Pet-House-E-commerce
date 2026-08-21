@@ -21,6 +21,7 @@ export type Order = {
   deliveryFee: number;
   total: number;
   status: OrderStatus;
+  receiptPhoto: string;
   rejectReason?: string;
   createdAt: number;
   approvedAt?: number;

@@ -18,6 +18,7 @@ type PlaceOrderInput = {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  receiptPhoto: string;
 };
 
 type OrderValue = {

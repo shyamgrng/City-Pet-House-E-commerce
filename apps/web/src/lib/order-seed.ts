@@ -26,6 +26,7 @@ export const orderSeed: Order[] = [
     deliveryFee: 100,
     total: focusPuppyFood.price + 100,
     status: "Receipt Uploaded",
+    receiptPhoto: "",
     createdAt: Date.now() - 3 * 60 * 60 * 1000,
   },
   {
@@ -43,6 +44,7 @@ export const orderSeed: Order[] = [
     deliveryFee: 100,
     total: nefrotec.price * 2 + litter.price + 100,
     status: "Receipt Uploaded",
+    receiptPhoto: "",
     createdAt: Date.now() - 20 * 60 * 60 * 1000,
   },
   {
@@ -57,6 +59,7 @@ export const orderSeed: Order[] = [
     deliveryFee: 100,
     total: collar.price + 100,
     status: "Payment Rejected",
+    receiptPhoto: "",
     rejectReason: "Receipt unreadable — please re-upload a clear screenshot",
     createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
   },
@@ -72,6 +75,7 @@ export const orderSeed: Order[] = [
     deliveryFee: 100,
     total: leash.price + 100,
     status: "Delivered",
+    receiptPhoto: "",
     createdAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
     approvedAt: Date.now() - 14 * 24 * 60 * 60 * 1000,
     deliveredAt: Date.now() - 12 * 24 * 60 * 60 * 1000,
