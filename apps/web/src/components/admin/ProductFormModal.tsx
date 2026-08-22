@@ -165,10 +165,16 @@ function Input({ value, onChange, type = "text" }: { value: string; onChange: (v
 
 function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] mb-1 last:border-0">
+    <div
+      onClick={() => onChange(!checked)}
+      className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] mb-1 last:border-0 cursor-pointer"
+    >
       <span className="text-[13px] text-[#1A2027]">{label}</span>
       <button
-        onClick={() => onChange(!checked)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onChange(!checked);
+        }}
         className="w-10 h-6 rounded-full relative cursor-pointer transition-colors shrink-0"
         style={{ background: checked ? "#25D366" : "#D8DCE0" }}
       >
