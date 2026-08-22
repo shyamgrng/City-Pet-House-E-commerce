@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import EmailInput from "@/components/EmailInput";
 import PhoneInput from "@/components/PhoneInput";
@@ -30,6 +30,9 @@ function SigninInner() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const redirectTo = searchParams.get("redirect") || "/account";
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => setError(""), [name, sex, dob, phone, regEmail, address, regPassword, confirmPassword, email, password]);
 
   const submit = () => {
     setError("");
