@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import MediaSlot from "@/components/MediaSlot";
 import { usePetTag } from "@/context/PetTagContext";
+import { displayAge } from "@/lib/pet-age";
 import type { PetTag } from "@/lib/pet-tag-types";
 
 export default function PetTagArchivePage() {
@@ -26,6 +27,9 @@ function PetTagArchiveContent() {
     fromScan: false,
   });
   const autoScanned = useRef(false);
+  const qrInputRef = useRef<HTMLInputElement>(null);
+  const [qrError, setQrError] = useState("");
+  const [decoding, setDecoding] = useState(false);
 
   useEffect(() => {
     if (autoScanned.current) return;
@@ -43,10 +47,48 @@ function PetTagArchiveContent() {
 
   const { query, submitted, result, fromScan } = lookup;
 
-  const submit = () => {
-    const found = lookupTag(query);
+  const lookupValue = (value: string) => {
+    const found = lookupTag(value);
     if (found) recordScan(found.id);
     setLookup((s) => ({ ...s, submitted: true, result: found }));
+  };
+
+  const submit = () => lookupValue(query);
+
+  const handleQrFile = async (file: File | undefined) => {
+    if (!file) return;
+    setQrError("");
+    setDecoding(true);
+    try {
+      const jsQR = (await import("jsqr")).default;
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("no canvas context");
+      ctx.drawImage(bitmap, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (!code || !code.data) {
+        setQrError("Couldn't read a QR code in that image — try a clearer photo.");
+        setDecoding(false);
+        return;
+      }
+      let tagValue = code.data;
+      try {
+        const u = new URL(code.data);
+        tagValue = u.searchParams.get("tag") || code.data;
+      } catch {
+        // not a URL — use the raw decoded value as the tag code
+      }
+      setLookup((s) => ({ ...s, query: tagValue }));
+      lookupValue(tagValue);
+    } catch {
+      setQrError("Couldn't process that image — try a different file.");
+    } finally {
+      setDecoding(false);
+    }
   };
 
   if (result) {
@@ -67,7 +109,7 @@ function PetTagArchiveContent() {
               </div>
               <div className="font-heading font-bold text-[22px] text-[#1A2027]">{result.petName}</div>
               <div className="text-[13px] text-[#8A96A3] mt-1">
-                {result.breed} · {result.color} · {result.sex}, {result.age}
+                {result.breed} · {result.color} · {result.sex}, {displayAge(result)}
               </div>
               {result.microchip && (
                 <div className="inline-block mt-3 bg-[#F0F2F4] rounded-full px-3.5 py-1.5 text-xs text-[#5B6773]">Microchip: {result.microchip}</div>
@@ -152,13 +194,33 @@ function PetTagArchiveContent() {
               ) : (
                 <>
                   <input
+                    ref={qrInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={(e) => {
+                      handleQrFile(e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => qrInputRef.current?.click()}
+                    disabled={decoding}
+                    className="w-full flex items-center justify-center gap-2 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer mb-2.5 disabled:opacity-60"
+                  >
+                    📷 {decoding ? "Reading QR code…" : "Upload QR Image"}
+                  </button>
+                  {qrError && <div className="text-xs text-[#D64545] mb-2.5">{qrError}</div>}
+                  <div className="text-[11px] text-[#8A96A3] text-center mb-2.5">— or —</div>
+                  <input
                     value={query}
                     onChange={(e) => setLookup((s) => ({ ...s, query: e.target.value }))}
                     onKeyDown={(e) => e.key === "Enter" && submit()}
                     placeholder="Tag code or pet name"
                     className="w-full box-border px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5"
                   />
-                  <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer mb-2.5">
+                  <button onClick={submit} className="w-full bg-white border border-primary text-primary text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer mb-2.5">
                     Search
                   </button>
                 </>

@@ -5,13 +5,16 @@ import ImageUploadField from "@/components/admin/ImageUploadField";
 import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { usePetTag } from "@/context/PetTagContext";
+import { displayAge } from "@/lib/pet-age";
 import { isValidNepalPhone } from "@/lib/phone";
 import type { PetTag } from "@/lib/pet-tag-types";
 
 type TagForm = {
   petName: string;
   photo: string;
-  age: string;
+  ageYears: number;
+  ageMonths: number;
+  registeredDate: string;
   sex: "Male" | "Female";
   color: string;
   breed: string;
@@ -27,7 +30,9 @@ type TagForm = {
 const EMPTY: TagForm = {
   petName: "",
   photo: "",
-  age: "",
+  ageYears: 0,
+  ageMonths: 0,
+  registeredDate: new Date().toISOString().slice(0, 10),
   sex: "Male",
   color: "",
   breed: "",
@@ -76,7 +81,9 @@ export default function AdminPetTagArchivePage() {
     setForm({
       petName: p.petName,
       photo: p.photo,
-      age: p.age,
+      ageYears: p.ageYears,
+      ageMonths: p.ageMonths,
+      registeredDate: p.registeredDate,
       sex: p.sex,
       color: p.color,
       breed: p.breed,
@@ -112,11 +119,6 @@ export default function AdminPetTagArchivePage() {
             <Field label="Pet Name *">
               <Input value={form.petName} onChange={(v) => setForm((f) => ({ ...f, petName: v }))} placeholder="e.g. Buddy" />
             </Field>
-            <Field label="Age">
-              <Input value={form.age} onChange={(v) => setForm((f) => ({ ...f, age: v }))} placeholder="e.g. 4 months" />
-            </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-4 mb-3.5">
             <Field label="Sex">
               <select
                 value={form.sex}
@@ -127,14 +129,48 @@ export default function AdminPetTagArchivePage() {
                 <option>Female</option>
               </select>
             </Field>
+          </div>
+          <div className="grid grid-cols-3 gap-4 mb-3.5">
+            <Field label="Age (years)">
+              <input
+                type="number"
+                min={0}
+                value={form.ageYears}
+                onChange={(e) => setForm((f) => ({ ...f, ageYears: Math.max(0, Number(e.target.value) || 0) }))}
+                className="w-full box-border px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px]"
+              />
+            </Field>
+            <Field label="Age (months)">
+              <input
+                type="number"
+                min={0}
+                max={11}
+                value={form.ageMonths}
+                onChange={(e) => setForm((f) => ({ ...f, ageMonths: Math.min(11, Math.max(0, Number(e.target.value) || 0)) }))}
+                className="w-full box-border px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px]"
+              />
+            </Field>
+            <Field label="As of Date *">
+              <input
+                type="date"
+                value={form.registeredDate}
+                onChange={(e) => setForm((f) => ({ ...f, registeredDate: e.target.value }))}
+                className="w-full box-border px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px]"
+              />
+            </Field>
+          </div>
+          <div className="text-[11px] text-[#8A96A3] -mt-2 mb-3.5">
+            Age shown on the archive is calculated automatically from here going forward — it will keep updating as time passes instead of staying fixed.
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-3.5">
             <Field label="Color">
               <Input value={form.color} onChange={(v) => setForm((f) => ({ ...f, color: v }))} placeholder="e.g. Golden" />
             </Field>
-          </div>
-          <div className="grid grid-cols-2 gap-4 mb-3.5">
             <Field label="Breed">
               <Input value={form.breed} onChange={(v) => setForm((f) => ({ ...f, breed: v }))} placeholder="e.g. Labrador" />
             </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-4 mb-3.5">
             <Field label="Microchip No.">
               <Input value={form.microchip} onChange={(v) => setForm((f) => ({ ...f, microchip: v }))} placeholder="15-digit number" />
             </Field>
@@ -256,7 +292,7 @@ export default function AdminPetTagArchivePage() {
               <div>
                 <div className="font-bold text-[#1A2027]">{p.petName}</div>
                 <div className="text-[#8A96A3]">
-                  {p.sex} · {p.age}
+                  {p.sex} · {displayAge(p)}
                 </div>
                 <div className="text-primary font-semibold">{p.tagId}</div>
               </div>

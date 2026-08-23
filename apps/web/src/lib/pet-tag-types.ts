@@ -4,7 +4,9 @@ export type PetTag = {
   petName: string;
   photo: string;
   sex: "Male" | "Female";
-  age: string;
+  ageYears: number;
+  ageMonths: number;
+  registeredDate: string;
   breed: string;
   color: string;
   microchip: string;

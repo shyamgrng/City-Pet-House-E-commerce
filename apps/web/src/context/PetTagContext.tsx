@@ -7,6 +7,30 @@ import type { PetTag, PetTagPageContent } from "@/lib/pet-tag-types";
 const TAGS_KEY = "cph_pet_tags";
 const CONTENT_KEY = "cph_pet_tag_content";
 
+// Backfills fields introduced after this record may have been saved to localStorage by an
+// older build, so previously-saved pet tags don't crash the new age-calculation UI.
+function normalizeTag(t: Partial<PetTag> & Pick<PetTag, "id" | "tagId">): PetTag {
+  return {
+    petName: "",
+    photo: "",
+    sex: "Male",
+    ageYears: 0,
+    ageMonths: 0,
+    registeredDate: new Date().toISOString().slice(0, 10),
+    breed: "",
+    color: "",
+    microchip: "",
+    notes: "",
+    ownerName: "",
+    phone: "",
+    altPhone: "",
+    address: "",
+    mapLink: "",
+    scans: 0,
+    ...t,
+  };
+}
+
 type PetTagValue = {
   tags: PetTag[];
   content: PetTagPageContent;
@@ -32,7 +56,7 @@ function loadTags(): PetTag[] {
   if (!raw) return petTagSeed;
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : petTagSeed;
+    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizeTag) : petTagSeed;
   } catch {
     return petTagSeed;
   }
