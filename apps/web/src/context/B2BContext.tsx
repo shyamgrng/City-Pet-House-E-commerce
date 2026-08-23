@@ -16,12 +16,44 @@ type B2BValue = {
 
 const B2BContext = createContext<B2BValue | null>(null);
 
+// Backfills fields introduced after this record may have been saved to localStorage by an
+// older build, so previously-saved submissions don't crash the new field-reading UI.
+function normalizeSubmission(s: Partial<B2BProductSubmission> & { id: string; name: string }): B2BProductSubmission {
+  return {
+    b2bId: "",
+    companyName: "",
+    desc: "",
+    photos: [],
+    category: "",
+    sku: "",
+    brand: "",
+    price: 0,
+    qty: 0,
+    lowStockAlert: 5,
+    sizes: [],
+    colours: [],
+    courierPackageSize: "Medium",
+    tags: [],
+    newArrival: false,
+    hotSale: false,
+    hotDiscount: 0,
+    todaysDeal: false,
+    dealStart: "",
+    dealEnd: "",
+    outOfStock: false,
+    commissionPct: 0,
+    status: "Pending",
+    submittedAt: Date.now(),
+    ...s,
+  };
+}
+
 function loadStored(): B2BProductSubmission[] {
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return b2bSubmissionSeed;
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : b2bSubmissionSeed;
+    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizeSubmission) : b2bSubmissionSeed;
   } catch {
     return b2bSubmissionSeed;
   }

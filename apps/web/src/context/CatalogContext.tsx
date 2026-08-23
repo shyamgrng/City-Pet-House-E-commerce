@@ -17,12 +17,44 @@ type CatalogValue = {
 
 const CatalogContext = createContext<CatalogValue | null>(null);
 
+// Backfills fields introduced after this record may have been saved to localStorage by an
+// older build, so previously-saved catalogs don't crash the new field-reading UI.
+function normalizeProduct(p: Partial<Product> & { id: string; name: string }): Product {
+  return {
+    desc: "",
+    photo: "",
+    photos: [],
+    category: "",
+    sku: "",
+    brand: "",
+    price: 0,
+    costPrice: 0,
+    qty: 0,
+    lowStockAlert: 5,
+    sizes: [],
+    colours: [],
+    suppliedBy: "",
+    commissionPercent: 0,
+    courierPackageSize: "Medium",
+    tags: [],
+    newArrival: false,
+    hotSale: false,
+    hotDiscount: 0,
+    todaysDeal: false,
+    dealStart: "",
+    dealEnd: "",
+    outOfStock: false,
+    status: "active",
+    ...p,
+  };
+}
+
 function loadStored(): Product[] {
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return catalogSeed;
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : catalogSeed;
+    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizeProduct) : catalogSeed;
   } catch {
     return catalogSeed;
   }
