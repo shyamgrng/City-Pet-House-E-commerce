@@ -12,9 +12,6 @@ export default function AboutPage() {
   return (
     <div>
       <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-8 pt-11 pb-9">
-        <Link href="/" className="text-[13px] text-primary font-semibold mb-4 inline-block">
-          ← Back to Home
-        </Link>
         <div className="text-xs font-bold tracking-[1.5px] text-primary mb-2.5">ABOUT US</div>
         <div className="font-heading font-bold text-[30px] text-[#1A2027]">City Pet House &amp; Animal Clinic</div>
       </div>
