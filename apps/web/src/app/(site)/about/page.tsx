@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import { useAbout } from "@/context/AboutContext";
 
 export default function AboutPage() {
@@ -27,7 +27,7 @@ export default function AboutPage() {
         <div className="flex flex-col gap-4 mb-9">
           {content.whyChoose.map((w) => (
             <div key={w.id} className="flex gap-3.5 items-start">
-              <ImagePlaceholder label="icon" shape="circle" className="w-10 h-10 shrink-0" />
+              <MediaSlot src={w.icon} label="icon" shape="circle" className="w-10 h-10 shrink-0" />
               <div className="text-sm text-[#3A4652] leading-[1.7]">
                 <strong className="text-[#1A2027]">{w.title}</strong> – {w.desc}
               </div>

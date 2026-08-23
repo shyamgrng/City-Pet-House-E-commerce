@@ -53,7 +53,7 @@ export function AboutProvider({ children }: { children: React.ReactNode }) {
         addWhyChoose: () =>
           persist({
             ...state.content,
-            whyChoose: [...state.content.whyChoose, { id: "why-" + Math.random().toString(36).slice(2, 8), title: "", desc: "" }],
+            whyChoose: [...state.content.whyChoose, { id: "why-" + Math.random().toString(36).slice(2, 8), title: "", desc: "", icon: "" }],
           }),
         updateWhyChoose: (id, patch) =>
           persist({ ...state.content, whyChoose: state.content.whyChoose.map((w) => (w.id === id ? { ...w, ...patch } : w)) }),

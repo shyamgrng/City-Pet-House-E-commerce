@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import { useAbout } from "@/context/AboutContext";
 
 export default function AdminAboutPage() {
@@ -35,8 +36,17 @@ export default function AdminAboutPage() {
       {content.whyChoose.map((w) => (
         <div key={w.id} className="bg-white border border-[#E4E9EC] rounded-[10px] p-4 mb-2.5">
           <div className="flex gap-2.5 mb-2">
-            <div className="w-12 h-12 rounded-lg bg-[#EDEFF1] flex items-center justify-center text-[8px] text-[#8A96A3] text-center shrink-0">
-              icon
+            <div className="w-20 shrink-0">
+              <ImageUploadField
+                value={w.icon || ""}
+                onChange={(v) => updateWhyChoose(w.id, { icon: v })}
+                label="icon"
+                shape="rect"
+                height="h-12"
+                maxWidth={200}
+                maxHeight={200}
+              />
+              <div className="text-[9px] text-[#8A96A3] mt-1 text-center">96×96px</div>
             </div>
             <input
               value={w.title}
