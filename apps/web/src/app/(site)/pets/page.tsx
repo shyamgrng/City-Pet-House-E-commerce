@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, type WheelEvent } from "react";
 import MediaSlot from "@/components/MediaSlot";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -32,6 +32,8 @@ function PetsAvailableContent() {
   });
   const [selected, setSelected] = useState<Pet | null>(null);
   const [activePhoto, setActivePhoto] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
 
   const available = pets.filter((p) => p.status === "Available");
   const filtered = species === "All" ? available : available.filter((p) => p.species === species);
@@ -41,6 +43,7 @@ function PetsAvailableContent() {
     const filled = p.photos.map((src, i) => ({ src, i })).filter((x) => x.src);
     const coverPos = filled.findIndex((x) => x.i === p.coverPhotoIndex);
     setActivePhoto(coverPos >= 0 ? coverPos : 0);
+    setZoomOpen(false);
   };
 
   const bookPuppy = (pet: Pet) => {
@@ -68,9 +71,36 @@ function PetsAvailableContent() {
 
   if (selected) {
     const similar = available.filter((p) => p.species === selected.species && p.id !== selected.id).slice(0, 4);
-    const photoList = selected.photos.map((src, i) => ({ src, i })).filter((p) => p.src);
-    const activeIndex = Math.min(activePhoto, Math.max(0, photoList.length - 1));
-    const heroSrc = photoList[activeIndex]?.src || coverPhoto(selected);
+    const photoEntries = selected.photos.map((src, i) => ({ src, i })).filter((p) => p.src);
+    const galleryItems: ({ kind: "photo"; src: string; photoIndex: number } | { kind: "video"; src: string })[] = [
+      ...photoEntries.map((p) => ({ kind: "photo" as const, src: p.src, photoIndex: p.i })),
+      ...(selected.video ? [{ kind: "video" as const, src: selected.video }] : []),
+    ];
+    const activeIndex = Math.min(activePhoto, Math.max(0, galleryItems.length - 1));
+    const activeItem = galleryItems[activeIndex];
+    const photoOnlyItems = galleryItems.filter((g) => g.kind === "photo");
+    const activePhotoOnlyIndex =
+      activeItem?.kind === "photo" ? photoOnlyItems.findIndex((p) => p.kind === "photo" && p.photoIndex === activeItem.photoIndex) : -1;
+    const heroSrc = activeItem?.kind === "photo" ? activeItem.src : coverPhoto(selected);
+
+    const openZoom = () => {
+      if (activeItem?.kind !== "photo") return;
+      setZoomScale(1);
+      setZoomOpen(true);
+    };
+    const closeZoom = () => setZoomOpen(false);
+    const jumpToPhoto = (dir: 1 | -1) => {
+      if (photoOnlyItems.length < 2 || activePhotoOnlyIndex < 0) return;
+      const nextPhoto = photoOnlyItems[(activePhotoOnlyIndex + dir + photoOnlyItems.length) % photoOnlyItems.length];
+      const idx = galleryItems.findIndex((g) => g.kind === "photo" && nextPhoto.kind === "photo" && g.photoIndex === nextPhoto.photoIndex);
+      if (idx >= 0) setActivePhoto(idx);
+      setZoomScale(1);
+    };
+    const handleWheelZoom = (e: WheelEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setZoomScale((s) => Math.min(3, Math.max(1, s - e.deltaY * 0.001)));
+    };
+
     return (
       <div className="px-8 py-7">
         <div onClick={() => setSelected(null)} className="text-[13px] font-semibold text-primary cursor-pointer mb-4">
@@ -78,24 +108,77 @@ function PetsAvailableContent() {
         </div>
         <div className="flex gap-7 flex-wrap mb-9">
           <div className="flex-1 min-w-[320px] max-w-[420px]">
-            <div className="h-[300px] rounded-xl relative overflow-hidden mb-2.5">
-              <MediaSlot src={heroSrc} label="puppy photo" className="absolute inset-0 w-full h-full" />
+            <div className="h-[300px] rounded-xl relative overflow-hidden mb-2.5 bg-black/5">
+              {activeItem?.kind === "video" ? (
+                <video src={activeItem.src} controls autoPlay className="absolute inset-0 w-full h-full object-contain bg-black" />
+              ) : (
+                <div onClick={openZoom} className="absolute inset-0 cursor-zoom-in">
+                  <MediaSlot src={heroSrc} label="puppy photo" className="absolute inset-0 w-full h-full" />
+                </div>
+              )}
               <div className="absolute top-2.5 left-2.5 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-1 rounded-md">
                 {selected.status}
               </div>
             </div>
-            {photoList.length > 1 && (
+            {galleryItems.length > 1 && (
               <div className="flex gap-2">
-                {photoList.map((p, i) => (
+                {galleryItems.map((g, i) => (
                   <button
-                    key={p.i}
+                    key={g.kind === "photo" ? `photo-${g.photoIndex}` : "video"}
                     onClick={() => setActivePhoto(i)}
                     className="w-16 h-16 rounded-lg overflow-hidden relative cursor-pointer shrink-0"
                     style={{ outline: activeIndex === i ? "2px solid #1996C8" : "1px solid #E4E9EC", outlineOffset: "-1px" }}
                   >
-                    <MediaSlot src={p.src} label={`photo ${i + 1}`} className="absolute inset-0 w-full h-full" />
+                    {g.kind === "video" ? (
+                      <div className="absolute inset-0 bg-[#1A2027] flex items-center justify-center text-white text-base">▶️</div>
+                    ) : (
+                      <MediaSlot src={g.src} label={`photo ${i + 1}`} className="absolute inset-0 w-full h-full" />
+                    )}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {zoomOpen && activeItem?.kind === "photo" && (
+              <div onClick={closeZoom} className="fixed inset-0 bg-black/75 z-[9999] flex items-center justify-center p-10">
+                <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 max-w-[640px] w-full relative shadow-2xl">
+                  <div
+                    onClick={closeZoom}
+                    className="absolute -top-4 -right-4 w-[34px] h-[34px] rounded-full bg-white shadow-lg flex items-center justify-center text-lg text-[#1A2027] cursor-pointer z-[2]"
+                  >
+                    ×
+                  </div>
+                  <div className="relative">
+                    <div onWheel={handleWheelZoom} className="h-[420px] rounded-lg overflow-hidden bg-[#F7F9FA] flex items-center justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URL, zoomed via inline transform */}
+                      <img
+                        src={activeItem.src}
+                        alt="puppy photo"
+                        className="max-w-full max-h-full object-contain"
+                        style={{ transform: `scale(${zoomScale})`, transition: "transform 0.15s" }}
+                      />
+                    </div>
+                    {photoOnlyItems.length > 1 && (
+                      <>
+                        <div
+                          onClick={() => jumpToPhoto(-1)}
+                          className="absolute top-1/2 left-2.5 -translate-y-1/2 w-[34px] h-[34px] rounded-full bg-white shadow-lg flex items-center justify-center text-base cursor-pointer"
+                        >
+                          ‹
+                        </div>
+                        <div
+                          onClick={() => jumpToPhoto(1)}
+                          className="absolute top-1/2 right-2.5 -translate-y-1/2 w-[34px] h-[34px] rounded-full bg-white shadow-lg flex items-center justify-center text-base cursor-pointer"
+                        >
+                          ›
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex justify-center mt-3.5">
+                    <div className="bg-[#1A2027] text-white text-xs font-semibold px-4 py-1.5 rounded-full">{selected.breed}</div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
