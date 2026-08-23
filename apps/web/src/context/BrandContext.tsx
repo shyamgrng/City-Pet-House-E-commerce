@@ -3,7 +3,9 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { brandSeed } from "@/lib/brand-seed";
 
-const STORAGE_KEY = "cph_brands";
+// v2: the old key could carry a stale, pre-Brand-Setting brand list (e.g. missing brands
+// added when the design's full 8-brand set was wired up) — bump so those reload the seed.
+const STORAGE_KEY = "cph_brands_v2";
 
 type BrandValue = {
   brands: string[];
