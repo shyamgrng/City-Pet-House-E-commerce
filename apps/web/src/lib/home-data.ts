@@ -13,7 +13,9 @@ export const categories = [
 // Health & Wellness Care rail now reads live from ServiceContext (src/context/ServiceContext.tsx)
 // via src/components/HealthCareRail.tsx, linking into the public /services detail pages.
 
-export const brands = ["Focus", "Bairo", "Himalaya", "Whiskas", "Pedigree", "Royal Canin", "ProLine", "Reflex"];
+// Shop by Brand list now reads live from BrandContext (src/context/BrandContext.tsx), editable
+// at Admin → Shop → Brand Setting — see src/app/(site)/page.tsx and
+// src/app/admin/(dashboard)/pages/home/page.tsx.
 
 // Product rails (Today's Deals, Pet Food, Pet Accessories, Fashion Wear, Toys, Grooming
 // Accessories) now read live from CatalogContext (src/context/CatalogContext.tsx) via

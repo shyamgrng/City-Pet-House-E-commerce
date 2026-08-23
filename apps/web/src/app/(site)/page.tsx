@@ -10,11 +10,13 @@ import MediaSlot from "@/components/MediaSlot";
 import ProductRail from "@/components/ProductRail";
 import SignInNoticeBanner from "@/components/SignInNoticeBanner";
 import TestimonialsRail from "@/components/TestimonialsRail";
+import { useBrand } from "@/context/BrandContext";
 import { useHomeContent } from "@/context/HomeContentContext";
-import { brands, categories } from "@/lib/home-data";
+import { categories } from "@/lib/home-data";
 
 export default function HomePage() {
   const { content, ready } = useHomeContent();
+  const { brands } = useBrand();
   if (!ready) return null;
   const { heroHeadline, heroSubtext, microchipBannerText, deliveryBannerText, groomingBannerText } = content;
 

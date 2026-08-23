@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import { useBrand } from "@/context/BrandContext";
 import { useHomeContent } from "@/context/HomeContentContext";
-import { brands, categories } from "@/lib/home-data";
+import { categories } from "@/lib/home-data";
 
 export default function AdminHomePage() {
   const { content, ready, update, setCategoryImage, setBrandImage } = useHomeContent();
+  const { brands } = useBrand();
   const [saved, setSaved] = useState(false);
 
   if (!ready) return null;

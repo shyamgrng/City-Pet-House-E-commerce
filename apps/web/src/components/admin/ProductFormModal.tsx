@@ -4,8 +4,9 @@ import { useState } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import PriceInput from "@/components/PriceInput";
 import { useB2BAuth } from "@/context/B2BAuthContext";
+import { useBrand } from "@/context/BrandContext";
 import { useCategory } from "@/context/CategoryContext";
-import { brandNames, colourOptions, courierPackageSizes, sizeOptions, type Product } from "@/lib/catalog-types";
+import { colourOptions, courierPackageSizes, sizeOptions, type Product } from "@/lib/catalog-types";
 
 type Draft = Omit<Product, "id">;
 
@@ -48,6 +49,7 @@ export default function ProductFormModal({
 }) {
   const { accounts } = useB2BAuth();
   const { categories } = useCategory();
+  const { brands: brandNames } = useBrand();
   const [draft, setDraft] = useState<Draft>(initial ? { ...initial } : { ...emptyDraft, category: categories[0] || "" });
   const [tagsText, setTagsText] = useState(initial ? initial.tags.join(", ") : "");
   const [error, setError] = useState("");

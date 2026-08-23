@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import MediaSlot from "@/components/MediaSlot";
+import { useBrand } from "@/context/BrandContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useCategory } from "@/context/CategoryContext";
 import { formatRs, salePrice, type Product } from "@/lib/catalog-types";
@@ -109,8 +110,9 @@ export default function ShopPage() {
       </div>
 
       {tab === "Category Setting" && <CategorySettingTab />}
+      {tab === "Brand Setting" && <BrandSettingTab />}
 
-      {tab !== "Overview" && tab !== "Product" && tab !== "Category Setting" && (
+      {tab !== "Overview" && tab !== "Product" && tab !== "Category Setting" && tab !== "Brand Setting" && (
         <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
           {tab} — coming soon
         </div>
@@ -381,6 +383,49 @@ function CategorySettingTab() {
         <button
           onClick={() => {
             addCategory(newName);
+            setNewName("");
+          }}
+          className="bg-primary text-white px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BrandSettingTab() {
+  const { brands, addBrand, removeBrand } = useBrand();
+  const [newName, setNewName] = useState("");
+
+  return (
+    <div className="max-w-[520px]">
+      <div className="font-heading font-bold text-[19px] text-[#1A2027] mb-1.5">Brand Setting</div>
+      <div className="text-[13px] text-[#5B6773] mb-[18px]">
+        Manage the brands available when adding products — new brands appear automatically in Shop by Brand on the homepage.
+      </div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-4">
+        {brands.map((b) => (
+          <div key={b} className="flex justify-between items-center px-4 py-3.5 border-b border-[#F0F2F4] last:border-0">
+            <div className="text-[13px] font-semibold text-[#1A2027]">{b}</div>
+            <button onClick={() => removeBrand(b)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2.5">
+        <input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          placeholder="New brand name"
+          className="flex-1 px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+        />
+        <button
+          onClick={() => {
+            addBrand(newName);
             setNewName("");
           }}
           className="bg-primary text-white px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"

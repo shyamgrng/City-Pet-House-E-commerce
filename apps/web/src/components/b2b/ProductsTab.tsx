@@ -5,9 +5,10 @@ import ImageUploadField from "@/components/admin/ImageUploadField";
 import PriceInput from "@/components/PriceInput";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
+import { useBrand } from "@/context/BrandContext";
 import { useCategory } from "@/context/CategoryContext";
 import { STATUS_COLORS } from "@/lib/b2b-types";
-import { brandNames, colourOptions, courierPackageSizes, sizeOptions } from "@/lib/catalog-types";
+import { colourOptions, courierPackageSizes, sizeOptions } from "@/lib/catalog-types";
 
 const EMPTY = {
   photos: ["", "", "", ""],
@@ -37,6 +38,7 @@ export default function ProductsTab() {
   const { supplier } = useB2BAuth();
   const { submissions, addSubmission } = useB2B();
   const { categories } = useCategory();
+  const { brands: brandNames } = useBrand();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState("");

@@ -3,9 +3,10 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import ShopProductCard from "@/components/ShopProductCard";
+import { useBrand } from "@/context/BrandContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useCategory } from "@/context/CategoryContext";
-import { brandNames, type Product } from "@/lib/catalog-types";
+import type { Product } from "@/lib/catalog-types";
 
 const ratingOptions = [5, 4, 3, 2];
 const priceRangeOptions: { label: string; min: number; max: number }[] = [
@@ -43,6 +44,7 @@ export default function ShopPage() {
 function ShopContent() {
   const { products: allProducts } = useCatalog();
   const { categories } = useCategory();
+  const { brands: brandNames } = useBrand();
   const products = useMemo(() => allProducts.filter((p) => p.status === "active"), [allProducts]);
   const searchParams = useSearchParams();
   const [category, setCategory] = useState<string>(() => {
