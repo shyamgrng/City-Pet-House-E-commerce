@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { parseLegacyAge } from "@/lib/pet-age";
 import { petTagContentSeed, petTagSeed } from "@/lib/pet-tag-seed";
 import type { PetTag, PetTagPageContent } from "@/lib/pet-tag-types";
 
@@ -8,14 +9,17 @@ const TAGS_KEY = "cph_pet_tags";
 const CONTENT_KEY = "cph_pet_tag_content";
 
 // Backfills fields introduced after this record may have been saved to localStorage by an
-// older build, so previously-saved pet tags don't crash the new age-calculation UI.
-function normalizeTag(t: Partial<PetTag> & Pick<PetTag, "id" | "tagId">): PetTag {
+// older build, so previously-saved pet tags don't crash the new age-calculation UI. Records
+// saved before ageYears/ageMonths existed carried a free-text `age` string instead — parse
+// that into the new fields (as-of today) rather than resetting the pet to "Newborn".
+function normalizeTag(t: Partial<PetTag> & Pick<PetTag, "id" | "tagId"> & { age?: string }): PetTag {
+  const legacy = t.ageYears === undefined && t.ageMonths === undefined && t.age ? parseLegacyAge(t.age) : null;
   return {
     petName: "",
     photo: "",
     sex: "Male",
-    ageYears: 0,
-    ageMonths: 0,
+    ageYears: legacy?.years ?? 0,
+    ageMonths: legacy?.months ?? 0,
     registeredDate: new Date().toISOString().slice(0, 10),
     breed: "",
     color: "",
@@ -35,8 +39,9 @@ type PetTagValue = {
   tags: PetTag[];
   content: PetTagPageContent;
   ready: boolean;
-  addTag: (input: Omit<PetTag, "id" | "tagId" | "scans">) => void;
-  updateTag: (id: string, patch: Partial<Omit<PetTag, "id" | "tagId" | "scans">>) => void;
+  saveError: string | null;
+  addTag: (input: Omit<PetTag, "id" | "tagId" | "scans">) => boolean;
+  updateTag: (id: string, patch: Partial<Omit<PetTag, "id" | "tagId" | "scans">>) => boolean;
   removeTag: (id: string) => void;
   lookupTag: (query: string) => PetTag | null;
   recordScan: (id: string) => void;
@@ -74,20 +79,29 @@ function loadContent(): PetTagPageContent {
 }
 
 export function PetTagProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ tags: PetTag[]; content: PetTagPageContent; ready: boolean }>({
+  const [state, setState] = useState<{ tags: PetTag[]; content: PetTagPageContent; ready: boolean; saveError: string | null }>({
     tags: petTagSeed,
     content: petTagContentSeed,
     ready: false,
+    saveError: null,
   });
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ tags: loadTags(), content: loadContent(), ready: true });
+    setState({ tags: loadTags(), content: loadContent(), ready: true, saveError: null });
   }, []);
 
-  const persistTags = (tags: PetTag[]) => {
-    window.localStorage.setItem(TAGS_KEY, JSON.stringify(tags));
-    setState((s) => ({ ...s, tags, ready: true }));
+  // Saving a large photo can exceed the browser's localStorage quota — surface that instead
+  // of silently discarding the edit, so "I uploaded a photo but it's not there" is visible.
+  const persistTags = (tags: PetTag[]): boolean => {
+    try {
+      window.localStorage.setItem(TAGS_KEY, JSON.stringify(tags));
+    } catch {
+      setState((s) => ({ ...s, saveError: "Couldn't save — your browser's storage is full. Try a smaller photo, or delete an old pet tag, then save again." }));
+      return false;
+    }
+    setState((s) => ({ ...s, tags, ready: true, saveError: null }));
+    return true;
   };
 
   const persistContent = (content: PetTagPageContent) => {
@@ -107,10 +121,11 @@ export function PetTagProvider({ children }: { children: React.ReactNode }) {
         tags: state.tags,
         content: state.content,
         ready: state.ready,
+        saveError: state.saveError,
         addTag: (input) => {
           const id = "pt-" + Date.now();
           const tagId = Math.random().toString(36).slice(2, 8).toUpperCase();
-          persistTags([{ id, tagId, scans: 0, ...input }, ...state.tags]);
+          return persistTags([{ id, tagId, scans: 0, ...input }, ...state.tags]);
         },
         updateTag: (id, patch) => persistTags(state.tags.map((t) => (t.id === id ? { ...t, ...patch } : t))),
         removeTag: (id) => persistTags(state.tags.filter((t) => t.id !== id)),

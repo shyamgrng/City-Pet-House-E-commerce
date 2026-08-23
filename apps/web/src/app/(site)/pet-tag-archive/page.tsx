@@ -96,7 +96,7 @@ function PetTagArchiveContent() {
           <Link href="/" className="absolute top-6 left-8 text-[13px] text-white font-semibold opacity-90">
             ← Back to Home
           </Link>
-          <div className="text-xs text-white/85 font-bold tracking-[0.6px]">🐾 CITY PET HOUSE · PET FOUND</div>
+          <div className="text-lg text-white/85 font-bold tracking-[0.6px]">🐾 PET DETAILS</div>
         </div>
 
         <div className="flex justify-center px-8 pb-12">

@@ -59,7 +59,7 @@ function downloadPetTagQr(tag: PetTag) {
 }
 
 export default function AdminPetTagArchivePage() {
-  const { tags, addTag, updateTag, removeTag } = usePetTag();
+  const { tags, addTag, updateTag, removeTag, saveError } = usePetTag();
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -101,9 +101,8 @@ export default function AdminPetTagArchivePage() {
 
   const submit = () => {
     if (!form.petName.trim() || !form.ownerName.trim() || !isValidNepalPhone(form.phone)) return;
-    if (editingId) updateTag(editingId, form);
-    else addTag(form);
-    setFormOpen(false);
+    const ok = editingId ? updateTag(editingId, form) : addTag(form);
+    if (ok) setFormOpen(false);
   };
 
   if (formOpen) {
@@ -226,6 +225,10 @@ export default function AdminPetTagArchivePage() {
             <Input value={form.mapLink} onChange={(v) => setForm((f) => ({ ...f, mapLink: v }))} placeholder="https://maps.google.com/?q=…" />
           </Field>
         </div>
+
+        {saveError && (
+          <div className="max-w-[760px] text-xs text-[#D64545] bg-[#FDEDEC] border border-[#F3C6C2] rounded-lg px-4 py-3 mb-3">{saveError}</div>
+        )}
 
         <div className="flex gap-2.5 max-w-[760px]">
           <button onClick={submit} className="flex-1 bg-primary text-white text-center py-3.5 rounded-lg text-sm font-bold cursor-pointer">

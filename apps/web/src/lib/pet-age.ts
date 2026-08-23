@@ -25,3 +25,13 @@ export function formatAge(totalMonths: number): string {
 export function displayAge(tag: { ageYears: number; ageMonths: number; registeredDate: string }, asOf: Date = new Date()): string {
   return formatAge(currentAgeMonths(tag, asOf));
 }
+
+// Parses a pre-rebuild free-text age like "5 years, 10 months" or "4 months" into
+// years/months, so records saved before ageYears/ageMonths existed can be migrated
+// instead of silently resetting to "Newborn".
+export function parseLegacyAge(text: string): { years: number; months: number } | null {
+  const years = Number(text.match(/(\d+)\s*year/)?.[1] ?? 0);
+  const months = Number(text.match(/(\d+)\s*month/)?.[1] ?? 0);
+  if (years === 0 && months === 0) return null;
+  return { years, months };
+}
