@@ -6,6 +6,8 @@ import MediaSlot from "@/components/MediaSlot";
 import { useBrand } from "@/context/BrandContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useCategory } from "@/context/CategoryContext";
+import { useCourierAuth } from "@/context/CourierAuthContext";
+import { useDeliverySettings } from "@/context/DeliverySettingsContext";
 import { formatRs, salePrice, type Product } from "@/lib/catalog-types";
 
 const subTabs = ["Overview", "Product", "Category Setting", "Brand Setting", "Delivery Setting", "Setting"];
@@ -111,8 +113,9 @@ export default function ShopPage() {
 
       {tab === "Category Setting" && <CategorySettingTab />}
       {tab === "Brand Setting" && <BrandSettingTab />}
+      {tab === "Delivery Setting" && <DeliverySettingTab />}
 
-      {tab !== "Overview" && tab !== "Product" && tab !== "Category Setting" && tab !== "Brand Setting" && (
+      {tab !== "Overview" && tab !== "Product" && tab !== "Category Setting" && tab !== "Brand Setting" && tab !== "Delivery Setting" && (
         <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
           {tab} — coming soon
         </div>
@@ -433,6 +436,249 @@ function BrandSettingTab() {
           Add
         </button>
       </div>
+    </div>
+  );
+}
+
+const emptyCourierForm = {
+  companyName: "",
+  phone: "",
+  address: "",
+  priceSmall: "",
+  priceMedium: "",
+  priceLarge: "",
+  priceVeryLarge: "",
+  usesDistancePricing: false,
+  ratePerKg: "",
+  ratePerKm: "",
+  defaultFlatPrice: "",
+};
+
+function DeliverySettingTab() {
+  const { standardFee, puppyFee, setFees } = useDeliverySettings();
+  const { accounts, addCourier, removeCourier } = useCourierAuth();
+  const [standardInput, setStandardInput] = useState(String(standardFee));
+  const [puppyInput, setPuppyInput] = useState(String(puppyFee));
+  const [feesSaved, setFeesSaved] = useState(false);
+
+  const [form, setForm] = useState(emptyCourierForm);
+  const [error, setError] = useState("");
+  const [created, setCreated] = useState<{ courierId: string; password: string } | null>(null);
+  const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
+
+  const saveFees = () => {
+    setFees(Number(standardInput) || 0, Number(puppyInput) || 0);
+    setFeesSaved(true);
+    setTimeout(() => setFeesSaved(false), 3000);
+  };
+
+  const submitCourier = () => {
+    if (!form.companyName.trim() || !form.phone.trim()) {
+      setError("Please fill in company name and phone number.");
+      return;
+    }
+    const result = addCourier({
+      companyName: form.companyName.trim(),
+      phone: form.phone.trim(),
+      altPhone: "",
+      address: form.address.trim(),
+      priceSmall: Number(form.priceSmall) || 0,
+      priceMedium: Number(form.priceMedium) || 0,
+      priceLarge: Number(form.priceLarge) || 0,
+      priceVeryLarge: Number(form.priceVeryLarge) || 0,
+      usesDistancePricing: form.usesDistancePricing,
+      ratePerKg: Number(form.ratePerKg) || 0,
+      ratePerKm: Number(form.ratePerKm) || 0,
+      defaultFlatPrice: Number(form.defaultFlatPrice) || 0,
+    });
+    setForm(emptyCourierForm);
+    setError("");
+    setCreated(result);
+  };
+
+  return (
+    <div className="max-w-[560px]">
+      <div className="font-heading font-bold text-[19px] text-[#1A2027] mb-1.5">Delivery Setting</div>
+      <div className="text-[13px] text-[#5B6773] mb-[18px]">Default delivery fee and rules applied at checkout.</div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Standard Delivery Fee (Rs.)</div>
+        <input
+          type="number"
+          value={standardInput}
+          onChange={(e) => {
+            setStandardInput(e.target.value);
+            setFeesSaved(false);
+          }}
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-4 box-border"
+        />
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Puppy Delivery Fee (Rs.)</div>
+        <input
+          type="number"
+          value={puppyInput}
+          onChange={(e) => {
+            setPuppyInput(e.target.value);
+            setFeesSaved(false);
+          }}
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+        />
+      </div>
+      <button onClick={saveFees} className="w-full bg-primary text-white text-center py-3 rounded-lg text-sm font-semibold cursor-pointer mb-2">
+        Save
+      </button>
+      {feesSaved && <div className="text-[11px] text-[#1F7A4D] mb-4">✓ Delivery fees saved</div>}
+
+      <div className="font-heading font-bold text-[15px] text-[#1A2027] mt-8 mb-1">Courier Suppliers</div>
+      <div className="text-[13px] text-[#5B6773] mb-3.5">Rates per parcel size, with an optional default/distance-based price.</div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto mb-4">
+        <div className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[640px]">
+          <div>Company</div>
+          <div>Address</div>
+          <div>Phone</div>
+          <div>Small</div>
+          <div>Medium</div>
+          <div>Large</div>
+          <div>V.Large</div>
+          <div></div>
+        </div>
+        {accounts.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No courier suppliers yet</div>
+        ) : (
+          accounts.map((co) => (
+            <div
+              key={co.courierId}
+              className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr] gap-2 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[640px]"
+            >
+              <div className="font-semibold text-[#1A2027]">{co.companyName}</div>
+              <div className="text-[#5B6773]">{co.address || "—"}</div>
+              <div className="text-[#5B6773]">{co.phone}</div>
+              <div>Rs.{co.priceSmall}</div>
+              <div>Rs.{co.priceMedium}</div>
+              <div>Rs.{co.priceLarge}</div>
+              <div>Rs.{co.priceVeryLarge}</div>
+              <button onClick={() => removeCourier(co.courierId)} className="text-[#D64545] font-semibold cursor-pointer text-left">
+                Remove
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5">
+        <div className="text-[13px] font-bold text-[#1A2027] mb-3.5">Add Courier Supplier</div>
+
+        <div className="grid grid-cols-2 gap-2.5 mb-3">
+          <div>
+            <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Company Name *</div>
+            <input
+              value={form.companyName}
+              onChange={(e) => set({ companyName: e.target.value })}
+              className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+            />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone Number *</div>
+            <input
+              value={form.phone}
+              onChange={(e) => set({ phone: e.target.value })}
+              className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+            />
+          </div>
+        </div>
+
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Address</div>
+        <input
+          value={form.address}
+          onChange={(e) => set({ address: e.target.value })}
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 box-border"
+        />
+
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Price by Parcel Size (Rs.)</div>
+        <div className="grid grid-cols-4 gap-2 mb-3">
+          <SizeField label="Small" value={form.priceSmall} onChange={(v) => set({ priceSmall: v })} />
+          <SizeField label="Medium" value={form.priceMedium} onChange={(v) => set({ priceMedium: v })} />
+          <SizeField label="Large" value={form.priceLarge} onChange={(v) => set({ priceLarge: v })} />
+          <SizeField label="Very Large" value={form.priceVeryLarge} onChange={(v) => set({ priceVeryLarge: v })} />
+        </div>
+
+        <div
+          onClick={() => set({ usesDistancePricing: !form.usesDistancePricing })}
+          className="flex items-center justify-between cursor-pointer mb-3"
+        >
+          <div className="text-[13px] font-semibold text-[#1A2027]">Also price by weight/distance (else use a flat default price)</div>
+          <div
+            className="w-[38px] h-[22px] rounded-full relative shrink-0 transition-colors"
+            style={{ background: form.usesDistancePricing ? "#25D366" : "#D8DCE0" }}
+          >
+            <span
+              className="absolute top-0.5 w-[18px] h-[18px] bg-white rounded-full transition-all"
+              style={{ left: form.usesDistancePricing ? "18px" : "2px" }}
+            />
+          </div>
+        </div>
+
+        {form.usesDistancePricing ? (
+          <div className="grid grid-cols-2 gap-2.5 mb-3">
+            <div>
+              <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Rate per Kg (Rs.)</div>
+              <input
+                type="number"
+                value={form.ratePerKg}
+                onChange={(e) => set({ ratePerKg: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+              />
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Rate per Km (Rs.)</div>
+              <input
+                type="number"
+                value={form.ratePerKm}
+                onChange={(e) => set({ ratePerKm: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="mb-3">
+            <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Default Flat Price (Rs.)</div>
+            <input
+              type="number"
+              value={form.defaultFlatPrice}
+              onChange={(e) => set({ defaultFlatPrice: e.target.value })}
+              className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+            />
+          </div>
+        )}
+
+        {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
+        <button onClick={submitCourier} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+          + Add Courier Supplier
+        </button>
+
+        {created && (
+          <div className="mt-3.5 bg-[#EAF4F9] border border-[#CFE6F1] rounded-lg p-3.5 text-xs">
+            <div className="font-bold text-[#146A8C] mb-1">Courier account created — share these login details:</div>
+            <div className="text-[#3A4652]">
+              Courier ID: <strong>{created.courierId}</strong> · Password: <strong>{created.password}</strong>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SizeField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <div className="text-[10px] font-semibold text-[#8A96A3] mb-1">{label}</div>
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-2 py-2 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+      />
     </div>
   );
 }

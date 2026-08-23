@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
+import { useDeliverySettings } from "@/context/DeliverySettingsContext";
 import { useOrder } from "@/context/OrderContext";
 import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
@@ -13,13 +14,13 @@ import type { CartItem } from "@/lib/cart-types";
 import { resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
-const DELIVERY_FEE = 100;
 const PAYMENT_METHODS = ["eSewa", "Khalti", "Bank Transfer"];
 
 export default function CartPage() {
   const { user, ready } = useAuth();
   const { items, subtotal, inc, dec, remove, clear } = useCart();
   const { placeOrder } = useOrder();
+  const { standardFee: DELIVERY_FEE } = useDeliverySettings();
 
   if (!ready) return null;
 
@@ -100,6 +101,7 @@ function CheckoutSection({
   clear: () => void;
 }) {
   const router = useRouter();
+  const { standardFee: DELIVERY_FEE } = useDeliverySettings();
   const [address, setAddress] = useState(user.address);
   const [phone, setPhone] = useState(user.phone);
   const [receiptPhoto, setReceiptPhoto] = useState("");

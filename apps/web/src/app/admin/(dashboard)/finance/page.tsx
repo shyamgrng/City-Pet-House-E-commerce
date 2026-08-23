@@ -1,14 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useCourierAuth } from "@/context/CourierAuthContext";
 import { financeFlows, financeOverview } from "@/lib/admin-data";
 
 const subTabs = ["Overview", "Income", "Refunds", "Cancellations", "Receivable", "Payable", "Accounts", "Audit Log"];
 const ranges = ["Today", "Yesterday", "Last 7 days", "All time"];
 
+function courierPayable(c: { defaultFlatPrice: number; priceMedium: number }) {
+  return c.defaultFlatPrice || c.priceMedium || 0;
+}
+
 export default function FinancePage() {
   const [tab, setTab] = useState("Overview");
   const [range, setRange] = useState("All time");
+  const { accounts: couriers } = useCourierAuth();
+  const courierPayableTotal = couriers.reduce((sum, c) => sum + courierPayable(c), 0);
 
   return (
     <div>
@@ -42,7 +49,33 @@ export default function FinancePage() {
         ))}
       </div>
 
-      {tab !== "Overview" && (
+      {tab === "Payable" && (
+        <>
+          <div className="font-heading font-bold text-base text-[#1A2027] mb-1">Accounts Payable</div>
+          <div className="text-xs text-[#5B6773] mb-4">Estimated per-delivery fee owed to each courier supplier.</div>
+          <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-4">
+            <div className="grid grid-cols-3 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+              <div>Party</div>
+              <div>Type</div>
+              <div>Amount</div>
+            </div>
+            {couriers.length === 0 ? (
+              <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No courier suppliers yet</div>
+            ) : (
+              couriers.map((c) => (
+                <div key={c.courierId} className="grid grid-cols-3 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                  <div className="font-semibold text-[#1A2027]">{c.companyName}</div>
+                  <div className="text-[10px] font-bold text-[#B8860B] bg-[#FFF6E5] rounded-full px-2 py-0.5 w-fit">Courier Fees</div>
+                  <div className="font-semibold text-[#7A56C8]">Rs. {courierPayable(c).toLocaleString("en-IN")}</div>
+                </div>
+              ))
+            )}
+          </div>
+          <Stat label="Total Payable" value={"Rs. " + courierPayableTotal.toLocaleString("en-IN")} color="#7A56C8" />
+        </>
+      )}
+
+      {tab !== "Overview" && tab !== "Payable" && (
         <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
           {tab} — coming soon
         </div>
@@ -59,7 +92,7 @@ export default function FinancePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5">
             <Stat label="Accounts Receivable" value={financeOverview.receivable} color="#C9962B" />
-            <Stat label="Accounts Payable" value={financeOverview.payable} color="#7A56C8" />
+            <Stat label="Accounts Payable" value={"Rs. " + courierPayableTotal.toLocaleString("en-IN")} color="#7A56C8" />
             <Stat label="Potential Stock Profit" value={financeOverview.potentialProfit} color="#17A2A0" />
           </div>
 

@@ -6,6 +6,14 @@ export type CourierAccount = {
   phone: string;
   altPhone: string;
   address: string;
+  priceSmall: number;
+  priceMedium: number;
+  priceLarge: number;
+  priceVeryLarge: number;
+  usesDistancePricing: boolean;
+  ratePerKg: number;
+  ratePerKm: number;
+  defaultFlatPrice: number;
 };
 
 export const courierAccountSeed: CourierAccount[] = [
@@ -17,5 +25,13 @@ export const courierAccountSeed: CourierAccount[] = [
     phone: "+977 9801122334",
     altPhone: "+977 015545566",
     address: "Kalanki, Kathmandu",
+    priceSmall: 100,
+    priceMedium: 150,
+    priceLarge: 220,
+    priceVeryLarge: 300,
+    usesDistancePricing: false,
+    ratePerKg: 0,
+    ratePerKm: 0,
+    defaultFlatPrice: 0,
   },
 ];

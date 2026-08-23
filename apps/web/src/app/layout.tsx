@@ -14,6 +14,7 @@ import { CategoryProvider } from "@/context/CategoryContext";
 import { ContactProvider } from "@/context/ContactContext";
 import { CourierAuthProvider } from "@/context/CourierAuthContext";
 import { DeliveryProvider } from "@/context/DeliveryContext";
+import { DeliverySettingsProvider } from "@/context/DeliverySettingsContext";
 import { DogBreedProvider } from "@/context/DogBreedContext";
 import { DoctorAuthProvider } from "@/context/DoctorAuthContext";
 import { FaqProvider } from "@/context/FaqContext";
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${poppins.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <BrandProvider>
+        <DeliverySettingsProvider>
         <AuthProvider>
           <DoctorAuthProvider>
             <B2BAuthProvider>
@@ -106,6 +108,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </B2BAuthProvider>
           </DoctorAuthProvider>
         </AuthProvider>
+        </DeliverySettingsProvider>
         </BrandProvider>
       </body>
     </html>

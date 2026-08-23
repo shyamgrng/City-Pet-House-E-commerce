@@ -7,14 +7,54 @@ import { courierAccountSeed, type CourierAccount } from "@/lib/courier-auth-type
 const SESSION_KEY = "cph_courier_session_id";
 const OVERRIDES_KEY = "cph_courier_account_overrides";
 const RESETS_KEY = "cph_courier_password_resets";
+const ADDED_KEY = "cph_courier_added_accounts";
+const REMOVED_KEY = "cph_courier_removed_ids";
 const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 
 type Result = { ok: true } | { ok: false; error: string };
-type Overrides = Record<string, Partial<Pick<CourierAccount, "password" | "phone" | "altPhone" | "address">>>;
+type Overrides = Record<
+  string,
+  Partial<
+    Pick<
+      CourierAccount,
+      | "password"
+      | "phone"
+      | "altPhone"
+      | "address"
+      | "priceSmall"
+      | "priceMedium"
+      | "priceLarge"
+      | "priceVeryLarge"
+      | "usesDistancePricing"
+      | "ratePerKg"
+      | "ratePerKm"
+      | "defaultFlatPrice"
+    >
+  >
+>;
 type ResetRecord = { code: string; expiresAt: number };
+
+// Backfills fields introduced after this record may have been saved to localStorage by an
+// older build, so previously-saved courier accounts don't crash the new field-reading UI.
+function normalizeCourier(
+  a: Partial<CourierAccount> & Pick<CourierAccount, "courierId" | "companyName" | "password" | "email" | "phone" | "altPhone" | "address">
+): CourierAccount {
+  return {
+    priceSmall: 0,
+    priceMedium: 0,
+    priceLarge: 0,
+    priceVeryLarge: 0,
+    usesDistancePricing: false,
+    ratePerKg: 0,
+    ratePerKm: 0,
+    defaultFlatPrice: 0,
+    ...a,
+  };
+}
 
 type CourierAuthValue = {
   courier: CourierAccount | null;
+  accounts: CourierAccount[];
   ready: boolean;
   signIn: (courierId: string, password: string) => Result;
   signOut: () => void;
@@ -22,6 +62,10 @@ type CourierAuthValue = {
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (courierId: string) => Result;
   resetPassword: (courierId: string, code: string, newPassword: string) => Result;
+  addCourier: (
+    input: Omit<CourierAccount, "courierId" | "password" | "email">
+  ) => { courierId: string; password: string };
+  removeCourier: (courierId: string) => void;
 };
 
 const CourierAuthContext = createContext<CourierAuthValue | null>(null);
@@ -58,6 +102,41 @@ function loadSession(accounts: CourierAccount[]): CourierAccount | null {
   return accounts.find((a) => a.courierId === id) ?? null;
 }
 
+function loadAdded(): CourierAccount[] {
+  try {
+    const raw = window.localStorage.getItem(ADDED_KEY);
+    const parsed = raw ? (JSON.parse(raw) as CourierAccount[]) : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeCourier) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistAdded(accounts: CourierAccount[]) {
+  window.localStorage.setItem(ADDED_KEY, JSON.stringify(accounts));
+}
+
+function loadRemoved(): string[] {
+  try {
+    const raw = window.localStorage.getItem(REMOVED_KEY);
+    const parsed = raw ? (JSON.parse(raw) as string[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistRemoved(ids: string[]) {
+  window.localStorage.setItem(REMOVED_KEY, JSON.stringify(ids));
+}
+
+function loadAllAccounts(): CourierAccount[] {
+  const removed = new Set(loadRemoved());
+  const base = courierAccountSeed.map(normalizeCourier).filter((a) => !removed.has(a.courierId));
+  const added = loadAdded().filter((a) => !removed.has(a.courierId));
+  return applyOverrides([...base, ...added], loadOverrides());
+}
+
 export function CourierAuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<{ accounts: CourierAccount[]; courier: CourierAccount | null; ready: boolean }>({
     accounts: courierAccountSeed,
@@ -66,15 +145,36 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
   });
 
   useEffect(() => {
-    const accounts = applyOverrides(courierAccountSeed, loadOverrides());
+    const accounts = loadAllAccounts();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ accounts, courier: loadSession(accounts), ready: true });
   }, []);
 
-  const persistOverride = (courierId: string, patch: Partial<Pick<CourierAccount, "password" | "phone" | "altPhone" | "address">>) => {
+  const persistOverride = (courierId: string, patch: Partial<Overrides[string]>) => {
     const overrides = loadOverrides();
     overrides[courierId] = { ...overrides[courierId], ...patch };
     window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+  };
+
+  const addCourier = (input: Omit<CourierAccount, "courierId" | "password" | "email">) => {
+    const courierId = "CR-" + Math.floor(2000 + Math.random() * 8000);
+    const password = "cph" + Math.floor(1000 + Math.random() * 9000);
+    const account: CourierAccount = {
+      ...input,
+      courierId,
+      password,
+      email: "",
+    };
+    const added = [...loadAdded(), account];
+    persistAdded(added);
+    setState((s) => ({ ...s, accounts: [...s.accounts, account] }));
+    return { courierId, password };
+  };
+
+  const removeCourier = (courierId: string) => {
+    const removed = [...loadRemoved(), courierId];
+    persistRemoved(removed);
+    setState((s) => ({ ...s, accounts: s.accounts.filter((a) => a.courierId !== courierId) }));
   };
 
   const requestPasswordReset = (courierId: string): Result => {
@@ -141,7 +241,19 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
 
   return (
     <CourierAuthContext.Provider
-      value={{ courier: state.courier, ready: state.ready, signIn, signOut, updateProfile, changePassword, requestPasswordReset, resetPassword }}
+      value={{
+        courier: state.courier,
+        accounts: state.accounts,
+        ready: state.ready,
+        signIn,
+        signOut,
+        updateProfile,
+        changePassword,
+        requestPasswordReset,
+        resetPassword,
+        addCourier,
+        removeCourier,
+      }}
     >
       {children}
     </CourierAuthContext.Provider>

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { adminUsers } from "@/lib/admin-data";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useVet } from "@/context/VetContext";
 import { b2bAccountSeed } from "@/lib/b2b-auth-types";
-import { courierAccountSeed } from "@/lib/courier-auth-types";
+import type { CourierAccount } from "@/lib/courier-auth-types";
 import { doctorAccountSeed } from "@/lib/doctor-auth-types";
 import type { Account } from "@/lib/auth-types";
 
@@ -14,11 +15,12 @@ const subTabs = ["Overview", "Client Account", "Doctor Account", "Courier Accoun
 
 const accountDoctors = doctorAccountSeed.map((d) => ({ name: d.name, status: "Active" }));
 const accountB2b = b2bAccountSeed.map((a) => ({ name: a.companyName, status: "Active" }));
-const accountCouriers = courierAccountSeed.map((a) => ({ name: a.companyName, status: "Active" }));
 
 export default function AccountsPage() {
   const [tab, setTab] = useState("Overview");
   const { accounts } = useAuth();
+  const { accounts: courierAccounts } = useCourierAuth();
+  const accountCouriers = courierAccounts.map((a) => ({ name: a.companyName, status: "Active" }));
 
   return (
     <div>
@@ -43,7 +45,7 @@ export default function AccountsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-4">
             <Stat label="Client Accounts" value={accounts.length} />
             <Stat label="Doctor Accounts" value={doctorAccountSeed.length} />
-            <Stat label="Courier Accounts" value={courierAccountSeed.length} />
+            <Stat label="Courier Accounts" value={courierAccounts.length} />
             <Stat label="Staff Accounts" value={adminUsers.length} />
           </div>
 
@@ -61,11 +63,51 @@ export default function AccountsPage() {
       )}
 
       {tab === "Client Account" && <ClientAccountTab accounts={accounts} />}
+      {tab === "Courier Account" && <CourierAccountTab couriers={courierAccounts} />}
 
-      {(tab === "Doctor Account" || tab === "Courier Account" || tab === "B2B Account" || tab === "Staff Account") && (
+      {(tab === "Doctor Account" || tab === "B2B Account" || tab === "Staff Account") && (
         <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
           {tab} — coming soon
         </div>
+      )}
+    </div>
+  );
+}
+
+function CourierAccountTab({ couriers }: { couriers: CourierAccount[] }) {
+  return (
+    <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
+      <div className="grid grid-cols-[1.3fr_1.1fr_1fr_0.6fr_0.6fr_0.6fr_0.6fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[600px]">
+        <div>Company</div>
+        <div>Contact</div>
+        <div>Address</div>
+        <div>Small</div>
+        <div>Medium</div>
+        <div>Large</div>
+        <div>V.Large</div>
+      </div>
+      {couriers.length === 0 ? (
+        <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">
+          No courier accounts registered yet — add one in Shop → Delivery Setting.
+        </div>
+      ) : (
+        couriers.map((c) => (
+          <div
+            key={c.courierId}
+            className="grid grid-cols-[1.3fr_1.1fr_1fr_0.6fr_0.6fr_0.6fr_0.6fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[600px]"
+          >
+            <div>
+              <div className="font-semibold text-[#1A2027]">{c.companyName}</div>
+              <div className="text-[10px] text-[#8A96A3] mt-0.5">{c.courierId}</div>
+            </div>
+            <div className="text-[#5B6773]">{c.phone}</div>
+            <div className="text-[#5B6773]">{c.address || "—"}</div>
+            <div>Rs.{c.priceSmall}</div>
+            <div>Rs.{c.priceMedium}</div>
+            <div>Rs.{c.priceLarge}</div>
+            <div>Rs.{c.priceVeryLarge}</div>
+          </div>
+        ))
       )}
     </div>
   );

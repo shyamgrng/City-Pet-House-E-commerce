@@ -102,6 +102,25 @@ export default function ProfileTab() {
       </div>
 
       <div className="flex-1 min-w-[260px] border border-[#E4E9EC] rounded-xl p-5">
+        <div className="text-[13px] font-bold text-[#1A2027] mb-1">Delivery Pricing</div>
+        <div className="text-[11px] text-[#8A96A3] mb-3.5">Set by City Pet House admin — contact them to change your rates.</div>
+        <div className="grid grid-cols-2 gap-2.5 mb-2.5">
+          <PricingField label="Small" value={courier.priceSmall} />
+          <PricingField label="Medium" value={courier.priceMedium} />
+          <PricingField label="Large" value={courier.priceLarge} />
+          <PricingField label="Very Large" value={courier.priceVeryLarge} />
+        </div>
+        {courier.usesDistancePricing ? (
+          <div className="grid grid-cols-2 gap-2.5">
+            <PricingField label="Rate per Kg" value={courier.ratePerKg} />
+            <PricingField label="Rate per Km" value={courier.ratePerKm} />
+          </div>
+        ) : (
+          courier.defaultFlatPrice > 0 && <PricingField label="Default Flat Price" value={courier.defaultFlatPrice} />
+        )}
+      </div>
+
+      <div className="flex-1 min-w-[260px] border border-[#E4E9EC] rounded-xl p-5">
         <div className="text-sm font-bold text-[#1A2027] mb-3.5">Change Password</div>
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">New Password</div>
         <input
@@ -135,6 +154,15 @@ function ProfileField({ label, value, last }: { label: string; value: string; la
     <div className={last ? "" : "mb-2.5"}>
       <div className="text-xs text-[#8A96A3] mb-0.5">{label}</div>
       <div className="text-[13px] font-semibold text-[#1A2027]">{value}</div>
+    </div>
+  );
+}
+
+function PricingField({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-[#F7F9FA] rounded-lg px-3 py-2">
+      <div className="text-[10px] text-[#8A96A3] mb-0.5">{label}</div>
+      <div className="text-[13px] font-bold text-[#1A2027]">Rs. {value.toLocaleString("en-IN")}</div>
     </div>
   );
 }
