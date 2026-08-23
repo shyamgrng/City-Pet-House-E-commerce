@@ -53,8 +53,6 @@ function PetTagArchiveContent() {
     setLookup((s) => ({ ...s, submitted: true, result: found }));
   };
 
-  const submit = () => lookupValue(query);
-
   const handleQrFile = async (file: File | undefined) => {
     if (!file) return;
     setQrError("");
@@ -212,17 +210,6 @@ function PetTagArchiveContent() {
                     📷 {decoding ? "Reading QR code…" : "Upload QR Image"}
                   </button>
                   {qrError && <div className="text-xs text-[#D64545] mb-2.5">{qrError}</div>}
-                  <div className="text-[11px] text-[#8A96A3] text-center mb-2.5">— or —</div>
-                  <input
-                    value={query}
-                    onChange={(e) => setLookup((s) => ({ ...s, query: e.target.value }))}
-                    onKeyDown={(e) => e.key === "Enter" && submit()}
-                    placeholder="Tag code or pet name"
-                    className="w-full box-border px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5"
-                  />
-                  <button onClick={submit} className="w-full bg-white border border-primary text-primary text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer mb-2.5">
-                    Search
-                  </button>
                 </>
               )}
               {submitted && !result && <div className="text-xs text-[#D64545]">No pet found matching that tag code or name.</div>}
