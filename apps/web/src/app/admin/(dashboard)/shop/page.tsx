@@ -10,7 +10,7 @@ import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useDeliverySettings } from "@/context/DeliverySettingsContext";
 import { formatRs, salePrice, type Product } from "@/lib/catalog-types";
 
-const subTabs = ["Overview", "Product", "Category Setting", "Brand Setting", "Delivery Setting", "Setting"];
+const subTabs = ["Overview", "Product", "Category Setting", "Brand Setting", "Delivery Setting"];
 
 const CHART_PALETTE = ["#1996C8", "#7A56C8", "#1F7A4D", "#C9962B", "#D64545", "#4F8FC0", "#B8860B"];
 
@@ -114,12 +114,6 @@ export default function ShopPage() {
       {tab === "Category Setting" && <CategorySettingTab />}
       {tab === "Brand Setting" && <BrandSettingTab />}
       {tab === "Delivery Setting" && <DeliverySettingTab />}
-
-      {tab !== "Overview" && tab !== "Product" && tab !== "Category Setting" && tab !== "Brand Setting" && tab !== "Delivery Setting" && (
-        <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
-          {tab} — coming soon
-        </div>
-      )}
 
       {tab === "Product" && (
         <>
