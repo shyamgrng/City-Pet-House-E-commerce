@@ -4,25 +4,12 @@ import { useMemo, useState } from "react";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import MediaSlot from "@/components/MediaSlot";
 import { useCatalog } from "@/context/CatalogContext";
-import { formatRs, salePrice, shopCategories, type Product } from "@/lib/catalog-types";
+import { useCategory } from "@/context/CategoryContext";
+import { formatRs, salePrice, type Product } from "@/lib/catalog-types";
 
 const subTabs = ["Overview", "Product", "Category Setting", "Brand Setting", "Delivery Setting", "Setting"];
 
-const BAR_COLORS: Record<string, string> = {
-  "Pet Accessories": "#1996C8",
-  "Fashion Wear": "#7A56C8",
-  "Pet Toys": "#1F7A4D",
-  "Pet Supplement": "#C9962B",
-  "Grooming Supplies": "#D64545",
-};
-
-const PIE_COLORS: Record<string, string> = {
-  "Pet Accessories": "#D64545",
-  "Fashion Wear": "#1996C8",
-  "Pet Toys": "#1F7A4D",
-  "Pet Supplement": "#C9962B",
-  "Grooming Supplies": "#7A56C8",
-};
+const CHART_PALETTE = ["#1996C8", "#7A56C8", "#1F7A4D", "#C9962B", "#D64545", "#4F8FC0", "#B8860B"];
 
 function stockStatus(p: Product) {
   if (p.status === "draft") return { label: "Draft", color: "#8A96A3" };
@@ -33,6 +20,7 @@ function stockStatus(p: Product) {
 
 export default function ShopPage() {
   const { products, addProduct, updateProduct, deleteProduct } = useCatalog();
+  const { categories } = useCategory();
   const [tab, setTab] = useState("Overview");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -48,7 +36,8 @@ export default function ShopPage() {
     return map;
   }, [products]);
 
-  const trackedCategories = Object.keys(BAR_COLORS).filter((c) => byCategory.has(c));
+  const trackedCategories = categories.filter((c) => byCategory.has(c));
+  const colorForCategory = (cat: string) => CHART_PALETTE[categories.indexOf(cat) % CHART_PALETTE.length];
 
   const totalSkus = products.length;
   const totalUnits = products.reduce((s, p) => s + p.qty, 0);
@@ -58,7 +47,7 @@ export default function ShopPage() {
   const unitsByCategory = trackedCategories.map((cat) => ({
     label: cat,
     units: byCategory.get(cat)!.reduce((s, p) => s + p.qty, 0),
-    color: BAR_COLORS[cat],
+    color: colorForCategory(cat),
   }));
   const maxUnits = Math.max(1, ...unitsByCategory.map((u) => u.units));
 
@@ -66,7 +55,7 @@ export default function ShopPage() {
   const categoryShare = trackedCategories.map((cat) => ({
     label: cat,
     pct: Math.round((byCategory.get(cat)!.reduce((s, p) => s + p.qty, 0) / totalTrackedUnits) * 100),
-    color: PIE_COLORS[cat],
+    color: colorForCategory(cat),
   }));
   const gradientStops = categoryShare
     .reduce<{ start: number; stops: string[] }>(
@@ -119,7 +108,9 @@ export default function ShopPage() {
         ))}
       </div>
 
-      {tab !== "Overview" && tab !== "Product" && (
+      {tab === "Category Setting" && <CategorySettingTab />}
+
+      {tab !== "Overview" && tab !== "Product" && tab !== "Category Setting" && (
         <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
           {tab} — coming soon
         </div>
@@ -141,7 +132,7 @@ export default function ShopPage() {
               placeholder="Search products…"
               className="flex-1 min-w-[220px] border border-[#E4E9EC] rounded-lg px-3.5 py-2.5 text-[13px]"
             />
-            {["All", ...shopCategories].map((c) => (
+            {["All", ...categories].map((c) => (
               <button
                 key={c}
                 onClick={() => setCategoryFilter(c)}
@@ -322,6 +313,80 @@ function StatCard({ label, value, color }: { label: string; value: number; color
       <div className="text-[11px] text-[#8A96A3] font-semibold mb-2">{label}</div>
       <div className="font-heading font-bold text-xl" style={{ color: color || "#1A2027" }}>
         {value}
+      </div>
+    </div>
+  );
+}
+
+function CategorySettingTab() {
+  const { categories, addCategory, renameCategory, removeCategory } = useCategory();
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [newName, setNewName] = useState("");
+
+  const startEdit = (name: string) => {
+    setEditingName(name);
+    setEditValue(name);
+  };
+  const saveEdit = () => {
+    if (editingName) renameCategory(editingName, editValue);
+    setEditingName(null);
+  };
+
+  return (
+    <div className="max-w-[520px]">
+      <div className="font-heading font-bold text-[19px] text-[#1A2027] mb-1.5">Category Setting</div>
+      <div className="text-[13px] text-[#5B6773] mb-[18px]">Manage the categories available when adding products.</div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-4">
+        {categories.map((c) =>
+          editingName === c ? (
+            <div key={c} className="flex items-center gap-2.5 px-4 py-2.5 border-b border-[#F0F2F4] last:border-0">
+              <input
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                autoFocus
+                className="flex-1 px-3 py-2.5 rounded-lg border border-primary text-[13px] box-border"
+              />
+              <button onClick={saveEdit} className="text-[11px] font-semibold text-[#1F7A4D] cursor-pointer whitespace-nowrap">
+                Save
+              </button>
+              <button onClick={() => setEditingName(null)} className="text-[11px] font-semibold text-[#8A96A3] cursor-pointer whitespace-nowrap">
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div key={c} className="flex justify-between items-center px-4 py-3.5 border-b border-[#F0F2F4] last:border-0">
+              <div className="text-[13px] font-semibold text-[#1A2027]">{c}</div>
+              <div className="flex gap-3.5">
+                <button onClick={() => startEdit(c)} className="text-[11px] font-semibold text-primary cursor-pointer">
+                  Edit
+                </button>
+                <button onClick={() => removeCategory(c)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
+                  Remove
+                </button>
+              </div>
+            </div>
+          )
+        )}
+      </div>
+
+      <div className="flex gap-2.5">
+        <input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          placeholder="New category name"
+          className="flex-1 px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+        />
+        <button
+          onClick={() => {
+            addCategory(newName);
+            setNewName("");
+          }}
+          className="bg-primary text-white px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+        >
+          Add
+        </button>
       </div>
     </div>
   );

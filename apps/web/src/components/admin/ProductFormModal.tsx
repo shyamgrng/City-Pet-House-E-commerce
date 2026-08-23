@@ -4,14 +4,8 @@ import { useState } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import PriceInput from "@/components/PriceInput";
 import { useB2BAuth } from "@/context/B2BAuthContext";
-import {
-  brandNames,
-  colourOptions,
-  courierPackageSizes,
-  shopCategories,
-  sizeOptions,
-  type Product,
-} from "@/lib/catalog-types";
+import { useCategory } from "@/context/CategoryContext";
+import { brandNames, colourOptions, courierPackageSizes, sizeOptions, type Product } from "@/lib/catalog-types";
 
 type Draft = Omit<Product, "id">;
 
@@ -20,7 +14,7 @@ const emptyDraft: Draft = {
   desc: "",
   photo: "",
   photos: [],
-  category: shopCategories[1],
+  category: "",
   sku: "",
   brand: "",
   price: 0,
@@ -53,7 +47,8 @@ export default function ProductFormModal({
   onSave: (draft: Draft) => void;
 }) {
   const { accounts } = useB2BAuth();
-  const [draft, setDraft] = useState<Draft>(initial ? { ...initial } : emptyDraft);
+  const { categories } = useCategory();
+  const [draft, setDraft] = useState<Draft>(initial ? { ...initial } : { ...emptyDraft, category: categories[0] || "" });
   const [tagsText, setTagsText] = useState(initial ? initial.tags.join(", ") : "");
   const [error, setError] = useState("");
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((d) => ({ ...d, [key]: value }));
@@ -131,7 +126,7 @@ export default function ProductFormModal({
               onChange={(e) => set("category", e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border bg-white"
             >
-              {shopCategories.map((c) => (
+              {categories.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>

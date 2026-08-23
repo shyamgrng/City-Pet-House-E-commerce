@@ -4,7 +4,8 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import ShopProductCard from "@/components/ShopProductCard";
 import { useCatalog } from "@/context/CatalogContext";
-import { brandNames, shopCategories, type Product } from "@/lib/catalog-types";
+import { useCategory } from "@/context/CategoryContext";
+import { brandNames, type Product } from "@/lib/catalog-types";
 
 const ratingOptions = [5, 4, 3, 2];
 const priceRangeOptions: { label: string; min: number; max: number }[] = [
@@ -41,11 +42,12 @@ export default function ShopPage() {
 
 function ShopContent() {
   const { products: allProducts } = useCatalog();
+  const { categories } = useCategory();
   const products = useMemo(() => allProducts.filter((p) => p.status === "active"), [allProducts]);
   const searchParams = useSearchParams();
   const [category, setCategory] = useState<string>(() => {
     const fromUrl = searchParams.get("category");
-    return fromUrl && shopCategories.includes(fromUrl) ? fromUrl : "";
+    return fromUrl && categories.includes(fromUrl) ? fromUrl : "";
   });
   const [brand, setBrand] = useState<string>(() => {
     const fromUrl = searchParams.get("brand");
@@ -98,7 +100,7 @@ function ShopContent() {
     <div className="flex gap-6 px-8 py-7">
       <div className="w-[200px] shrink-0">
         <div className="font-heading font-bold text-sm text-[#1A2027] mb-3">Categories</div>
-        {shopCategories.map((c) => (
+        {categories.map((c) => (
           <div
             key={c}
             onClick={() => setCategory(category === c ? "" : c)}

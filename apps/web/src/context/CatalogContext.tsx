@@ -13,6 +13,7 @@ type CatalogValue = {
   addProduct: (input: Omit<Product, "id">) => void;
   updateProduct: (id: string, input: Omit<Product, "id">) => void;
   deleteProduct: (id: string) => void;
+  renameCategoryInProducts: (oldName: string, newName: string) => void;
 };
 
 const CatalogContext = createContext<CatalogValue | null>(null);
@@ -87,8 +88,14 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
     persist(state.products.filter((p) => p.id !== id));
   };
 
+  const renameCategoryInProducts = (oldName: string, newName: string) => {
+    persist(state.products.map((p) => (p.category === oldName ? { ...p, category: newName } : p)));
+  };
+
   return (
-    <CatalogContext.Provider value={{ products: state.products, ready: state.ready, addProduct, updateProduct, deleteProduct }}>
+    <CatalogContext.Provider
+      value={{ products: state.products, ready: state.ready, addProduct, updateProduct, deleteProduct, renameCategoryInProducts }}
+    >
       {children}
     </CatalogContext.Provider>
   );

@@ -9,6 +9,7 @@ import { BlogProvider } from "@/context/BlogContext";
 import { CareerProvider } from "@/context/CareerContext";
 import { CartProvider } from "@/context/CartContext";
 import { CatalogProvider } from "@/context/CatalogContext";
+import { CategoryProvider } from "@/context/CategoryContext";
 import { ContactProvider } from "@/context/ContactContext";
 import { CourierAuthProvider } from "@/context/CourierAuthContext";
 import { DeliveryProvider } from "@/context/DeliveryContext";
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                     <VetProvider>
                       <ServiceProvider>
                         <CatalogProvider>
+                          <CategoryProvider>
                           <CartProvider>
                             <OrderProvider>
                               <PetProvider>
@@ -92,6 +94,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                               </PetProvider>
                             </OrderProvider>
                           </CartProvider>
+                          </CategoryProvider>
                         </CatalogProvider>
                       </ServiceProvider>
                     </VetProvider>

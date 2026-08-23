@@ -5,14 +5,15 @@ import ImageUploadField from "@/components/admin/ImageUploadField";
 import PriceInput from "@/components/PriceInput";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
+import { useCategory } from "@/context/CategoryContext";
 import { STATUS_COLORS } from "@/lib/b2b-types";
-import { brandNames, colourOptions, courierPackageSizes, shopCategories, sizeOptions } from "@/lib/catalog-types";
+import { brandNames, colourOptions, courierPackageSizes, sizeOptions } from "@/lib/catalog-types";
 
 const EMPTY = {
   photos: ["", "", "", ""],
   name: "",
   desc: "",
-  category: shopCategories[0],
+  category: "",
   price: "",
   qty: "",
   lowStockAlert: "5",
@@ -35,6 +36,7 @@ const EMPTY = {
 export default function ProductsTab() {
   const { supplier } = useB2BAuth();
   const { submissions, addSubmission } = useB2B();
+  const { categories } = useCategory();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState("");
@@ -104,7 +106,10 @@ export default function ProductsTab() {
       <div className="flex justify-between items-center mb-4">
         <div className="text-[13px] font-bold text-[#1A2027]">Your Products ({mine.length})</div>
         <button
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => {
+            if (!open && !form.category) set({ category: categories[0] || "" });
+            setOpen((o) => !o);
+          }}
           className="bg-primary text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer"
         >
           {open ? "Cancel" : "+ Add Product"}
@@ -144,7 +149,7 @@ export default function ProductsTab() {
             <div>
               <Label>Category *</Label>
               <select value={form.category} onChange={(e) => set({ category: e.target.value })} className={inputCls}>
-                {shopCategories.map((c) => (
+                {categories.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>

@@ -12,6 +12,7 @@ type B2BValue = {
   addSubmission: (input: Omit<B2BProductSubmission, "id" | "status" | "submittedAt">) => void;
   approveSubmission: (id: string) => void;
   rejectSubmission: (id: string) => void;
+  renameCategoryInSubmissions: (oldName: string, newName: string) => void;
 };
 
 const B2BContext = createContext<B2BValue | null>(null);
@@ -84,6 +85,10 @@ export function B2BProvider({ children }: { children: React.ReactNode }) {
     persist(state.submissions.map((s) => (s.id === id ? { ...s, status } : s)));
   };
 
+  const renameCategoryInSubmissions = (oldName: string, newName: string) => {
+    persist(state.submissions.map((s) => (s.category === oldName ? { ...s, category: newName } : s)));
+  };
+
   return (
     <B2BContext.Provider
       value={{
@@ -92,6 +97,7 @@ export function B2BProvider({ children }: { children: React.ReactNode }) {
         addSubmission,
         approveSubmission: (id) => setStatus(id, "Approved"),
         rejectSubmission: (id) => setStatus(id, "Rejected"),
+        renameCategoryInSubmissions,
       }}
     >
       {children}
