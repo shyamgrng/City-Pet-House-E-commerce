@@ -25,8 +25,9 @@ const PIE_COLORS: Record<string, string> = {
 };
 
 function stockStatus(p: Product) {
+  if (p.status === "draft") return { label: "Draft", color: "#8A96A3" };
   if (p.outOfStock || p.qty === 0) return { label: "Out of Stock", color: "#D64545" };
-  if (p.qty <= 5) return { label: "Low Stock", color: "#C9962B" };
+  if (p.qty <= p.lowStockAlert) return { label: "Low Stock", color: "#C9962B" };
   return { label: "In Stock", color: "#1F7A4D" };
 }
 
@@ -51,7 +52,7 @@ export default function ShopPage() {
 
   const totalSkus = products.length;
   const totalUnits = products.reduce((s, p) => s + p.qty, 0);
-  const lowStockCount = products.filter((p) => !p.outOfStock && p.qty > 0 && p.qty <= 5).length;
+  const lowStockCount = products.filter((p) => !p.outOfStock && p.qty > 0 && p.qty <= p.lowStockAlert).length;
   const outOfStockCount = products.filter((p) => p.outOfStock || p.qty === 0).length;
 
   const unitsByCategory = trackedCategories.map((cat) => ({
@@ -79,7 +80,7 @@ export default function ShopPage() {
     .stops.join(", ");
 
   const lowStockAndOut = products
-    .filter((p) => p.outOfStock || p.qty === 0 || p.qty <= 5)
+    .filter((p) => p.outOfStock || p.qty === 0 || p.qty <= p.lowStockAlert)
     .map((p) => ({ name: p.name, status: p.outOfStock || p.qty === 0 ? "Out of stock" : `${p.qty} left`, level: p.outOfStock || p.qty === 0 ? "out" : "low" }));
 
   const filteredProducts = products.filter((p) => {
@@ -172,9 +173,13 @@ export default function ShopPage() {
                     <MediaSlot src={p.photo} label="product photo" className="w-[72px] h-[72px] rounded-lg" />
                     <div>
                       <div className="font-semibold text-[#1A2027]">{p.name}</div>
+                      {(p.sizes.length > 0 || p.colours.length > 0) && (
+                        <div className="text-[11px] text-[#8A96A3] mt-0.5">{[...p.sizes, ...p.colours].join(", ")}</div>
+                      )}
+                      {p.suppliedBy && <div className="text-[11px] text-[#7A56C8] mt-0.5">Supplied by {p.suppliedBy}</div>}
                     </div>
                     <div className="text-[#5B6773]">{p.category}</div>
-                    <div className="font-semibold" style={{ color: p.qty <= 5 ? "#C9962B" : "#1A2027" }}>
+                    <div className="font-semibold" style={{ color: p.qty <= p.lowStockAlert ? "#C9962B" : "#1A2027" }}>
                       {p.qty}
                     </div>
                     <div>
@@ -182,6 +187,12 @@ export default function ShopPage() {
                       {p.hotSale && (
                         <div className="text-[10px] text-[#D64545] font-bold mt-0.5">
                           🔥 -{p.hotDiscount}% · now {formatRs(salePrice(p))}
+                        </div>
+                      )}
+                      {p.costPrice > 0 && (
+                        <div className="text-[10px] text-[#8A96A3] mt-0.5">
+                          Cost {formatRs(p.costPrice)} ·{" "}
+                          <span style={{ color: p.price - p.costPrice >= 0 ? "#1F7A4D" : "#D64545" }}>{formatRs(p.price - p.costPrice)} profit</span>
                         </div>
                       )}
                     </div>

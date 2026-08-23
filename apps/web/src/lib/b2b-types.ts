@@ -1,3 +1,5 @@
+import type { CourierPackageSize } from "./catalog-types";
+
 export type SubmissionStatus = "Pending" | "Approved" | "Rejected";
 
 export type B2BProductSubmission = {
@@ -6,10 +8,24 @@ export type B2BProductSubmission = {
   companyName: string;
   name: string;
   desc: string;
+  photos: string[];
   category: string;
+  sku: string;
   brand: string;
   price: number;
   qty: number;
+  lowStockAlert: number;
+  sizes: string[];
+  colours: string[];
+  courierPackageSize: CourierPackageSize;
+  tags: string[];
+  newArrival: boolean;
+  hotSale: boolean;
+  hotDiscount: number;
+  todaysDeal: boolean;
+  dealStart: string;
+  dealEnd: string;
+  outOfStock: boolean;
   commissionPct: number;
   status: SubmissionStatus;
   submittedAt: number;

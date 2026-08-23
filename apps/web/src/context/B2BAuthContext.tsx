@@ -15,6 +15,7 @@ type ResetRecord = { code: string; expiresAt: number };
 
 type B2BAuthValue = {
   supplier: B2BAccount | null;
+  accounts: B2BAccount[];
   ready: boolean;
   signIn: (b2bId: string, password: string) => Result;
   signOut: () => void;
@@ -141,7 +142,17 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <B2BAuthContext.Provider
-      value={{ supplier: state.supplier, ready: state.ready, signIn, signOut, updateProfile, changePassword, requestPasswordReset, resetPassword }}
+      value={{
+        supplier: state.supplier,
+        accounts: state.accounts,
+        ready: state.ready,
+        signIn,
+        signOut,
+        updateProfile,
+        changePassword,
+        requestPasswordReset,
+        resetPassword,
+      }}
     >
       {children}
     </B2BAuthContext.Provider>

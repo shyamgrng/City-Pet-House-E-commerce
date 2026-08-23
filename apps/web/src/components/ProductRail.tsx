@@ -16,7 +16,7 @@ export default function ProductRail({
   padBottom?: string;
 }) {
   const { products } = useCatalog();
-  const items = products.filter((p) => p.category === category).slice(0, 6);
+  const items = products.filter((p) => p.category === category && p.status === "active").slice(0, 6);
 
   return (
     <div>

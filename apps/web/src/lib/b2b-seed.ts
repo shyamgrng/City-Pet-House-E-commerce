@@ -1,7 +1,25 @@
 import type { B2BProductSubmission } from "@/lib/b2b-types";
 
+const defaults = {
+  photos: [] as string[],
+  sku: "",
+  lowStockAlert: 5,
+  sizes: [] as string[],
+  colours: [] as string[],
+  courierPackageSize: "Medium" as const,
+  tags: [] as string[],
+  newArrival: false,
+  hotSale: false,
+  hotDiscount: 0,
+  todaysDeal: false,
+  dealStart: "",
+  dealEnd: "",
+  outOfStock: false,
+};
+
 export const b2bSubmissionSeed: B2BProductSubmission[] = [
   {
+    ...defaults,
     id: "SUB-3001",
     b2bId: "B2B-1001",
     companyName: "Himal Pet Supplies Pvt. Ltd.",
@@ -16,6 +34,7 @@ export const b2bSubmissionSeed: B2BProductSubmission[] = [
     submittedAt: Date.now() - 12 * 24 * 60 * 60 * 1000,
   },
   {
+    ...defaults,
     id: "SUB-3002",
     b2bId: "B2B-1001",
     companyName: "Himal Pet Supplies Pvt. Ltd.",
@@ -30,6 +49,7 @@ export const b2bSubmissionSeed: B2BProductSubmission[] = [
     submittedAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
   },
   {
+    ...defaults,
     id: "SUB-3003",
     b2bId: "B2B-1001",
     companyName: "Himal Pet Supplies Pvt. Ltd.",

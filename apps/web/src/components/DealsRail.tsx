@@ -3,10 +3,11 @@
 import Link from "next/link";
 import ShopProductCard from "./ShopProductCard";
 import { useCatalog } from "@/context/CatalogContext";
+import { isDealLive } from "@/lib/catalog-types";
 
 export default function DealsRail() {
   const { products } = useCatalog();
-  const deals = products.filter((p) => p.todaysDeal).slice(0, 6);
+  const deals = products.filter((p) => p.status === "active" && isDealLive(p)).slice(0, 6);
 
   return (
     <div>

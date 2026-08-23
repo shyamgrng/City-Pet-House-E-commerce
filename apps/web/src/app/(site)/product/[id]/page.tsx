@@ -7,7 +7,7 @@ import MediaSlot from "@/components/MediaSlot";
 import ShopProductCard from "@/components/ShopProductCard";
 import { useCart } from "@/context/CartContext";
 import { useCatalog } from "@/context/CatalogContext";
-import { badgeColor, formatRs, salePrice } from "@/lib/catalog-types";
+import { formatRs, salePrice } from "@/lib/catalog-types";
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -16,6 +16,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [activePhoto, setActivePhoto] = useState(0);
   const product = products.find((p) => p.id === id);
 
   if (!product) {
@@ -26,29 +27,68 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const similar = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 5);
+  const similar = products
+    .filter((p) => p.category === product.category && p.id !== product.id && p.status === "active")
+    .slice(0, 5);
 
   return (
     <div>
       <div className="flex gap-8 px-8 py-7">
         <div className="flex-1">
           <div className="h-[380px] rounded-2xl relative overflow-hidden mb-2.5">
-            <MediaSlot src={product.photo} label="product gallery" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={product.photos[activePhoto] || product.photo} label="product gallery" className="absolute inset-0 w-full h-full" />
           </div>
+          {product.photos.length > 1 && (
+            <div className="flex gap-2">
+              {product.photos.map((photo, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActivePhoto(i)}
+                  className="w-16 h-16 rounded-lg overflow-hidden relative cursor-pointer shrink-0"
+                  style={{ outline: activePhoto === i ? "2px solid #1996C8" : "1px solid #E4E9EC", outlineOffset: "-1px" }}
+                >
+                  <MediaSlot src={photo} label={`photo ${i + 1}`} className="absolute inset-0 w-full h-full" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-heading font-bold text-2xl text-[#1A2027]">{product.name}</div>
           <div className="flex gap-2 mt-2">
-            {product.badge && (
-              <span
-                className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full inline-block"
-                style={{ background: badgeColor(product.badge) }}
-              >
-                {product.badge}
-              </span>
+            {product.newArrival && (
+              <span className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full inline-block bg-primary">New</span>
             )}
           </div>
           {product.desc && <div className="text-[13px] text-[#5B6773] mt-2.5 mb-3.5 max-w-[520px] leading-relaxed">{product.desc}</div>}
+          {(product.sizes.length > 0 || product.colours.length > 0) && (
+            <div className="flex flex-wrap gap-4 mb-3.5">
+              {product.sizes.length > 0 && (
+                <div>
+                  <div className="text-[11px] font-semibold text-[#8A96A3] mb-1">Size</div>
+                  <div className="flex gap-1.5">
+                    {product.sizes.map((sz) => (
+                      <span key={sz} className="text-xs font-semibold text-[#3A4652] border border-[#E4E9EC] rounded-md px-2 py-1">
+                        {sz}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {product.colours.length > 0 && (
+                <div>
+                  <div className="text-[11px] font-semibold text-[#8A96A3] mb-1">Colour</div>
+                  <div className="flex gap-1.5">
+                    {product.colours.map((c) => (
+                      <span key={c} className="text-xs font-semibold text-[#3A4652] border border-[#E4E9EC] rounded-md px-2 py-1">
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex items-center gap-3 mb-4">
             {product.hotSale ? (
               <>

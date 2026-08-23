@@ -1,13 +1,6 @@
 import { brandNames, slugify, type Product } from "./catalog-types";
 
-type SeedRow = [
-  name: string,
-  category: string,
-  price: number,
-  qty: number,
-  badge: Product["badge"],
-  hotDiscount: number,
-];
+type SeedRow = [name: string, category: string, price: number, qty: number, badge: "" | "New" | "Sale", hotDiscount: number];
 
 // Order matches the design's products() catalog exactly (Pet Accessories, Fashion Wear,
 // Pet Toys, Pet Supplement, Grooming Supplies — Pet Food is a category option with no
@@ -67,13 +60,26 @@ export const catalogSeed: Product[] = rows.map(([name, category, price, qty, bad
   name,
   desc: "",
   photo: "",
+  photos: [],
   category,
+  sku: "",
   brand: brandNames[i % brandNames.length],
   price,
+  costPrice: 0,
   qty,
-  badge,
+  lowStockAlert: 5,
+  sizes: [],
+  colours: [],
+  suppliedBy: "",
+  commissionPercent: 0,
+  courierPackageSize: "Medium",
+  tags: [],
+  newArrival: badge === "New",
   hotSale: hotDiscount > 0,
   hotDiscount,
   todaysDeal: hotDiscount > 0,
+  dealStart: "",
+  dealEnd: "",
   outOfStock: qty === 0,
+  status: "active",
 }));

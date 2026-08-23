@@ -40,7 +40,8 @@ export default function ShopPage() {
 }
 
 function ShopContent() {
-  const { products } = useCatalog();
+  const { products: allProducts } = useCatalog();
+  const products = useMemo(() => allProducts.filter((p) => p.status === "active"), [allProducts]);
   const searchParams = useSearchParams();
   const [category, setCategory] = useState<string>(() => {
     const fromUrl = searchParams.get("category");
