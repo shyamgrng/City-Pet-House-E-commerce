@@ -36,6 +36,7 @@ function useCartDeliveryFee(items: CartItem[]) {
 export default function CartPage() {
   const { user, ready } = useAuth();
   const { items, subtotal, inc, dec, remove, clear } = useCart();
+  const { products } = useCatalog();
   const { placeOrder } = useOrder();
   const deliveryResult = useCartDeliveryFee(items);
 
@@ -56,11 +57,18 @@ export default function CartPage() {
         </div>
       ) : (
         <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-6">
-          {items.map((it) => (
+          {items.map((it) => {
+            const product = products.find((p) => p.id === it.productId);
+            return (
             <div key={it.productId} className="flex justify-between items-center px-4 py-3.5 border-b border-[#F0F2F4] last:border-0">
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-semibold text-[#1A2027]">{it.name}</div>
-                <div className="text-xs text-[#8A96A3] mt-0.5">{formatRs(it.price)} each</div>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-[#F7F9FA]">
+                  <MediaSlot src={product?.photo} label="product photo" className="w-full h-full text-[7px]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[13px] font-semibold text-[#1A2027] truncate">{it.name}</div>
+                  <div className="text-xs text-[#8A96A3] mt-0.5">{formatRs(it.price)} each</div>
+                </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button onClick={() => dec(it.productId)} className="w-7 h-7 rounded-md border border-[#E4E9EC] text-[#3A4652] font-bold cursor-pointer">
@@ -76,7 +84,8 @@ export default function CartPage() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -135,6 +144,7 @@ function CheckoutSection({
   const [phone, setPhone] = useState(user.phone);
   const [receiptPhoto, setReceiptPhoto] = useState("");
   const [error, setError] = useState("");
+  const [previewQr, setPreviewQr] = useState<{ src: string; label: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File | undefined) => {
@@ -237,13 +247,36 @@ function CheckoutSection({
         <div className="flex gap-3 justify-center mb-4 flex-wrap">
           {activeMethods.map((pm) => (
             <div key={pm.key} className="text-center">
-              <div className="w-[92px] h-[92px] mb-1 rounded-lg bg-white overflow-hidden">
+              <div
+                onClick={() => pm.qrImage && setPreviewQr({ src: pm.qrImage, label: pm.label })}
+                className="w-[92px] h-[92px] mb-1 rounded-lg bg-white overflow-hidden"
+                style={{ cursor: pm.qrImage ? "zoom-in" : "default" }}
+              >
                 <MediaSlot src={pm.qrImage} label="QR" className="w-full h-full text-[9px] font-mono" />
               </div>
               <div className="text-[11px] font-semibold text-[#1A2027]">{pm.label}</div>
             </div>
           ))}
         </div>
+
+        {previewQr && (
+          <div
+            onClick={() => setPreviewQr(null)}
+            className="fixed inset-0 bg-black/70 flex flex-col items-center justify-center z-[70] p-6"
+          >
+            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-5 max-w-[92vw]">
+              <div className="text-center text-sm font-bold text-[#1A2027] mb-3">{previewQr.label}</div>
+              {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URL, shown full-size for scanning */}
+              <img src={previewQr.src} alt={`${previewQr.label} QR code`} className="w-[min(80vw,340px)] h-[min(80vw,340px)] object-contain mx-auto" />
+            </div>
+            <button
+              onClick={() => setPreviewQr(null)}
+              className="mt-4 text-white text-sm font-semibold bg-white/15 px-5 py-2 rounded-lg cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        )}
 
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
           Upload Payment Receipt <span className="text-[#D64545]">*</span>
