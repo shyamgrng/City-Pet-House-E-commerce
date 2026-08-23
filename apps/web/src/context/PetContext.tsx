@@ -3,17 +3,24 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { petSeed } from "@/lib/pet-seed";
 import type { Pet } from "@/lib/pet-types";
-import { PET_PHOTO_SLOTS, slugify } from "@/lib/pet-types";
+import { dewormStages, PET_PHOTO_SLOTS, slugify, vaccineStages } from "@/lib/pet-types";
 
 const STORAGE_KEY = "cph_pets";
 
 // Backfills fields introduced after this record may have been saved to localStorage by an
 // older build. Older records carried a single `photo` string and a `videos` count instead of
-// a photos[] array with a chosen cover slot and a real uploaded `video`.
+// a photos[] array with a chosen cover slot and a real uploaded `video`, and had no
+// vaccination/deworming checklist at all.
 function normalizePet(p: Partial<Pet> & Pick<Pet, "id" | "breed"> & { photo?: string }): Pet {
   const photos = Array.isArray(p.photos)
     ? [...p.photos, ...Array(PET_PHOTO_SLOTS).fill("")].slice(0, PET_PHOTO_SLOTS)
     : [p.photo || "", ...Array(PET_PHOTO_SLOTS - 1).fill("")];
+  const vaccinations = Array.isArray(p.vaccinations)
+    ? [...p.vaccinations, ...Array(vaccineStages.length).fill(false)].slice(0, vaccineStages.length)
+    : Array(vaccineStages.length).fill(false);
+  const dewormings = Array.isArray(p.dewormings)
+    ? [...p.dewormings, ...Array(dewormStages.length).fill(false)].slice(0, dewormStages.length)
+    : Array(dewormStages.length).fill(false);
   return {
     species: "Dog",
     sex: "Male",
@@ -26,6 +33,8 @@ function normalizePet(p: Partial<Pet> & Pick<Pet, "id" | "breed"> & { photo?: st
     video: "",
     ...p,
     photos,
+    vaccinations,
+    dewormings,
   };
 }
 

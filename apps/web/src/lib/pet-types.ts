@@ -2,6 +2,19 @@ export type PetStatus = "Available" | "Reserved" | "Sold";
 
 export const PET_PHOTO_SLOTS = 4;
 
+// Standard puppy vaccination schedule (7 doses) and deworming schedule (4 doses).
+export const vaccineStages = [
+  "6–8 wks: DHPPi (1st dose)",
+  "9–11 wks: DHPPi (2nd dose)",
+  "12–14 wks: DHPPi (3rd dose) + Leptospirosis",
+  "14–16 wks: Rabies (1st dose)",
+  "16–18 wks: DHPPi (4th dose / booster)",
+  "6 months: Rabies booster",
+  "12 months: Annual booster (DHPPi + Rabies)",
+] as const;
+
+export const dewormStages = ["2 weeks", "4 weeks", "6 weeks", "8 weeks"] as const;
+
 export type Pet = {
   id: string;
   breed: string;
@@ -17,6 +30,10 @@ export type Pet = {
   /** Index into photos[] of the photo shown as the listing's cover/lead image. */
   coverPhotoIndex: number;
   video: string;
+  /** Aligned to vaccineStages — which doses this pet has received. */
+  vaccinations: boolean[];
+  /** Aligned to dewormStages — which doses this pet has received. */
+  dewormings: boolean[];
 };
 
 export const petSpeciesList = ["Dog", "Cat", "Small Pets", "Birds", "Fish"];

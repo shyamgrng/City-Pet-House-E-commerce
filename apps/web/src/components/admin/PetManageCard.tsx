@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { usePets } from "@/context/PetContext";
 import { readVideoFile, resizeImageFile } from "@/lib/image-upload";
-import { formatRs, petSpeciesList, type Pet, type PetStatus } from "@/lib/pet-types";
+import { dewormStages, formatRs, petSpeciesList, vaccineStages, type Pet, type PetStatus } from "@/lib/pet-types";
 
 const SPECIES_COLORS: Record<string, string> = {
   Dog: "#1996C8",
@@ -132,7 +132,27 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
             className={inputCls}
           />
         </Field>
-        <div className="col-span-2 flex justify-between items-center mt-1">
+
+        <div className="col-span-2 mt-1.5">
+          <StageChecklist
+            label="Vaccination Status"
+            stages={vaccineStages}
+            done={pet.vaccinations}
+            color="#1F7A4D"
+            onToggle={(i) => patch({ vaccinations: pet.vaccinations.map((v, vi) => (vi === i ? !v : v)) })}
+          />
+        </div>
+        <div className="col-span-2 mt-2.5">
+          <StageChecklist
+            label="Deworming Status"
+            stages={dewormStages}
+            done={pet.dewormings}
+            color="#C9962B"
+            onToggle={(i) => patch({ dewormings: pet.dewormings.map((v, vi) => (vi === i ? !v : v)) })}
+          />
+        </div>
+
+        <div className="col-span-2 flex justify-between items-center mt-2.5">
           <button onClick={flashUpdated} className="bg-primary text-white text-xs font-semibold px-4.5 py-2 rounded-lg cursor-pointer">
             Update Pet
           </button>
@@ -152,6 +172,43 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
 }
 
 const inputCls = "w-full box-border h-8 rounded-md border border-[#E4E9EC] px-2.5 text-xs bg-white";
+
+function StageChecklist({
+  label,
+  stages,
+  done,
+  color,
+  onToggle,
+}: {
+  label: string;
+  stages: readonly string[];
+  done: boolean[];
+  color: string;
+  onToggle: (index: number) => void;
+}) {
+  const doneCount = done.filter(Boolean).length;
+  return (
+    <div>
+      <div className="text-[10px] font-bold text-[#8A96A3] mb-1.5 uppercase">
+        {label} ({doneCount}/{stages.length} doses)
+      </div>
+      <div className="flex gap-1.5 flex-wrap">
+        {stages.map((stage, i) => (
+          <button
+            key={i}
+            type="button"
+            title={stage}
+            onClick={() => onToggle(i)}
+            className="w-7 h-7 rounded-full text-[11px] font-bold cursor-pointer shrink-0"
+            style={{ background: done[i] ? color : "#F0F2F4", color: done[i] ? "#fff" : "#5B6773" }}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

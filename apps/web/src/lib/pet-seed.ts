@@ -1,4 +1,4 @@
-import { PET_PHOTO_SLOTS, slugify, type Pet } from "./pet-types";
+import { dewormStages, PET_PHOTO_SLOTS, slugify, vaccineStages, type Pet } from "./pet-types";
 
 type SeedRow = [breed: string, species: string, sex: string, age: string, price: number, deliveryFee: number, tags: string[]];
 
@@ -30,4 +30,6 @@ export const petSeed: Pet[] = rows.map(([breed, species, sex, age, price, delive
   photos: Array(PET_PHOTO_SLOTS).fill(""),
   coverPhotoIndex: 0,
   video: "",
+  vaccinations: Array(vaccineStages.length).fill(false),
+  dewormings: Array(dewormStages.length).fill(false),
 }));

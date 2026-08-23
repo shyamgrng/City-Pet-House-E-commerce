@@ -7,7 +7,7 @@ import MediaSlot from "@/components/MediaSlot";
 import { useAdoption } from "@/context/AdoptionContext";
 import { usePets } from "@/context/PetContext";
 import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
-import { coverPhoto, PET_PHOTO_SLOTS, petSpeciesList } from "@/lib/pet-types";
+import { coverPhoto, dewormStages, PET_PHOTO_SLOTS, petSpeciesList, vaccineStages } from "@/lib/pet-types";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Dog: "#1996C8",
@@ -50,6 +50,8 @@ export default function PetAvailablePage() {
       photos: Array(PET_PHOTO_SLOTS).fill(""),
       coverPhotoIndex: 0,
       video: "",
+      vaccinations: Array(vaccineStages.length).fill(false),
+      dewormings: Array(dewormStages.length).fill(false),
     });
     setTab("Manage Pets");
   };

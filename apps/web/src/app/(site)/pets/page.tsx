@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { usePets } from "@/context/PetContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { coverPhoto, formatRs, petSpeciesList, type Pet } from "@/lib/pet-types";
+import { coverPhoto, dewormStages, formatRs, petSpeciesList, vaccineStages, type Pet } from "@/lib/pet-types";
 
 const chips = ["All", ...petSpeciesList];
 
@@ -196,6 +196,14 @@ function PetsAvailableContent() {
                   {tag}
                 </span>
               ))}
+            </div>
+            <div className="flex gap-1.5 flex-wrap mb-3">
+              <span className="text-[11px] font-semibold text-[#146A8C] bg-[#EAF4F9] px-2 py-1 rounded-md">
+                💉 Vaccinated {selected.vaccinations.filter(Boolean).length}/{vaccineStages.length} doses
+              </span>
+              <span className="text-[11px] font-semibold text-[#8A6D1F] bg-[#FFF8E8] px-2 py-1 rounded-md">
+                🪱 Dewormed {selected.dewormings.filter(Boolean).length}/{dewormStages.length} doses
+              </span>
             </div>
             <div className="text-[22px] font-bold text-primary mb-0.5">{formatRs(selected.price)}</div>
             <div className="text-xs text-[#8A96A3] mb-[18px]">+ {formatRs(selected.deliveryFee)} delivery</div>
