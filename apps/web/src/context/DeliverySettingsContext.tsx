@@ -1,16 +1,23 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import type { CourierPackageSize } from "@/lib/catalog-types";
 
 const STORAGE_KEY = "cph_delivery_settings";
 
-type DeliverySettings = { standardFee: number; puppyFee: number };
+type DeliverySettings = {
+  standardFee: number;
+  puppyFee: number;
+  freeDeliveryThreshold: number;
+  /** Highest tier still eligible for the free-delivery waiver — "Medium" means Small & Medium qualify. */
+  freeDeliveryMaxTier: CourierPackageSize;
+};
 
-const DEFAULT_SETTINGS: DeliverySettings = { standardFee: 150, puppyFee: 250 };
+const DEFAULT_SETTINGS: DeliverySettings = { standardFee: 150, puppyFee: 250, freeDeliveryThreshold: 10000, freeDeliveryMaxTier: "Medium" };
 
 type DeliverySettingsValue = DeliverySettings & {
   ready: boolean;
-  setFees: (standardFee: number, puppyFee: number) => void;
+  setSettings: (settings: DeliverySettings) => void;
 };
 
 const DeliverySettingsContext = createContext<DeliverySettingsValue | null>(null);
@@ -20,7 +27,12 @@ function loadStored(): DeliverySettings {
   if (!raw) return DEFAULT_SETTINGS;
   try {
     const parsed = JSON.parse(raw);
-    return { standardFee: Number(parsed.standardFee) || DEFAULT_SETTINGS.standardFee, puppyFee: Number(parsed.puppyFee) || DEFAULT_SETTINGS.puppyFee };
+    return {
+      standardFee: Number(parsed.standardFee) || DEFAULT_SETTINGS.standardFee,
+      puppyFee: Number(parsed.puppyFee) || DEFAULT_SETTINGS.puppyFee,
+      freeDeliveryThreshold: Number(parsed.freeDeliveryThreshold) || DEFAULT_SETTINGS.freeDeliveryThreshold,
+      freeDeliveryMaxTier: parsed.freeDeliveryMaxTier === "Small" ? "Small" : DEFAULT_SETTINGS.freeDeliveryMaxTier,
+    };
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -34,14 +46,22 @@ export function DeliverySettingsProvider({ children }: { children: React.ReactNo
     setState({ ...loadStored(), ready: true });
   }, []);
 
-  const setFees = (standardFee: number, puppyFee: number) => {
-    const next = { standardFee, puppyFee };
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    setState({ ...next, ready: true });
+  const setSettings = (settings: DeliverySettings) => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    setState({ ...settings, ready: true });
   };
 
   return (
-    <DeliverySettingsContext.Provider value={{ standardFee: state.standardFee, puppyFee: state.puppyFee, ready: state.ready, setFees }}>
+    <DeliverySettingsContext.Provider
+      value={{
+        standardFee: state.standardFee,
+        puppyFee: state.puppyFee,
+        freeDeliveryThreshold: state.freeDeliveryThreshold,
+        freeDeliveryMaxTier: state.freeDeliveryMaxTier,
+        ready: state.ready,
+        setSettings,
+      }}
+    >
       {children}
     </DeliverySettingsContext.Provider>
   );

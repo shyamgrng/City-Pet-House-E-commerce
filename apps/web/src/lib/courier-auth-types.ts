@@ -14,6 +14,8 @@ export type CourierAccount = {
   ratePerKg: number;
   ratePerKm: number;
   defaultFlatPrice: number;
+  /** Whether this courier's rate card drives checkout pricing — only one account should be active at a time. */
+  isActive: boolean;
 };
 
 export const courierAccountSeed: CourierAccount[] = [
@@ -33,5 +35,6 @@ export const courierAccountSeed: CourierAccount[] = [
     ratePerKg: 0,
     ratePerKm: 0,
     defaultFlatPrice: 0,
+    isActive: true,
   },
 ];

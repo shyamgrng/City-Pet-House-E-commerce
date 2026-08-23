@@ -29,6 +29,7 @@ type Overrides = Record<
       | "ratePerKg"
       | "ratePerKm"
       | "defaultFlatPrice"
+      | "isActive"
     >
   >
 >;
@@ -48,6 +49,7 @@ function normalizeCourier(
     ratePerKg: 0,
     ratePerKm: 0,
     defaultFlatPrice: 0,
+    isActive: false,
     ...a,
   };
 }
@@ -66,6 +68,7 @@ type CourierAuthValue = {
     input: Omit<CourierAccount, "courierId" | "password" | "email">
   ) => { courierId: string; password: string };
   removeCourier: (courierId: string) => void;
+  setActiveCourier: (courierId: string) => void;
 };
 
 const CourierAuthContext = createContext<CourierAuthValue | null>(null);
@@ -177,6 +180,17 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
     setState((s) => ({ ...s, accounts: s.accounts.filter((a) => a.courierId !== courierId) }));
   };
 
+  const setActiveCourier = (courierId: string) => {
+    setState((s) => {
+      const accounts = s.accounts.map((a) => {
+        const isActive = a.courierId === courierId;
+        persistOverride(a.courierId, { isActive });
+        return { ...a, isActive };
+      });
+      return { ...s, accounts };
+    });
+  };
+
   const requestPasswordReset = (courierId: string): Result => {
     const account = state.accounts.find((a) => a.courierId.toLowerCase() === courierId.trim().toLowerCase());
     if (!account) return { ok: false, error: "No courier account found with that ID." };
@@ -253,6 +267,7 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
         resetPassword,
         addCourier,
         removeCourier,
+        setActiveCourier,
       }}
     >
       {children}

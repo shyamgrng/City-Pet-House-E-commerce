@@ -455,10 +455,12 @@ const emptyCourierForm = {
 };
 
 function DeliverySettingTab() {
-  const { standardFee, puppyFee, setFees } = useDeliverySettings();
-  const { accounts, addCourier, removeCourier } = useCourierAuth();
+  const { standardFee, puppyFee, freeDeliveryThreshold, freeDeliveryMaxTier, setSettings } = useDeliverySettings();
+  const { accounts, addCourier, removeCourier, setActiveCourier } = useCourierAuth();
   const [standardInput, setStandardInput] = useState(String(standardFee));
   const [puppyInput, setPuppyInput] = useState(String(puppyFee));
+  const [thresholdInput, setThresholdInput] = useState(String(freeDeliveryThreshold));
+  const [maxTierInput, setMaxTierInput] = useState<"Small" | "Medium">(freeDeliveryMaxTier === "Small" ? "Small" : "Medium");
   const [feesSaved, setFeesSaved] = useState(false);
 
   const [form, setForm] = useState(emptyCourierForm);
@@ -467,7 +469,12 @@ function DeliverySettingTab() {
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
 
   const saveFees = () => {
-    setFees(Number(standardInput) || 0, Number(puppyInput) || 0);
+    setSettings({
+      standardFee: Number(standardInput) || 0,
+      puppyFee: Number(puppyInput) || 0,
+      freeDeliveryThreshold: Number(thresholdInput) || 0,
+      freeDeliveryMaxTier: maxTierInput,
+    });
     setFeesSaved(true);
     setTimeout(() => setFeesSaved(false), 3000);
   };
@@ -490,6 +497,7 @@ function DeliverySettingTab() {
       ratePerKg: Number(form.ratePerKg) || 0,
       ratePerKm: Number(form.ratePerKm) || 0,
       defaultFlatPrice: Number(form.defaultFlatPrice) || 0,
+      isActive: accounts.length === 0,
     });
     setForm(emptyCourierForm);
     setError("");
@@ -520,8 +528,37 @@ function DeliverySettingTab() {
             setPuppyInput(e.target.value);
             setFeesSaved(false);
           }}
-          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-4 box-border"
         />
+
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Free Delivery Threshold (Rs.)</div>
+        <input
+          type="number"
+          value={thresholdInput}
+          onChange={(e) => {
+            setThresholdInput(e.target.value);
+            setFeesSaved(false);
+          }}
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-1.5 box-border"
+        />
+        <div className="text-[11px] text-[#8A96A3] mb-3">Waived only for carts at or above this subtotal, and only within the tier limit below.</div>
+
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Free Delivery Applies Up To</div>
+        <div className="flex gap-2 bg-[#F0F2F4] rounded-[9px] p-1">
+          {(["Small", "Medium"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => {
+                setMaxTierInput(t);
+                setFeesSaved(false);
+              }}
+              className="flex-1 text-center py-2 rounded-[7px] text-xs font-semibold cursor-pointer"
+              style={{ background: maxTierInput === t ? "#1996C8" : "transparent", color: maxTierInput === t ? "#fff" : "#5B6773" }}
+            >
+              {t === "Small" ? "Small only" : "Small & Medium"}
+            </button>
+          ))}
+        </div>
       </div>
       <button onClick={saveFees} className="w-full bg-primary text-white text-center py-3 rounded-lg text-sm font-semibold cursor-pointer mb-2">
         Save
@@ -532,7 +569,7 @@ function DeliverySettingTab() {
       <div className="text-[13px] text-[#5B6773] mb-3.5">Rates per parcel size, with an optional default/distance-based price.</div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto mb-4">
-        <div className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[640px]">
+        <div className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[720px]">
           <div>Company</div>
           <div>Address</div>
           <div>Phone</div>
@@ -540,6 +577,7 @@ function DeliverySettingTab() {
           <div>Medium</div>
           <div>Large</div>
           <div>V.Large</div>
+          <div>Active</div>
           <div></div>
         </div>
         {accounts.length === 0 ? (
@@ -548,7 +586,7 @@ function DeliverySettingTab() {
           accounts.map((co) => (
             <div
               key={co.courierId}
-              className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr] gap-2 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[640px]"
+              className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr] gap-2 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[720px]"
             >
               <div className="font-semibold text-[#1A2027]">{co.companyName}</div>
               <div className="text-[#5B6773]">{co.address || "—"}</div>
@@ -557,6 +595,19 @@ function DeliverySettingTab() {
               <div>Rs.{co.priceMedium}</div>
               <div>Rs.{co.priceLarge}</div>
               <div>Rs.{co.priceVeryLarge}</div>
+              <div
+                onClick={() => !co.isActive && setActiveCourier(co.courierId)}
+                className="flex items-center gap-1.5 cursor-pointer"
+                title={co.isActive ? "This courier's rates drive checkout pricing" : "Click to make this courier active"}
+              >
+                <span
+                  className="w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0"
+                  style={{ borderColor: co.isActive ? "#1F7A4D" : "#C7CDD2" }}
+                >
+                  {co.isActive && <span className="w-1.5 h-1.5 rounded-full bg-[#1F7A4D]" />}
+                </span>
+                {co.isActive && <span className="text-[10px] font-bold text-[#1F7A4D]">Active</span>}
+              </div>
               <button onClick={() => removeCourier(co.courierId)} className="text-[#D64545] font-semibold cursor-pointer text-left">
                 Remove
               </button>

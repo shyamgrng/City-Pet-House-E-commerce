@@ -6,25 +6,42 @@ import { useRef, useState } from "react";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
+import { useCatalog } from "@/context/CatalogContext";
+import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useDeliverySettings } from "@/context/DeliverySettingsContext";
 import { useOrder } from "@/context/OrderContext";
 import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import type { CartItem } from "@/lib/cart-types";
+import { calculateDeliveryFee, type DeliveryFeeResult } from "@/lib/delivery-fee";
 import { resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
 const PAYMENT_METHODS = ["eSewa", "Khalti", "Bank Transfer"];
 
+function useCartDeliveryFee(items: CartItem[]) {
+  const { products } = useCatalog();
+  const { accounts: couriers } = useCourierAuth();
+  const { standardFee, freeDeliveryThreshold, freeDeliveryMaxTier } = useDeliverySettings();
+
+  const feeItems = items.map((it) => {
+    const product = products.find((p) => p.id === it.productId);
+    return { subtotal: it.price * it.qty, tier: product?.courierPackageSize ?? "Small" };
+  });
+  const activeCourier = couriers.find((c) => c.isActive) ?? null;
+
+  return calculateDeliveryFee({ items: feeItems, courier: activeCourier, standardFee, freeDeliveryThreshold, freeDeliveryMaxTier });
+}
+
 export default function CartPage() {
   const { user, ready } = useAuth();
   const { items, subtotal, inc, dec, remove, clear } = useCart();
   const { placeOrder } = useOrder();
-  const { standardFee: DELIVERY_FEE } = useDeliverySettings();
+  const deliveryResult = useCartDeliveryFee(items);
 
   if (!ready) return null;
 
-  const total = items.length > 0 ? subtotal + DELIVERY_FEE : 0;
+  const total = items.length > 0 ? subtotal + deliveryResult.fee : 0;
 
   return (
     <div className="px-8 py-7 max-w-[720px] mx-auto">
@@ -79,7 +96,15 @@ export default function CartPage() {
       )}
 
       {items.length > 0 && user && (
-        <CheckoutSection user={user} items={items} subtotal={subtotal} total={total} placeOrder={placeOrder} clear={clear} />
+        <CheckoutSection
+          user={user}
+          items={items}
+          subtotal={subtotal}
+          total={total}
+          deliveryResult={deliveryResult}
+          placeOrder={placeOrder}
+          clear={clear}
+        />
       )}
     </div>
   );
@@ -90,6 +115,7 @@ function CheckoutSection({
   items,
   subtotal,
   total,
+  deliveryResult,
   placeOrder,
   clear,
 }: {
@@ -97,11 +123,12 @@ function CheckoutSection({
   items: CartItem[];
   subtotal: number;
   total: number;
+  deliveryResult: DeliveryFeeResult;
   placeOrder: ReturnType<typeof useOrder>["placeOrder"];
   clear: () => void;
 }) {
   const router = useRouter();
-  const { standardFee: DELIVERY_FEE } = useDeliverySettings();
+  const DELIVERY_FEE = deliveryResult.fee;
   const [address, setAddress] = useState(user.address);
   const [phone, setPhone] = useState(user.phone);
   const [receiptPhoto, setReceiptPhoto] = useState("");
@@ -168,13 +195,31 @@ function CheckoutSection({
         />
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">📞 Phone</div>
         <PhoneInput value={phone} onChange={setPhone} className="" />
-        <div className="text-[11px] text-[#8A96A3] mt-2.5">Delivery — {formatRs(DELIVERY_FEE)} (varies by item)</div>
+        <div className="text-[11px] text-[#8A96A3] mt-2.5">
+          Delivery — {deliveryResult.freeDeliveryApplied ? "Free" : formatRs(DELIVERY_FEE)}
+          {deliveryResult.courierName && ` via ${deliveryResult.courierName}`}
+        </div>
       </div>
 
       <div className="border border-[#E4E9EC] rounded-xl p-4 mb-6">
         <div className="text-[13px] font-bold text-[#1A2027] mb-3">Order Summary</div>
         <SummaryRow label="Subtotal" value={formatRs(subtotal)} />
-        <SummaryRow label="Delivery Fee" value={formatRs(DELIVERY_FEE)} />
+        <SummaryRow label="Delivery Fee" value={deliveryResult.freeDeliveryApplied ? "Free" : formatRs(DELIVERY_FEE)} />
+        {deliveryResult.freeDeliveryApplied && (
+          <div className="text-[11px] font-semibold text-[#1F7A4D] bg-[#E7F3EC] rounded-md px-2.5 py-1.5 mt-1 mb-1 inline-block">
+            Free delivery applied 🎉
+          </div>
+        )}
+        {deliveryResult.freeDeliveryBlockedReason && (
+          <div className="text-[11px] text-[#8A6D1F] bg-[#FFF8E8] rounded-md px-2.5 py-1.5 mt-1 mb-1">
+            {deliveryResult.freeDeliveryBlockedReason}
+          </div>
+        )}
+        {deliveryResult.amountToUnlockFreeDelivery !== null && (
+          <div className="text-[11px] text-[#146A8C] bg-[#EAF4F9] rounded-md px-2.5 py-1.5 mt-1 mb-1">
+            Add {formatRs(deliveryResult.amountToUnlockFreeDelivery)} more to unlock free delivery
+          </div>
+        )}
         <div className="flex justify-between items-center pt-2.5 mt-1 border-t border-[#F0F2F4]">
           <span className="text-sm font-bold text-[#1A2027]">Total</span>
           <span className="text-lg font-bold text-primary">{formatRs(total)}</span>
