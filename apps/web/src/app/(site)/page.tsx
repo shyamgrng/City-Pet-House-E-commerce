@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import AvailablePuppiesRail from "@/components/AvailablePuppiesRail";
+import BrandCarousel from "@/components/BrandCarousel";
 import DealsRail from "@/components/DealsRail";
 import HealthCareRail from "@/components/HealthCareRail";
 import LatestBlogRail from "@/components/LatestBlogRail";
@@ -152,18 +153,7 @@ export default function HomePage() {
         <div className="px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Shop by Brand</div>
         </div>
-        <div className="flex gap-3 overflow-x-auto px-8 pb-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {brands.map((b) => (
-            <Link
-              key={b}
-              href={`/shop?brand=${encodeURIComponent(b)}`}
-              className="flex flex-col items-center gap-2 cursor-pointer shrink-0 w-[88px]"
-            >
-              <MediaSlot src={content.brandImages[b]} label={b} shape="circle" className="w-[88px] h-[88px]" />
-              <div className="text-[11px] font-semibold text-[#1A2027] text-center">{b}</div>
-            </Link>
-          ))}
-        </div>
+        <BrandCarousel brands={brands} images={content.brandImages} />
         <ProductRail title="Grooming Accessories" category="Grooming Supplies" padBottom="pb-9" />
       </div>
 
