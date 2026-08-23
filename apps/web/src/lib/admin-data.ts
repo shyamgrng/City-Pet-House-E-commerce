@@ -110,17 +110,9 @@ export const financeFlows = [
 ];
 
 // ---- Users / Roles ----
-export const adminUsers = [
-  { name: "Admin User", email: "admin@citypethouse.com", role: "Admin", status: "Active" },
-  { name: "Sabin Karki", email: "sabin@citypethouse.com", role: "Staff", status: "Active" },
-];
-export const rolePerms = [
-  { role: "Admin", perms: [true, true, true, true, true, true] },
-  { role: "Manager", perms: [true, true, true, true, true, false] },
-  { role: "Staff", perms: [true, true, true, true, false, false] },
-  { role: "B2B User", perms: [false, false, false, true, false, false] },
-];
-export const roleColumns = ["Dashboard", "Deliveries", "Vet Consults", "Shop", "Finance", "Users"];
+// Admin/staff users and role permissions now read live from AdminAuthContext (backed by
+// lib/admin-user-seed.ts) — see src/app/admin/(dashboard)/users/page.tsx. These are the same
+// credentials that sign in at /admin/login.
 
 // ---- Pet Tag Archive ----
 // Pet QR tag registry + public page content now read live from PetTagContext (see

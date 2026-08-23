@@ -1,57 +1,145 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { adminUserSeed, rolePermsSeed } from "@/lib/admin-user-seed";
+import type { AdminUser, AdminUserPerms, AdminUserRole } from "@/lib/admin-user-types";
 
-type AdminUser = { name: string; email: string; role: string };
+const USERS_KEY = "cph_admin_users";
+const ROLE_PERMS_KEY = "cph_admin_role_perms";
+const SESSION_KEY = "cph_admin_session";
 
-const DEMO_USER: AdminUser = { name: "Admin User", email: "admin@citypethouse.com", role: "Admin" };
-const DEMO_PASSWORD = "admin123";
-const STORAGE_KEY = "cph_admin_session";
-
-function safeParseUser(raw: string): AdminUser | null {
+function loadUsers(): AdminUser[] {
+  const raw = window.localStorage.getItem(USERS_KEY);
+  if (!raw) return adminUserSeed;
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length ? parsed : adminUserSeed;
   } catch {
-    return null;
+    return adminUserSeed;
   }
+}
+
+function loadRolePerms(): Record<AdminUserRole, AdminUserPerms> {
+  const raw = window.localStorage.getItem(ROLE_PERMS_KEY);
+  if (!raw) return rolePermsSeed;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? { ...rolePermsSeed, ...parsed } : rolePermsSeed;
+  } catch {
+    return rolePermsSeed;
+  }
+}
+
+// Older builds stored the full session user object as JSON; now only the email is stored
+// and the live user record is resolved from the users list on every load.
+function loadSessionEmail(): string | null {
+  const raw = window.localStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && parsed.email) return parsed.email;
+  } catch {
+    // not JSON — already a plain email string
+  }
+  return raw;
 }
 
 type AdminAuthValue = {
   user: AdminUser | null;
+  users: AdminUser[];
+  rolePerms: Record<AdminUserRole, AdminUserPerms>;
   ready: boolean;
   login: (email: string, password: string) => boolean;
   logout: () => void;
+  addUser: (input: Omit<AdminUser, "active">) => { ok: true } | { ok: false; error: string };
+  updateUser: (email: string, patch: Partial<Omit<AdminUser, "email">>) => void;
+  removeUser: (email: string) => void;
+  toggleUserActive: (email: string) => void;
+  toggleRolePerm: (role: AdminUserRole, key: keyof AdminUserPerms) => void;
 };
 
 const AdminAuthContext = createContext<AdminAuthValue | null>(null);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<{ user: AdminUser | null; ready: boolean }>({ user: null, ready: false });
+  const [state, setState] = useState<{
+    users: AdminUser[];
+    rolePerms: Record<AdminUserRole, AdminUserPerms>;
+    sessionEmail: string | null;
+    ready: boolean;
+  }>({ users: adminUserSeed, rolePerms: rolePermsSeed, sessionEmail: null, ready: false });
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    // Reading localStorage on mount to hydrate the session is inherently a one-time
-    // synchronous read from an external source — there is no external event to subscribe to.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSession({ user: stored ? safeParseUser(stored) : null, ready: true });
+    setState({ users: loadUsers(), rolePerms: loadRolePerms(), sessionEmail: loadSessionEmail(), ready: true });
   }, []);
 
+  const persistUsers = (users: AdminUser[]) => {
+    window.localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    setState((s) => ({ ...s, users }));
+  };
+
+  const persistRolePerms = (rolePerms: Record<AdminUserRole, AdminUserPerms>) => {
+    window.localStorage.setItem(ROLE_PERMS_KEY, JSON.stringify(rolePerms));
+    setState((s) => ({ ...s, rolePerms }));
+  };
+
   const login = (email: string, password: string) => {
-    if (email.trim().toLowerCase() === DEMO_USER.email && password === DEMO_PASSWORD) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(DEMO_USER));
-      setSession({ user: DEMO_USER, ready: true });
-      return true;
-    }
-    return false;
+    const match = state.users.find(
+      (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password && u.active
+    );
+    if (!match) return false;
+    window.localStorage.setItem(SESSION_KEY, match.email);
+    setState((s) => ({ ...s, sessionEmail: match.email }));
+    return true;
   };
 
   const logout = () => {
-    window.localStorage.removeItem(STORAGE_KEY);
-    setSession((s) => ({ ...s, user: null }));
+    window.localStorage.removeItem(SESSION_KEY);
+    setState((s) => ({ ...s, sessionEmail: null }));
   };
 
+  const addUser = (input: Omit<AdminUser, "active">): { ok: true } | { ok: false; error: string } => {
+    if (state.users.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {
+      return { ok: false, error: "A user with that email already exists." };
+    }
+    persistUsers([...state.users, { ...input, active: true }]);
+    return { ok: true };
+  };
+
+  const updateUser = (email: string, patch: Partial<Omit<AdminUser, "email">>) => {
+    persistUsers(state.users.map((u) => (u.email === email ? { ...u, ...patch } : u)));
+  };
+
+  const removeUser = (email: string) => {
+    persistUsers(state.users.filter((u) => u.email !== email));
+  };
+
+  const toggleUserActive = (email: string) => {
+    persistUsers(state.users.map((u) => (u.email === email ? { ...u, active: !u.active } : u)));
+  };
+
+  const toggleRolePerm = (role: AdminUserRole, key: keyof AdminUserPerms) => {
+    persistRolePerms({ ...state.rolePerms, [role]: { ...state.rolePerms[role], [key]: !state.rolePerms[role][key] } });
+  };
+
+  const user = state.sessionEmail ? (state.users.find((u) => u.email === state.sessionEmail) ?? null) : null;
+
   return (
-    <AdminAuthContext.Provider value={{ user: session.user, ready: session.ready, login, logout }}>
+    <AdminAuthContext.Provider
+      value={{
+        user,
+        users: state.users,
+        rolePerms: state.rolePerms,
+        ready: state.ready,
+        login,
+        logout,
+        addUser,
+        updateUser,
+        removeUser,
+        toggleUserActive,
+        toggleRolePerm,
+      }}
+    >
       {children}
     </AdminAuthContext.Provider>
   );

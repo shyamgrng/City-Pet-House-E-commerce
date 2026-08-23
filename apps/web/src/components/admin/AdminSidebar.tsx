@@ -7,6 +7,8 @@ import { useAdminAuth } from "@/context/AdminAuthContext";
 import { useCareer } from "@/context/CareerContext";
 import { useDelivery } from "@/context/DeliveryContext";
 import { useOrder } from "@/context/OrderContext";
+import { usePets } from "@/context/PetContext";
+import { useVet } from "@/context/VetContext";
 import { sidebarBadges, sidebarDefs } from "@/lib/admin-data";
 
 function slugFor(key: string) {
@@ -25,11 +27,15 @@ export default function AdminSidebar() {
   const { applications } = useCareer();
   const { orders } = useOrder();
   const { deliveries } = useDelivery();
+  const { bookings } = useVet();
+  const { pets } = usePets();
   const pathname = usePathname();
   const router = useRouter();
   const newApplicationsCount = applications.filter((a) => a.status === "New").length;
   const pendingDeliveriesCount =
     orders.filter((o) => o.status === "Receipt Uploaded").length + deliveries.filter((d) => d.status === "Awaiting Courier").length;
+  const pendingVetConsultsCount = bookings.filter((b) => b.status === "Payment Review").length;
+  const reservedPetsCount = pets.filter((p) => p.status === "Reserved").length;
 
   return (
     <div className="w-[200px] shrink-0 bg-[#1A2027] text-white p-5 px-3.5 flex flex-col min-h-screen">
@@ -47,7 +53,11 @@ export default function AdminSidebar() {
               ? { count: newApplicationsCount, color: "#C9962B" }
               : s.key === "deliveries"
                 ? { count: pendingDeliveriesCount, color: "#D64545" }
-                : sidebarBadges[s.key];
+                : s.key === "vetconsults"
+                  ? { count: pendingVetConsultsCount, color: "#D64545" }
+                  : s.key === "petavailable"
+                    ? { count: reservedPetsCount, color: "#C9962B" }
+                    : sidebarBadges[s.key];
           return (
             <Link
               key={s.key}

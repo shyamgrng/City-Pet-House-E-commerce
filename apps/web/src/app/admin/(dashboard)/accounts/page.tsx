@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { adminUsers } from "@/lib/admin-data";
 import { useAdoption } from "@/context/AdoptionContext";
+import { useAdminAuth } from "@/context/AdminAuthContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useVet } from "@/context/VetContext";
@@ -19,6 +19,7 @@ const accountB2b = b2bAccountSeed.map((a) => ({ name: a.companyName, status: "Ac
 export default function AccountsPage() {
   const [tab, setTab] = useState("Overview");
   const { accounts } = useAuth();
+  const { users: adminUsers } = useAdminAuth();
   const { accounts: courierAccounts } = useCourierAuth();
   const accountCouriers = courierAccounts.map((a) => ({ name: a.companyName, status: "Active" }));
 
