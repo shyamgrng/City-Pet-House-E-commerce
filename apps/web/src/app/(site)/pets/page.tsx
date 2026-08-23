@@ -31,9 +31,17 @@ function PetsAvailableContent() {
     return fromUrl && chips.includes(fromUrl) ? fromUrl : "All";
   });
   const [selected, setSelected] = useState<Pet | null>(null);
+  const [activePhoto, setActivePhoto] = useState(0);
 
   const available = pets.filter((p) => p.status === "Available");
   const filtered = species === "All" ? available : available.filter((p) => p.species === species);
+
+  const selectPet = (p: Pet) => {
+    setSelected(p);
+    const filled = p.photos.map((src, i) => ({ src, i })).filter((x) => x.src);
+    const coverPos = filled.findIndex((x) => x.i === p.coverPhotoIndex);
+    setActivePhoto(coverPos >= 0 ? coverPos : 0);
+  };
 
   const bookPuppy = (pet: Pet) => {
     if (!user) {
@@ -60,6 +68,9 @@ function PetsAvailableContent() {
 
   if (selected) {
     const similar = available.filter((p) => p.species === selected.species && p.id !== selected.id).slice(0, 4);
+    const photoList = selected.photos.map((src, i) => ({ src, i })).filter((p) => p.src);
+    const activeIndex = Math.min(activePhoto, Math.max(0, photoList.length - 1));
+    const heroSrc = photoList[activeIndex]?.src || coverPhoto(selected);
     return (
       <div className="px-8 py-7">
         <div onClick={() => setSelected(null)} className="text-[13px] font-semibold text-primary cursor-pointer mb-4">
@@ -68,11 +79,25 @@ function PetsAvailableContent() {
         <div className="flex gap-7 flex-wrap mb-9">
           <div className="flex-1 min-w-[320px] max-w-[420px]">
             <div className="h-[300px] rounded-xl relative overflow-hidden mb-2.5">
-              <MediaSlot src={coverPhoto(selected)} label="puppy photo" className="absolute inset-0 w-full h-full" />
+              <MediaSlot src={heroSrc} label="puppy photo" className="absolute inset-0 w-full h-full" />
               <div className="absolute top-2.5 left-2.5 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-1 rounded-md">
                 {selected.status}
               </div>
             </div>
+            {photoList.length > 1 && (
+              <div className="flex gap-2">
+                {photoList.map((p, i) => (
+                  <button
+                    key={p.i}
+                    onClick={() => setActivePhoto(i)}
+                    className="w-16 h-16 rounded-lg overflow-hidden relative cursor-pointer shrink-0"
+                    style={{ outline: activeIndex === i ? "2px solid #1996C8" : "1px solid #E4E9EC", outlineOffset: "-1px" }}
+                  >
+                    <MediaSlot src={p.src} label={`photo ${i + 1}`} className="absolute inset-0 w-full h-full" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-[280px]">
             <div className="flex justify-between items-start gap-3">
@@ -105,7 +130,7 @@ function PetsAvailableContent() {
             <div className="font-heading font-bold text-base text-[#1A2027] mb-3.5">Other Puppies Available</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
               {similar.map((p) => (
-                <div key={p.id} onClick={() => setSelected(p)} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
+                <div key={p.id} onClick={() => selectPet(p)} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
                   <MediaSlot src={coverPhoto(p)} label="puppy photo" className="h-[110px]" />
                   <div className="p-2.5">
                     <div className="text-xs font-semibold text-[#1A2027]">{p.breed}</div>
@@ -151,7 +176,7 @@ function PetsAvailableContent() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {filtered.map((p) => (
-            <div key={p.id} onClick={() => setSelected(p)} className="border border-[#E4E9EC] rounded-xl overflow-hidden cursor-pointer">
+            <div key={p.id} onClick={() => selectPet(p)} className="border border-[#E4E9EC] rounded-xl overflow-hidden cursor-pointer">
               <div className="h-[260px] relative">
                 <MediaSlot src={coverPhoto(p)} label="puppy photo" className="absolute inset-0 w-full h-full" />
                 <div className="absolute top-2 left-2 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
