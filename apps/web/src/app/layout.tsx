@@ -25,7 +25,9 @@ import { MicrochipProvider } from "@/context/MicrochipContext";
 import { OrderProvider } from "@/context/OrderContext";
 import { PetProvider } from "@/context/PetContext";
 import { PetTagProvider } from "@/context/PetTagContext";
+import { PaymentMethodsProvider } from "@/context/PaymentMethodsContext";
 import { ServiceProvider } from "@/context/ServiceContext";
+import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
 import { TestimonialProvider } from "@/context/TestimonialContext";
 import { VetProvider } from "@/context/VetContext";
 import { WishlistProvider } from "@/context/WishlistContext";
@@ -53,6 +55,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${poppins.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        <SiteSettingsProvider>
+        <PaymentMethodsProvider>
         <BrandProvider>
         <DeliverySettingsProvider>
         <AuthProvider>
@@ -110,6 +114,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </AuthProvider>
         </DeliverySettingsProvider>
         </BrandProvider>
+        </PaymentMethodsProvider>
+        </SiteSettingsProvider>
       </body>
     </html>
   );

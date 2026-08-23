@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import HeaderSearch from "./HeaderSearch";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { siteSettings } from "@/lib/site-settings";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -21,6 +21,7 @@ const navLinks = [
 export default function SiteHeader() {
   const { user, ready, signOut } = useAuth();
   const { count } = useCart();
+  const { settings } = useSiteSettings();
   const router = useRouter();
   const pathname = usePathname();
   const isSignedIn = ready && !!user;
@@ -45,9 +46,9 @@ export default function SiteHeader() {
   return (
     <div className="sticky top-0 z-10 bg-white">
       <div className="flex items-center justify-center gap-4 px-8 py-1.5 bg-[#F7F9FA] text-[11px] text-[#5B6773] border-b border-[#E4E9EC]">
-        <div>📞 {siteSettings.phone}</div>
-        <div>📍 {siteSettings.address}</div>
-        <div>{siteSettings.hours}</div>
+        <div>📞 {settings.phone}</div>
+        <div>📍 {settings.address}</div>
+        <div>{settings.hours}</div>
       </div>
 
       <div className="flex items-center gap-6 px-8 py-3.5 border-b border-[#E4E9EC]">

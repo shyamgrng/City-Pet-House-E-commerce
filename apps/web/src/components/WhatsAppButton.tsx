@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { siteSettings } from "@/lib/site-settings";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
 
 export default function WhatsAppButton() {
   const [hover, setHover] = useState(false);
-  const digits = siteSettings.phone.replace(/\D/g, "");
+  const { settings } = useSiteSettings();
+  const digits = settings.phone.replace(/\D/g, "");
   const message = "Hi City Pet House! I'd like to ask about...";
   const href = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 

@@ -194,10 +194,3 @@ export const pageEditorList = [
   { title: "Microchipping Archive", desc: "Banner, content sections & FAQs on the public Microchipping Archive page", href: "/admin/pages/microchipping-archive" },
   { title: "Pet Tag Archive", desc: "Banner, content sections & FAQs on the public Pet Tag Archive page", href: "/admin/pages/pet-tag-archive" },
 ];
-
-// ---- Settings ----
-export const paymentMethods = [
-  { name: "Fonepay", active: true },
-  { name: "eSewa", active: true },
-  { name: "Khalti", active: true },
-];

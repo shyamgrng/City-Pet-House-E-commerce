@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -10,14 +11,13 @@ import { useCatalog } from "@/context/CatalogContext";
 import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useDeliverySettings } from "@/context/DeliverySettingsContext";
 import { useOrder } from "@/context/OrderContext";
+import { usePaymentMethods } from "@/context/PaymentMethodsContext";
 import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import type { CartItem } from "@/lib/cart-types";
 import { calculateDeliveryFee, type DeliveryFeeResult } from "@/lib/delivery-fee";
 import { resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
-
-const PAYMENT_METHODS = ["eSewa", "Khalti", "Bank Transfer"];
 
 function useCartDeliveryFee(items: CartItem[]) {
   const { products } = useCatalog();
@@ -128,6 +128,8 @@ function CheckoutSection({
   clear: () => void;
 }) {
   const router = useRouter();
+  const { methods } = usePaymentMethods();
+  const activeMethods = methods.filter((m) => m.active);
   const DELIVERY_FEE = deliveryResult.fee;
   const [address, setAddress] = useState(user.address);
   const [phone, setPhone] = useState(user.phone);
@@ -232,13 +234,13 @@ function CheckoutSection({
           Pay via any of the QR codes below. Upload your receipt screenshot — your order will be held for 6 hours pending admin
           approval.
         </div>
-        <div className="flex gap-3 justify-center mb-4">
-          {PAYMENT_METHODS.map((pm) => (
-            <div key={pm} className="text-center">
-              <div className="w-[92px] h-[92px] mb-1 rounded-lg bg-white flex items-center justify-center text-[9px] text-[#8A96A3] font-mono">
-                QR
+        <div className="flex gap-3 justify-center mb-4 flex-wrap">
+          {activeMethods.map((pm) => (
+            <div key={pm.key} className="text-center">
+              <div className="w-[92px] h-[92px] mb-1 rounded-lg bg-white overflow-hidden">
+                <MediaSlot src={pm.qrImage} label="QR" className="w-full h-full text-[9px] font-mono" />
               </div>
-              <div className="text-[11px] font-semibold text-[#1A2027]">{pm}</div>
+              <div className="text-[11px] font-semibold text-[#1A2027]">{pm.label}</div>
             </div>
           ))}
         </div>

@@ -4,8 +4,8 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import EmailInput from "@/components/EmailInput";
 import { useContactPage } from "@/context/ContactContext";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { isValidEmail } from "@/lib/email-format";
-import { siteSettings } from "@/lib/site-settings";
 
 export default function ContactPage() {
   return (
@@ -17,6 +17,7 @@ export default function ContactPage() {
 
 function ContactContent() {
   const { content, ready } = useContactPage();
+  const { settings } = useSiteSettings();
   const searchParams = useSearchParams();
   const prefillService = searchParams.get("service");
   const [name, setName] = useState("");
@@ -46,16 +47,16 @@ function ContactContent() {
           <div className="text-sm text-[#5B6773] leading-[1.8] mb-7">{content.intro}</div>
           <div className="grid grid-cols-2 gap-4">
             <InfoCard icon="📍" title="Our Address">
-              {siteSettings.address}
+              {settings.address}
             </InfoCard>
             <InfoCard icon="📞" title="Phone Number">
-              {siteSettings.phone}
+              {settings.phone}
             </InfoCard>
             <InfoCard icon="✉️" title="Email Address">
-              {siteSettings.email}
+              {settings.email}
             </InfoCard>
             <InfoCard icon="🕒" title="Working Time">
-              {siteSettings.hours}
+              {settings.hours}
             </InfoCard>
           </div>
         </div>
