@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import AdoptionFormModal from "@/components/admin/AdoptionFormModal";
-import PetFormModal from "@/components/admin/PetFormModal";
+import PetManageCard from "@/components/admin/PetManageCard";
 import MediaSlot from "@/components/MediaSlot";
 import { useAdoption } from "@/context/AdoptionContext";
 import { usePets } from "@/context/PetContext";
 import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
-import { formatRs, petSpeciesList, type Pet } from "@/lib/pet-types";
+import { coverPhoto, PET_PHOTO_SLOTS, petSpeciesList } from "@/lib/pet-types";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Dog: "#1996C8",
@@ -24,11 +24,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function PetAvailablePage() {
-  const { pets, addPet, updatePet, deletePet } = usePets();
+  const { pets, addPet, updatePet } = usePets();
   const { posts, addPost, updatePost, deletePost } = useAdoption();
   const [tab, setTab] = useState("Overview");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<Pet | null>(null);
   const [adoptionModalOpen, setAdoptionModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<AdoptionPost | null>(null);
 
@@ -39,20 +37,24 @@ export default function PetAvailablePage() {
 
   const bySpecies = petSpeciesList.map((s) => ({ label: s, count: pets.filter((p) => p.species === s).length, color: CATEGORY_COLORS[s] }));
 
-  const openAdd = () => {
-    setEditing(null);
-    setModalOpen(true);
+  const addBlankPet = () => {
+    addPet({
+      breed: "New Pet",
+      species: "Dog",
+      sex: "Male",
+      age: "",
+      price: 0,
+      deliveryFee: 0,
+      tags: [],
+      status: "Available",
+      photos: Array(PET_PHOTO_SLOTS).fill(""),
+      coverPhotoIndex: 0,
+      video: "",
+    });
+    setTab("Manage Pets");
   };
-  const openEdit = (p: Pet) => {
-    setEditing(p);
-    setModalOpen(true);
-  };
-  const handleSave = (draft: Omit<Pet, "id">) => {
-    if (editing) updatePet(editing.id, draft);
-    else addPet(draft);
-    setModalOpen(false);
-  };
-  const markSold = (p: Pet) => updatePet(p.id, { ...p, status: p.status === "Sold" ? "Available" : "Sold" });
+  const editFromOverview = () => setTab("Manage Pets");
+  const markSold = (p: (typeof pets)[number]) => updatePet(p.id, { ...p, status: p.status === "Sold" ? "Available" : "Sold" });
 
   const openAddPost = () => {
     setEditingPost(null);
@@ -76,11 +78,6 @@ export default function PetAvailablePage() {
           <div className="font-heading font-bold text-[19px] text-[#1A2027]">Pet Available</div>
           <div className="text-xs text-[#5B6773]">Manage the puppies, kittens &amp; other pets shown in Pets Available for Sale.</div>
         </div>
-        {tab === "Manage Pets" && (
-          <button onClick={openAdd} className="bg-primary text-white text-xs font-semibold px-4 py-2.5 rounded-lg cursor-pointer whitespace-nowrap">
-            + Add Pet
-          </button>
-        )}
         {tab === "Adoption Posts" && (
           <button onClick={openAddPost} className="bg-primary text-white text-xs font-semibold px-4 py-2.5 rounded-lg cursor-pointer whitespace-nowrap">
             + Add Notice
@@ -102,40 +99,17 @@ export default function PetAvailablePage() {
       </div>
 
       {tab === "Manage Pets" && (
-        <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-          <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.9fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
-            <div>Pet</div>
-            <div>Species</div>
-            <div>Price</div>
-            <div>Status</div>
-            <div>Actions</div>
-          </div>
+        <div>
+          <button
+            onClick={addBlankPet}
+            className="w-full border border-dashed border-primary text-primary text-center py-3 rounded-[10px] text-xs font-semibold cursor-pointer mb-4"
+          >
+            + Add Pet
+          </button>
           {pets.length === 0 ? (
             <div className="px-4 py-6 text-xs text-[#8A96A3] text-center">No pets yet.</div>
           ) : (
-            pets.map((p) => (
-              <div key={p.id} className="grid grid-cols-[1.4fr_1fr_1fr_1fr_0.9fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-                <div>
-                  <div className="font-semibold text-[#1A2027]">{p.breed}</div>
-                  <div className="text-[11px] text-[#8A96A3] mt-0.5">
-                    {p.sex} · {p.age}
-                  </div>
-                </div>
-                <div className="text-[#5B6773]">{p.species}</div>
-                <div className="font-semibold">{formatRs(p.price)}</div>
-                <div className="text-[11px] font-semibold" style={{ color: STATUS_COLORS[p.status] }}>
-                  {p.status}
-                </div>
-                <div className="flex gap-2.5 text-[11px] font-semibold">
-                  <span onClick={() => openEdit(p)} className="text-primary cursor-pointer">
-                    Edit
-                  </span>
-                  <span onClick={() => deletePet(p.id)} className="text-[#D64545] cursor-pointer">
-                    Delete
-                  </span>
-                </div>
-              </div>
-            ))
+            pets.map((p) => <PetManageCard key={p.id} pet={p} />)
           )}
         </div>
       )}
@@ -220,7 +194,7 @@ export default function PetAvailablePage() {
                   {items.map((p) => (
                     <div key={p.id} className="border-t-2 rounded-[10px] border border-[#E4E9EC] overflow-hidden" style={{ borderTopColor: c.color }}>
                       <div className="h-[100px] relative">
-                        <MediaSlot src={p.photo} label="pet photo" className="absolute inset-0 w-full h-full" />
+                        <MediaSlot src={coverPhoto(p)} label="pet photo" className="absolute inset-0 w-full h-full" />
                         <div
                           className="absolute top-1.5 left-1.5 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded"
                           style={{ background: STATUS_COLORS[p.status] }}
@@ -235,7 +209,7 @@ export default function PetAvailablePage() {
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => openEdit(p)}
+                            onClick={editFromOverview}
                             className="flex-1 border border-[#E4E9EC] text-[#3A4652] text-xs font-semibold py-2 rounded-md cursor-pointer"
                           >
                             Edit
@@ -257,7 +231,6 @@ export default function PetAvailablePage() {
         </>
       )}
 
-      {modalOpen && <PetFormModal initial={editing} onClose={() => setModalOpen(false)} onSave={handleSave} />}
       {adoptionModalOpen && (
         <AdoptionFormModal initial={editingPost} onClose={() => setAdoptionModalOpen(false)} onSave={handleSavePost} />
       )}

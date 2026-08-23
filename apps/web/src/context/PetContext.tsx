@@ -3,15 +3,38 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { petSeed } from "@/lib/pet-seed";
 import type { Pet } from "@/lib/pet-types";
-import { slugify } from "@/lib/pet-types";
+import { PET_PHOTO_SLOTS, slugify } from "@/lib/pet-types";
 
 const STORAGE_KEY = "cph_pets";
+
+// Backfills fields introduced after this record may have been saved to localStorage by an
+// older build. Older records carried a single `photo` string and a `videos` count instead of
+// a photos[] array with a chosen cover slot and a real uploaded `video`.
+function normalizePet(p: Partial<Pet> & Pick<Pet, "id" | "breed"> & { photo?: string }): Pet {
+  const photos = Array.isArray(p.photos)
+    ? [...p.photos, ...Array(PET_PHOTO_SLOTS).fill("")].slice(0, PET_PHOTO_SLOTS)
+    : [p.photo || "", ...Array(PET_PHOTO_SLOTS - 1).fill("")];
+  return {
+    species: "Dog",
+    sex: "Male",
+    age: "",
+    price: 0,
+    deliveryFee: 0,
+    tags: [],
+    status: "Available",
+    coverPhotoIndex: 0,
+    video: "",
+    ...p,
+    photos,
+  };
+}
 
 type PetValue = {
   pets: Pet[];
   ready: boolean;
-  addPet: (input: Omit<Pet, "id">) => void;
-  updatePet: (id: string, input: Omit<Pet, "id">) => void;
+  saveError: string | null;
+  addPet: (input: Omit<Pet, "id">) => string;
+  updatePet: (id: string, input: Omit<Pet, "id">) => boolean;
   deletePet: (id: string) => void;
 };
 
@@ -22,33 +45,46 @@ function loadStored(): Pet[] {
   if (!raw) return petSeed;
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : petSeed;
+    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizePet) : petSeed;
   } catch {
     return petSeed;
   }
 }
 
 export function PetProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ pets: Pet[]; ready: boolean }>({ pets: petSeed, ready: false });
+  const [state, setState] = useState<{ pets: Pet[]; ready: boolean; saveError: string | null }>({
+    pets: petSeed,
+    ready: false,
+    saveError: null,
+  });
 
   useEffect(() => {
     // One-time hydration from localStorage on mount — no external event to subscribe to.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ pets: loadStored(), ready: true });
+    setState({ pets: loadStored(), ready: true, saveError: null });
   }, []);
 
-  const persist = (pets: Pet[]) => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(pets));
-    setState({ pets, ready: true });
+  // Photos and video are stored as base64 data URLs — a large upload can exceed the
+  // browser's localStorage quota, so surface that instead of silently dropping the edit.
+  const persist = (pets: Pet[]): boolean => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(pets));
+    } catch {
+      setState((s) => ({ ...s, saveError: "Couldn't save — your browser's storage is full. Try a smaller photo/video, or delete an old pet, then try again." }));
+      return false;
+    }
+    setState({ pets, ready: true, saveError: null });
+    return true;
   };
 
   const addPet = (input: Omit<Pet, "id">) => {
     const id = slugify(input.breed) + "-" + Math.random().toString(36).slice(2, 7);
     persist([{ ...input, id }, ...state.pets]);
+    return id;
   };
 
   const updatePet = (id: string, input: Omit<Pet, "id">) => {
-    persist(state.pets.map((p) => (p.id === id ? { ...input, id } : p)));
+    return persist(state.pets.map((p) => (p.id === id ? { ...input, id } : p)));
   };
 
   const deletePet = (id: string) => {
@@ -56,7 +92,7 @@ export function PetProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <PetContext.Provider value={{ pets: state.pets, ready: state.ready, addPet, updatePet, deletePet }}>
+    <PetContext.Provider value={{ pets: state.pets, ready: state.ready, saveError: state.saveError, addPet, updatePet, deletePet }}>
       {children}
     </PetContext.Provider>
   );

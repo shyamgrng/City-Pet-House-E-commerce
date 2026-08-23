@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { usePets } from "@/context/PetContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { formatRs, petSpeciesList, type Pet } from "@/lib/pet-types";
+import { coverPhoto, formatRs, petSpeciesList, type Pet } from "@/lib/pet-types";
 
 const chips = ["All", ...petSpeciesList];
 
@@ -68,7 +68,7 @@ function PetsAvailableContent() {
         <div className="flex gap-7 flex-wrap mb-9">
           <div className="flex-1 min-w-[320px] max-w-[420px]">
             <div className="h-[300px] rounded-xl relative overflow-hidden mb-2.5">
-              <MediaSlot src={selected.photo} label="puppy photo" className="absolute inset-0 w-full h-full" />
+              <MediaSlot src={coverPhoto(selected)} label="puppy photo" className="absolute inset-0 w-full h-full" />
               <div className="absolute top-2.5 left-2.5 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-1 rounded-md">
                 {selected.status}
               </div>
@@ -106,7 +106,7 @@ function PetsAvailableContent() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
               {similar.map((p) => (
                 <div key={p.id} onClick={() => setSelected(p)} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
-                  <MediaSlot src={p.photo} label="puppy photo" className="h-[110px]" />
+                  <MediaSlot src={coverPhoto(p)} label="puppy photo" className="h-[110px]" />
                   <div className="p-2.5">
                     <div className="text-xs font-semibold text-[#1A2027]">{p.breed}</div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">
@@ -153,13 +153,13 @@ function PetsAvailableContent() {
           {filtered.map((p) => (
             <div key={p.id} onClick={() => setSelected(p)} className="border border-[#E4E9EC] rounded-xl overflow-hidden cursor-pointer">
               <div className="h-[260px] relative">
-                <MediaSlot src={p.photo} label="puppy photo" className="absolute inset-0 w-full h-full" />
+                <MediaSlot src={coverPhoto(p)} label="puppy photo" className="absolute inset-0 w-full h-full" />
                 <div className="absolute top-2 left-2 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
                   {p.status}
                 </div>
-                {p.videos > 0 && (
+                {p.video && (
                   <div className="absolute bottom-2 right-2 bg-black/55 text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
-                    🎥 {p.videos}
+                    🎥 Video
                   </div>
                 )}
               </div>

@@ -26,3 +26,20 @@ export function resizeImageFile(file: File, maxWidth: number, maxHeight: number,
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Reads a video file as a data URL, unresized (video can't be downscaled via canvas).
+ * Rejects files over maxBytes since a large video as base64 can blow the localStorage quota.
+ */
+export function readVideoFile(file: File, maxBytes = 5 * 1024 * 1024): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (file.size > maxBytes) {
+      reject(new Error(`Video is too large — please choose one under ${Math.round(maxBytes / (1024 * 1024))}MB.`));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read file."));
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsDataURL(file);
+  });
+}
