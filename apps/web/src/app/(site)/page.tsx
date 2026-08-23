@@ -152,11 +152,15 @@ export default function HomePage() {
         <div className="px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Shop by Brand</div>
         </div>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 px-8 pb-7">
+        <div className="flex gap-3 overflow-x-auto px-8 pb-7 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {brands.map((b) => (
-            <Link key={b} href={`/shop?brand=${encodeURIComponent(b)}`} className="flex flex-col items-center gap-2 cursor-pointer">
+            <Link
+              key={b}
+              href={`/shop?brand=${encodeURIComponent(b)}`}
+              className="flex flex-col items-center gap-2 cursor-pointer shrink-0 w-[88px]"
+            >
               <MediaSlot src={content.brandImages[b]} label={b} shape="circle" className="w-[88px] h-[88px]" />
-              <div className="text-[11px] font-semibold text-[#1A2027]">{b}</div>
+              <div className="text-[11px] font-semibold text-[#1A2027] text-center">{b}</div>
             </Link>
           ))}
         </div>
