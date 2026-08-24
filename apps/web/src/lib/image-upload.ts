@@ -18,30 +18,48 @@ export function isAllowedVideoFile(file: File): boolean {
   return VIDEO_EXTENSIONS.some((ext) => name.endsWith(ext));
 }
 
-/** Reads an image file, downscales it to fit within maxWidth/maxHeight, and returns a JPEG data URL. */
+const MAX_FALLBACK_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Reads an image file, downscales it to fit within maxWidth/maxHeight, and returns a JPEG data URL.
+ * Resizing is best-effort: some browsers (notably Safari, for certain wide-gamut/ICC-profile PNGs)
+ * can fail to decode an image onto a canvas even though the file itself is perfectly valid. Rather
+ * than blocking the upload on that, we fall back to storing the original file's data URL untouched.
+ */
 export function resizeImageFile(file: File, maxWidth: number, maxHeight: number, quality = 0.82): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Could not read file."));
     reader.onload = () => {
+      const original = reader.result as string;
       const img = new Image();
-      img.onerror = () => reject(new Error("Could not decode image."));
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width, maxHeight / img.height);
-        const width = Math.round(img.width * scale);
-        const height = Math.round(img.height * scale);
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Canvas not supported."));
+      img.onerror = () => {
+        if (file.size > MAX_FALLBACK_BYTES) {
+          reject(new Error(`Could not process that image, and it's too large (over ${Math.round(MAX_FALLBACK_BYTES / (1024 * 1024))}MB) to use as-is.`));
           return;
         }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
+        resolve(original);
       };
-      img.src = reader.result as string;
+      img.onload = () => {
+        try {
+          const scale = Math.min(1, maxWidth / img.width, maxHeight / img.height);
+          const width = Math.round(img.width * scale);
+          const height = Math.round(img.height * scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(original);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } catch {
+          resolve(original);
+        }
+      };
+      img.src = original;
     };
     reader.readAsDataURL(file);
   });
