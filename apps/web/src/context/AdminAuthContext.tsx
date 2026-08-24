@@ -88,7 +88,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password && u.active
     );
     if (!match) return false;
-    window.localStorage.setItem(SESSION_KEY, match.email);
+    try {
+      window.localStorage.setItem(SESSION_KEY, match.email);
+    } catch {
+      // Storage is full elsewhere on the site -- still let this tab's session through so the
+      // admin isn't locked out entirely; they just won't stay signed in on a future visit.
+    }
     setState((s) => ({ ...s, sessionEmail: match.email }));
     return true;
   };

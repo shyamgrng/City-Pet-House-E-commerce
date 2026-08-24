@@ -35,11 +35,17 @@ export default function ImageUploadField({
       setError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
       return;
     }
+    let dataUrl: string;
     try {
-      const dataUrl = await resizeImageFile(file, maxWidth, maxHeight);
-      onChange(dataUrl);
+      dataUrl = await resizeImageFile(file, maxWidth, maxHeight);
     } catch {
       setError("Could not process that image — try a different file.");
+      return;
+    }
+    try {
+      onChange(dataUrl);
+    } catch {
+      setError("Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.");
     }
   };
 
