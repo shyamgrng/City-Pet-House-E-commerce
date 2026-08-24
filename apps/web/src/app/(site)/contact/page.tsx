@@ -3,9 +3,11 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import EmailInput from "@/components/EmailInput";
+import PhoneInput from "@/components/PhoneInput";
 import { useContactPage } from "@/context/ContactContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { isValidEmail } from "@/lib/email-format";
+import { isValidNepalPhone } from "@/lib/phone";
 
 export default function ContactPage() {
   return (
@@ -22,8 +24,10 @@ function ContactContent() {
   const prefillService = searchParams.get("service");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [subject, setSubject] = useState(prefillService ? "Grooming / Services" : "");
-  const [message, setMessage] = useState(prefillService ? `I'd like to book: ${prefillService}.` : "");
+  const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,10 +35,14 @@ function ContactContent() {
 
   const submit = () => {
     setError("");
-    if (!name.trim() || !email.trim()) return;
-    if (!isValidEmail(email)) {
-      setError("Enter a valid email like abc@abc.com.");
-      return;
+    if (prefillService) {
+      if (!name.trim() || !isValidNepalPhone(phone)) return;
+    } else {
+      if (!name.trim() || !email.trim()) return;
+      if (!isValidEmail(email)) {
+        setError("Enter a valid email like abc@abc.com.");
+        return;
+      }
     }
     setSubmitted(true);
   };
@@ -71,25 +79,44 @@ function ContactContent() {
             </div>
           ) : (
             <div className="bg-white border border-[#E4E9EC] rounded-2xl p-[22px] flex flex-col gap-3.5">
+              {prefillService && (
+                <div className="text-xs font-semibold text-primary bg-[#EAF4F9] rounded-[9px] px-3.5 py-2.5">
+                  Booking: {prefillService}
+                </div>
+              )}
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your Name*"
                 className="w-full box-border h-[46px] rounded-[9px] border border-[#E4E9EC] px-3.5 text-[13px]"
               />
-              <EmailInput value={email} onChange={setEmail} placeholder="Your Email*" className="" />
-              <select
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full box-border h-[46px] rounded-[9px] border border-[#E4E9EC] px-3.5 text-[13px] bg-white"
-              >
-                <option value="">Select Subject</option>
-                <option value="Shop / Order">Shop / Order</option>
-                <option value="Vet Consult">Vet Consult</option>
-                <option value="Adoption">Adoption</option>
-                <option value="Grooming / Services">Grooming / Services</option>
-                <option value="Other">Other</option>
-              </select>
+              {prefillService ? (
+                <>
+                  <PhoneInput value={phone} onChange={setPhone} placeholder="Phone Number* — 98XXXXXXXX" className="" />
+                  <input
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Address"
+                    className="w-full box-border h-[46px] rounded-[9px] border border-[#E4E9EC] px-3.5 text-[13px]"
+                  />
+                </>
+              ) : (
+                <>
+                  <EmailInput value={email} onChange={setEmail} placeholder="Your Email*" className="" />
+                  <select
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="w-full box-border h-[46px] rounded-[9px] border border-[#E4E9EC] px-3.5 text-[13px] bg-white"
+                  >
+                    <option value="">Select Subject</option>
+                    <option value="Shop / Order">Shop / Order</option>
+                    <option value="Vet Consult">Vet Consult</option>
+                    <option value="Adoption">Adoption</option>
+                    <option value="Grooming / Services">Grooming / Services</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </>
+              )}
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
