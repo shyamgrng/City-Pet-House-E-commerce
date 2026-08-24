@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import MediaSlot from "@/components/MediaSlot";
-import { resizeImageFile } from "@/lib/image-upload";
+import { IMAGE_ACCEPT, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
 
 export default function ImageUploadField({
   value,
@@ -31,8 +31,8 @@ export default function ImageUploadField({
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setError("");
-    if (!file.type.startsWith("image/")) {
-      setError("Please choose an image file.");
+    if (!isAllowedImageFile(file)) {
+      setError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
       return;
     }
     try {
@@ -51,7 +51,7 @@ export default function ImageUploadField({
       >
         <MediaSlot src={value} label={label} shape={shape} className="absolute inset-0 w-full h-full" />
       </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+      <input ref={inputRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
       <div className="flex gap-3 justify-center">
         <button type="button" onClick={() => inputRef.current?.click()} className="text-[11px] font-semibold text-primary cursor-pointer">
           {value ? "Replace" : "Upload Image"}

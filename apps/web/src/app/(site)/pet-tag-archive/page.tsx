@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import MediaSlot from "@/components/MediaSlot";
 import { usePetTag } from "@/context/PetTagContext";
+import { IMAGE_ACCEPT } from "@/lib/image-upload";
 import { displayAge } from "@/lib/pet-age";
 import type { PetTag } from "@/lib/pet-tag-types";
 
@@ -194,7 +195,7 @@ function PetTagArchiveContent() {
                   <input
                     ref={qrInputRef}
                     type="file"
-                    accept="image/*"
+                    accept={IMAGE_ACCEPT}
                     capture="environment"
                     onChange={(e) => {
                       handleQrFile(e.target.files?.[0]);

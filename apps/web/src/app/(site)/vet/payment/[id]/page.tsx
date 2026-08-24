@@ -4,7 +4,7 @@ import { use, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useVet } from "@/context/VetContext";
-import { resizeImageFile } from "@/lib/image-upload";
+import { IMAGE_ACCEPT, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
 
 export default function VetPaymentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -26,8 +26,8 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setError("");
-    if (!file.type.startsWith("image/")) {
-      setError("Please choose an image file.");
+    if (!isAllowedImageFile(file)) {
+      setError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
       return;
     }
     try {
@@ -76,7 +76,7 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
           Upload Payment Receipt <span className="text-[#D64545]">*</span>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+        <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
         {receiptPhoto ? (
           <div className="mb-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}

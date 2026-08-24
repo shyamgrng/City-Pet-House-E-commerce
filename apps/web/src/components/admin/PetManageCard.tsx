@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { usePets } from "@/context/PetContext";
-import { readVideoFile, resizeImageFile } from "@/lib/image-upload";
+import { IMAGE_ACCEPT, VIDEO_ACCEPT, isAllowedImageFile, isAllowedVideoFile, readVideoFile, resizeImageFile } from "@/lib/image-upload";
 import { dewormStages, formatRs, petSpeciesList, vaccineStages, type Pet, type PetStatus } from "@/lib/pet-types";
 
 const SPECIES_COLORS: Record<string, string> = {
@@ -32,8 +32,8 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
   const setPhotoAt = async (index: number, file: File | undefined) => {
     if (!file) return;
     setPhotoError("");
-    if (!file.type.startsWith("image/")) {
-      setPhotoError("Please choose an image file.");
+    if (!isAllowedImageFile(file)) {
+      setPhotoError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
       return;
     }
     try {
@@ -48,8 +48,8 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
   const setVideo = async (file: File | undefined) => {
     if (!file) return;
     setPhotoError("");
-    if (!file.type.startsWith("video/")) {
-      setPhotoError("Please choose a video file.");
+    if (!isAllowedVideoFile(file)) {
+      setPhotoError("Please choose a video file (MP4, MPEG, MPG, or WMV).");
       return;
     }
     try {
@@ -236,7 +236,7 @@ function PhotoSlot({
 
   return (
     <div className="relative shrink-0 w-[100px]">
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+      <input ref={inputRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
       {src ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URL */}
@@ -273,7 +273,7 @@ function VideoSlot({ video, onFile }: { video: string; onFile: (file: File | und
 
   return (
     <div className="shrink-0 w-[100px]">
-      <input ref={inputRef} type="file" accept="video/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+      <input ref={inputRef} type="file" accept={VIDEO_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
       {video ? (
         <>
           <video src={video} controls className="w-[100px] h-20 rounded-lg bg-black object-cover" />

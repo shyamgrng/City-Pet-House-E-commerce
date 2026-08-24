@@ -1,3 +1,23 @@
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".tif", ".tiff", ".raw", ".cr2"];
+const VIDEO_EXTENSIONS = [".mp4", ".mpg", ".mpeg", ".wmv"];
+
+/** Passed to <input accept> so the OS file picker shows these formats even when the browser doesn't know their MIME type (e.g. .raw, .cr2). */
+export const IMAGE_ACCEPT = [...IMAGE_EXTENSIONS, "image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/tiff"].join(",");
+export const VIDEO_ACCEPT = [...VIDEO_EXTENSIONS, "video/mp4", "video/mpeg", "video/x-ms-wmv"].join(",");
+
+/** file.type is often blank for formats the browser doesn't recognize (RAW, TIFF), so fall back to the extension. */
+export function isAllowedImageFile(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  const name = file.name.toLowerCase();
+  return IMAGE_EXTENSIONS.some((ext) => name.endsWith(ext));
+}
+
+export function isAllowedVideoFile(file: File): boolean {
+  if (file.type.startsWith("video/")) return true;
+  const name = file.name.toLowerCase();
+  return VIDEO_EXTENSIONS.some((ext) => name.endsWith(ext));
+}
+
 /** Reads an image file, downscales it to fit within maxWidth/maxHeight, and returns a JPEG data URL. */
 export function resizeImageFile(file: File, maxWidth: number, maxHeight: number, quality = 0.82): Promise<string> {
   return new Promise((resolve, reject) => {

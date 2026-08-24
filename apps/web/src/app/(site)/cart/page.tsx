@@ -16,7 +16,7 @@ import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import type { CartItem } from "@/lib/cart-types";
 import { calculateDeliveryFee, type DeliveryFeeResult } from "@/lib/delivery-fee";
-import { resizeImageFile } from "@/lib/image-upload";
+import { IMAGE_ACCEPT, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
 function useCartDeliveryFee(items: CartItem[]) {
@@ -150,8 +150,8 @@ function CheckoutSection({
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     setError("");
-    if (!file.type.startsWith("image/")) {
-      setError("Please choose an image file.");
+    if (!isAllowedImageFile(file)) {
+      setError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
       return;
     }
     try {
@@ -281,7 +281,7 @@ function CheckoutSection({
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
           Upload Payment Receipt <span className="text-[#D64545]">*</span>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+        <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
         {receiptPhoto ? (
           <div className="mb-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
