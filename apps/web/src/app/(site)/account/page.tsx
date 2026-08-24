@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import EmailInput from "@/components/EmailInput";
+import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCatalog } from "@/context/CatalogContext";
 import { useOrder } from "@/context/OrderContext";
+import { usePets } from "@/context/PetContext";
 import { useVet } from "@/context/VetContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { daysLeft, isExpired, type AdoptionPost } from "@/lib/adoption-types";
@@ -14,6 +17,7 @@ import { formatRs } from "@/lib/catalog-types";
 import { isValidEmail } from "@/lib/email-format";
 import { STATUS_COLORS as ORDER_STATUS_COLORS } from "@/lib/order-types";
 import { isValidNepalPhone } from "@/lib/phone";
+import { coverPhoto, coverPhotoAlt } from "@/lib/pet-types";
 import { STATUS_COLORS as VET_STATUS_COLORS } from "@/lib/vet-types";
 
 const TABS = [
@@ -83,26 +87,45 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function WishlistTab() {
   const { items, toggle } = useWishlist();
+  const { products } = useCatalog();
+  const { pets } = usePets();
 
   if (items.length === 0) {
     return <Empty>No Item has been selected for your Wishlist</Empty>;
   }
 
+  const thumbFor = (item: (typeof items)[number]) => {
+    if (item.kind === "product") {
+      const product = products.find((p) => p.id === item.id);
+      return { src: product?.photo, alt: product?.photoAlts[0] || item.name };
+    }
+    const pet = pets.find((p) => p.id === item.id);
+    return { src: pet ? coverPhoto(pet) : undefined, alt: pet ? coverPhotoAlt(pet) || item.name : item.name };
+  };
+
   return (
     <div className="flex flex-col gap-2.5">
-      {items.map((item) => (
-        <div key={`${item.kind}-${item.id}`} className="flex justify-between items-center border border-[#E4E9EC] rounded-xl px-4 py-3.5">
-          <Link href={item.href} className="flex-1">
-            <div className="text-sm font-semibold text-[#1A2027]">{item.name}</div>
-            <div className="text-xs text-[#8A96A3] mt-0.5">
-              {item.kind === "product" ? "Product" : "Pet"} · {item.priceLabel}
-            </div>
-          </Link>
-          <button onClick={() => toggle(item)} className="text-xs font-semibold text-[#D64545] cursor-pointer">
-            Remove
-          </button>
-        </div>
-      ))}
+      {items.map((item) => {
+        const thumb = thumbFor(item);
+        return (
+          <div key={`${item.kind}-${item.id}`} className="flex justify-between items-center gap-3.5 border border-[#E4E9EC] rounded-xl px-4 py-3.5">
+            <Link href={item.href} className="flex items-center gap-3.5 flex-1 min-w-0">
+              <div className="w-14 h-14 rounded-lg overflow-hidden relative shrink-0">
+                <MediaSlot src={thumb.src} label={thumb.alt} fit="cover" className="absolute inset-0 w-full h-full" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-[#1A2027] truncate">{item.name}</div>
+                <div className="text-xs text-[#8A96A3] mt-0.5">
+                  {item.kind === "product" ? "Product" : "Pet"} · {item.priceLabel}
+                </div>
+              </div>
+            </Link>
+            <button onClick={() => toggle(item)} className="text-xs font-semibold text-[#D64545] cursor-pointer shrink-0">
+              Remove
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }
