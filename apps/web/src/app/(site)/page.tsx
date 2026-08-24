@@ -158,7 +158,7 @@ export default function HomePage() {
       </div>
 
       {/* Big grooming banner */}
-      <div className="mx-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center justify-between px-8">
+      <div className="mx-8 mt-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center justify-between px-8">
         <MediaSlot src={content.groomingBannerImage} label="big banner — dog grooming services" fit="cover" className="absolute inset-0 w-full h-full" />
         <div
           className="relative text-white font-heading font-bold text-xl"
