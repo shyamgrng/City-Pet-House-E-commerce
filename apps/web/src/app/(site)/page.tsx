@@ -22,7 +22,7 @@ export default function HomePage() {
   const { heroHeadline, heroSubtext, microchipBannerText, deliveryBannerText, groomingBannerText } = content;
 
   return (
-    <div>
+    <div className="bg-[#FAFAFA]">
       <Suspense fallback={null}>
         <SignInNoticeBanner />
       </Suspense>
