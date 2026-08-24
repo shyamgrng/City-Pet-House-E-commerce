@@ -140,44 +140,43 @@ function PetsAvailableContent() {
             )}
 
             {zoomOpen && activeItem?.kind === "photo" && (
-              <div onClick={closeZoom} className="fixed inset-0 bg-black/75 z-[9999] flex items-center justify-center p-10">
-                <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 max-w-[640px] w-full relative shadow-2xl">
+              <div
+                onClick={closeZoom}
+                className="fixed inset-0 z-[9999] flex items-center justify-center p-10"
+                style={{ backgroundColor: "rgba(0,0,0,0.9)" }}
+              >
+                <div onClick={(e) => e.stopPropagation()} className="relative max-w-[900px] w-full">
                   <div
                     onClick={closeZoom}
                     className="absolute -top-4 -right-4 w-[34px] h-[34px] rounded-full bg-white shadow-lg flex items-center justify-center text-lg text-[#1A2027] cursor-pointer z-[2]"
                   >
                     ×
                   </div>
-                  <div className="relative">
-                    <div onWheel={handleWheelZoom} className="h-[420px] rounded-lg overflow-hidden bg-[#F7F9FA] flex items-center justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URL, zoomed via inline transform */}
-                      <img
-                        src={activeItem.src}
-                        alt="puppy photo"
-                        className="max-w-full max-h-full object-contain"
-                        style={{ transform: `scale(${zoomScale})`, transition: "transform 0.15s" }}
-                      />
-                    </div>
-                    {photoOnlyItems.length > 1 && (
-                      <>
-                        <div
-                          onClick={() => jumpToPhoto(-1)}
-                          className="absolute top-1/2 left-2.5 -translate-y-1/2 w-[34px] h-[34px] rounded-full bg-white shadow-lg flex items-center justify-center text-base cursor-pointer"
-                        >
-                          ‹
-                        </div>
-                        <div
-                          onClick={() => jumpToPhoto(1)}
-                          className="absolute top-1/2 right-2.5 -translate-y-1/2 w-[34px] h-[34px] rounded-full bg-white shadow-lg flex items-center justify-center text-base cursor-pointer"
-                        >
-                          ›
-                        </div>
-                      </>
-                    )}
+                  <div onWheel={handleWheelZoom} className="h-[70vh] flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URL, zoomed via inline transform */}
+                    <img
+                      src={activeItem.src}
+                      alt="puppy photo"
+                      className="max-w-full max-h-full object-contain"
+                      style={{ transform: `scale(${zoomScale})`, transition: "transform 0.15s" }}
+                    />
                   </div>
-                  <div className="flex justify-center mt-3.5">
-                    <div className="bg-[#1A2027] text-white text-xs font-semibold px-4 py-1.5 rounded-full">{selected.breed}</div>
-                  </div>
+                  {photoOnlyItems.length > 1 && (
+                    <>
+                      <div
+                        onClick={() => jumpToPhoto(-1)}
+                        className="absolute top-1/2 left-2.5 -translate-y-1/2 w-[34px] h-[34px] rounded-full bg-white shadow-lg flex items-center justify-center text-base cursor-pointer"
+                      >
+                        ‹
+                      </div>
+                      <div
+                        onClick={() => jumpToPhoto(1)}
+                        className="absolute top-1/2 right-2.5 -translate-y-1/2 w-[34px] h-[34px] rounded-full bg-white shadow-lg flex items-center justify-center text-base cursor-pointer"
+                      >
+                        ›
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
