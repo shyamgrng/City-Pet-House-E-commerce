@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
+import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAuth } from "@/context/AuthContext";
@@ -39,15 +41,14 @@ export default function AdoptionPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {posts.map((post) => (
-                <div key={post.id} className="border border-[#E4E9EC] rounded-xl overflow-hidden">
-                  <div
-                    className="h-[120px] flex items-center justify-center text-[#8A96A3] font-mono text-[9px] relative"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(45deg, #EDEFF1, #EDEFF1 8px, #E4E7EA 8px, #E4E7EA 16px)",
-                    }}
-                  >
-                    dog photo
+                <div key={post.id} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+                  <div className="aspect-square relative">
+                    <MediaSlot src={post.photo} label={post.photoAlt || post.breed} fit="cover" className="absolute inset-0 w-full h-full" />
+                    {!post.adopted && (
+                      <div className="absolute top-1.5 left-1.5 bg-[#1F7A4D] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
+                        For Adoption
+                      </div>
+                    )}
                     {post.adopted && (
                       <div
                         className="absolute top-2 right-2 bg-[#1F7A4D] text-white text-[11px] font-bold px-2.5 py-1 rounded-md"
@@ -108,6 +109,8 @@ export default function AdoptionPage() {
 
 function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaultContact: string }) {
   const { addPost } = useAdoption();
+  const [photo, setPhoto] = useState("");
+  const [photoAlt, setPhotoAlt] = useState("");
   const [name, setName] = useState("");
   const [breed, setBreed] = useState("");
   const [age, setAge] = useState("");
@@ -122,7 +125,9 @@ function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaul
 
   const submit = () => {
     if (!canSave) return;
-    addPost({ name, breed, age, sex, vaccination, address, desc, contact, postedDaysAgo: 0, adopted: false, ownerId });
+    addPost({ photo, photoAlt, name, breed, age, sex, vaccination, address, desc, contact, postedDaysAgo: 0, adopted: false, ownerId });
+    setPhoto("");
+    setPhotoAlt("");
     setName("");
     setBreed("");
     setAge("");
@@ -135,6 +140,21 @@ function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaul
 
   return (
     <div>
+      <FormLabel>Dog&apos;s Photo</FormLabel>
+      <div className="mb-3.5">
+        <ImageUploadField
+          value={photo}
+          onChange={setPhoto}
+          label="Photo"
+          height="h-[140px]"
+          maxWidth={1000}
+          maxHeight={1000}
+          crop
+          alt={photoAlt}
+          onAltChange={setPhotoAlt}
+        />
+      </div>
+
       <FormLabel>Dog&apos;s Name *</FormLabel>
       <FormInput value={name} onChange={setName} />
       <FormLabel>Breed *</FormLabel>

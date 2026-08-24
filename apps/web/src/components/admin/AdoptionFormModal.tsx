@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 import type { AdoptionPost } from "@/lib/adoption-types";
 
 type Draft = Omit<AdoptionPost, "id">;
 
 const emptyDraft: Draft = {
+  photo: "",
+  photoAlt: "",
   name: "",
   breed: "",
   age: "",
@@ -38,6 +41,21 @@ export default function AdoptionFormModal({
         <div className="flex justify-between items-center mb-4">
           <div className="text-[15px] font-bold text-[#1A2027]">{initial ? "Edit Adoption Notice" : "Add Adoption Notice"}</div>
           <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">✕</div>
+        </div>
+
+        <Label>Dog&apos;s Photo</Label>
+        <div className="mb-3.5">
+          <ImageUploadField
+            value={draft.photo}
+            onChange={(v) => set("photo", v)}
+            label="Photo"
+            height="h-[140px]"
+            maxWidth={1000}
+            maxHeight={1000}
+            crop
+            alt={draft.photoAlt}
+            onAltChange={(v) => set("photoAlt", v)}
+          />
         </div>
 
         <Label>Dog&apos;s Name *</Label>

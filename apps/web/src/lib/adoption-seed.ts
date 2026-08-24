@@ -3,6 +3,8 @@ import { slugify, type AdoptionPost } from "./adoption-types";
 // Matches the design's adoptionPosts seed array exactly.
 const rows: Omit<AdoptionPost, "id" | "adopted">[] = [
   {
+    photo: "",
+    photoAlt: "",
     name: "Kalu",
     breed: "Mixed Breed (Local)",
     age: "1.5 yrs",
@@ -14,6 +16,8 @@ const rows: Omit<AdoptionPost, "id" | "adopted">[] = [
     postedDaysAgo: 2,
   },
   {
+    photo: "",
+    photoAlt: "",
     name: "Milo",
     breed: "Labrador Mix",
     age: "3 yrs",
@@ -25,6 +29,8 @@ const rows: Omit<AdoptionPost, "id" | "adopted">[] = [
     postedDaysAgo: 6,
   },
   {
+    photo: "",
+    photoAlt: "",
     name: "Chandni",
     breed: "Indie",
     age: "8 months",

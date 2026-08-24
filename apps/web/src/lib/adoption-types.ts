@@ -1,5 +1,7 @@
 export type AdoptionPost = {
   id: string;
+  photo: string;
+  photoAlt: string;
   name: string;
   breed: string;
   age: string;

@@ -17,12 +17,30 @@ type AdoptionValue = {
 
 const AdoptionContext = createContext<AdoptionValue | null>(null);
 
+// Backfills fields introduced after a post may have been saved to localStorage by an older build.
+function normalizePost(p: Partial<AdoptionPost> & { id: string; name: string }): AdoptionPost {
+  return {
+    photo: "",
+    photoAlt: "",
+    breed: "",
+    age: "",
+    sex: "",
+    vaccination: "",
+    address: "",
+    desc: "",
+    contact: "",
+    postedDaysAgo: 0,
+    adopted: false,
+    ...p,
+  };
+}
+
 function loadStored(): AdoptionPost[] {
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (!raw) return adoptionSeed;
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : adoptionSeed;
+    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizePost) : adoptionSeed;
   } catch {
     return adoptionSeed;
   }
