@@ -113,6 +113,23 @@ function countWords(html: string) {
   return text ? text.split(/\s+/).length : 0;
 }
 
+/** Wraps inserted media/structural content (image, video, table, divider) as a non-editable
+ *  "block" with an always-visible delete button, so it can be removed with one click instead
+ *  of relying on contentEditable's unreliable click-to-select-a-whole-element behavior. */
+function deletableBlock(innerHtml: string) {
+  return `<div class="cph-block" contenteditable="false" style="position:relative;margin:10px 0;">${innerHtml}<button type="button" class="cph-block-delete" title="Delete" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:6px;background:rgba(26,32,39,0.75);color:#fff;border:none;cursor:pointer;font-size:14px;line-height:24px;padding:0;">×</button></div>`;
+}
+
+/** Parses a YouTube/Vimeo URL into an embeddable iframe src, or null if unrecognized. */
+function toEmbedUrl(url: string): string | null {
+  const u = url.trim();
+  const yt = u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/);
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  const vimeo = u.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return null;
+}
+
 function titleStatus(len: number) {
   if (len === 0) return { color: "#8A96A3", status: "—" };
   if (len >= 50 && len <= 60) return { color: "#1F7A4D", status: "Excellent" };
@@ -169,6 +186,12 @@ export default function BlogArticleEditor({
 
   const [showLinkPanel, setShowLinkPanel] = useState(false);
   const [linkUrl, setLinkUrl] = useState("https://");
+  const [showImagePanel, setShowImagePanel] = useState(false);
+  const [pendingImage, setPendingImage] = useState("");
+  const [pendingImageAlt, setPendingImageAlt] = useState("");
+  const [showVideoPanel, setShowVideoPanel] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoError, setVideoError] = useState("");
   const [showCommentsPanel, setShowCommentsPanel] = useState(false);
   const [comments, setComments] = useState<{ author: string; text: string }[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -215,6 +238,24 @@ export default function BlogArticleEditor({
   const handleContentInput = () => {
     if (editorRef.current) setContent(editorRef.current.innerHTML);
   };
+
+  useEffect(() => {
+    // Images, video embeds, tables, and dividers are inserted as non-editable "blocks" (below)
+    // with their own always-visible delete button, since clicking one in a contentEditable area
+    // doesn't reliably select the whole element the way clicking a paragraph of text does --
+    // a plain click there just drops a text caret nearby, so Backspace/Delete does nothing to it.
+    const el = editorRef.current;
+    if (!el) return;
+    const onClick = (e: MouseEvent) => {
+      const btn = (e.target as HTMLElement).closest(".cph-block-delete");
+      if (!btn) return;
+      e.preventDefault();
+      btn.closest(".cph-block")?.remove();
+      handleContentInput();
+    };
+    el.addEventListener("click", onClick);
+    return () => el.removeEventListener("click", onClick);
+  }, []);
 
   // Inserts HTML at the caret via direct Range/DOM ops rather than execCommand("insertHTML") --
   // the browser's own insertHTML tends to merge block content (a table, another list) into
@@ -320,6 +361,31 @@ export default function BlogArticleEditor({
     handleContentInput();
     captureSelection();
     setShowLinkPanel(false);
+  };
+
+  const applyImage = () => {
+    if (!pendingImage) return;
+    const alt = pendingImageAlt.trim().replace(/"/g, "&quot;");
+    insertHtmlAtCaret(deletableBlock(`<img src="${pendingImage}" alt="${alt}" style="max-width:100%;border-radius:10px;display:block" />`));
+    setPendingImage("");
+    setPendingImageAlt("");
+    setShowImagePanel(false);
+  };
+
+  const applyVideo = () => {
+    const embedSrc = toEmbedUrl(videoUrl);
+    if (!embedSrc) {
+      setVideoError("Enter a valid YouTube or Vimeo URL.");
+      return;
+    }
+    insertHtmlAtCaret(
+      deletableBlock(
+        `<iframe src="${embedSrc}" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;display:block" allowfullscreen></iframe>`,
+      ),
+    );
+    setVideoUrl("");
+    setVideoError("");
+    setShowVideoPanel(false);
   };
 
   const addComment = () => {
@@ -590,52 +656,67 @@ export default function BlogArticleEditor({
               onMouseDown={noPreventFocusLoss}
               onClick={() =>
                 insertHtmlAtCaret(
-                  '<table style="width:100%;border-collapse:collapse;margin:10px 0"><tr><th style="border:1px solid #E4E9EC;padding:8px;background:#F7F9FA">Col 1</th><th style="border:1px solid #E4E9EC;padding:8px;background:#F7F9FA">Col 2</th></tr><tr><td style="border:1px solid #E4E9EC;padding:8px">Cell</td><td style="border:1px solid #E4E9EC;padding:8px">Cell</td></tr></table>',
+                  deletableBlock(
+                    '<table contenteditable="true" style="width:100%;border-collapse:collapse"><tr><th style="border:1px solid #E4E9EC;padding:8px;background:#F7F9FA">Col 1</th><th style="border:1px solid #E4E9EC;padding:8px;background:#F7F9FA">Col 2</th></tr><tr><td style="border:1px solid #E4E9EC;padding:8px">Cell</td><td style="border:1px solid #E4E9EC;padding:8px">Cell</td></tr></table>',
+                  ),
                 )
               }
               className={toolbarBtn}
+              title="Insert table"
             >
               ⊞
             </div>
-            <div onMouseDown={noPreventFocusLoss} onClick={() => wrapSelection("blockquote", "border-left:3px solid #1996C8;padding-left:12px;color:#5B6773;margin:10px 0")} className={toolbarBtn}>
+            <div
+              onMouseDown={noPreventFocusLoss}
+              onClick={() => wrapSelection("blockquote", "border-left:3px solid #1996C8;padding-left:12px;color:#5B6773;margin:10px 0")}
+              className={toolbarBtn}
+              title="Quote (select text first)"
+            >
               &quot;
             </div>
             <div
               onMouseDown={noPreventFocusLoss}
               onClick={() => wrapSelection("code", "background:#F0F2F4;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:13px")}
               className={`${toolbarBtn} font-mono text-[11px]`}
+              title="Code (select text first)"
             >
               &lt;/&gt;
             </div>
-            <div onMouseDown={noPreventFocusLoss} onClick={() => insertHtmlAtCaret("<hr />")} className={toolbarBtn}>—</div>
+            <div onMouseDown={noPreventFocusLoss} onClick={() => insertHtmlAtCaret(deletableBlock("<hr />"))} className={toolbarBtn} title="Divider">
+              —
+            </div>
             <div
-              onMouseDown={(e) => {
-                captureSelection();
-                e.preventDefault();
-              }}
+              onMouseDown={noPreventFocusLoss}
               onClick={() => {
                 setLinkUrl("https://");
                 setShowLinkPanel(true);
               }}
               className={toolbarBtn}
+              title="Insert link (select text first)"
             >
               🔗
             </div>
             <div
               onMouseDown={noPreventFocusLoss}
-              onClick={() => insertHtmlAtCaret('<img src="https://placehold.co/700x360?text=Article+Image" style="max-width:100%;border-radius:10px;margin:10px 0" />')}
+              onClick={() => {
+                setPendingImage("");
+                setPendingImageAlt("");
+                setShowImagePanel(true);
+              }}
               className={toolbarBtn}
+              title="Upload a photo"
             >
               🖼
             </div>
             <div
               onMouseDown={noPreventFocusLoss}
-              onClick={() =>
-                insertHtmlAtCaret(
-                  '<div style="padding:14px;background:#F0F2F4;border-radius:8px;font-size:12px;color:#5B6773;margin:10px 0">▶ Video embed placeholder — paste a YouTube/Vimeo URL here</div>',
-                )
-              }
+              onClick={() => {
+                setVideoUrl("");
+                setVideoError("");
+                setShowVideoPanel(true);
+              }}
               className={toolbarBtn}
+              title="Embed a YouTube/Vimeo video"
             >
               ▶
             </div>
@@ -681,6 +762,49 @@ export default function BlogArticleEditor({
               <button onClick={() => setShowLinkPanel(false)} className="text-[#8A96A3] text-xs cursor-pointer flex items-center">
                 Cancel
               </button>
+            </div>
+          )}
+
+          {showImagePanel && (
+            <div className="border border-[#E4E9EC] rounded-lg p-3 mt-2.5 bg-[#F0F7FB]">
+              <div className="w-[220px] mb-2.5">
+                <ImageUploadField value={pendingImage} onChange={setPendingImage} label="photo" height="h-[120px]" maxWidth={1200} maxHeight={1200} crop alt={pendingImageAlt} onAltChange={setPendingImageAlt} />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={applyImage}
+                  disabled={!pendingImage}
+                  className="bg-primary text-white px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Insert Image
+                </button>
+                <button onClick={() => setShowImagePanel(false)} className="text-[#8A96A3] text-xs cursor-pointer">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {showVideoPanel && (
+            <div className="border border-[#E4E9EC] rounded-lg p-3 mt-2.5 bg-[#F0F7FB]">
+              <div className="flex gap-2">
+                <input
+                  value={videoUrl}
+                  onChange={(e) => {
+                    setVideoUrl(e.target.value);
+                    setVideoError("");
+                  }}
+                  placeholder="Paste a YouTube or Vimeo URL"
+                  className="flex-1 box-border h-8 rounded-md border border-[#E4E9EC] px-2.5 text-xs"
+                />
+                <button onClick={applyVideo} className="bg-primary text-white px-3.5 rounded-md text-xs font-semibold cursor-pointer flex items-center">
+                  Insert Video
+                </button>
+                <button onClick={() => setShowVideoPanel(false)} className="text-[#8A96A3] text-xs cursor-pointer flex items-center">
+                  Cancel
+                </button>
+              </div>
+              {videoError && <div className="text-[11px] text-[#D64545] mt-1.5">{videoError}</div>}
             </div>
           )}
 
