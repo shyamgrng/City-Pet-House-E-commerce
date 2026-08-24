@@ -30,7 +30,7 @@ export default function HomePage() {
       {/* Hero */}
       <div className="flex flex-col lg:flex-row gap-3.5 px-8 pt-5 pb-2">
         <div className="flex-[2.2] relative h-[300px] rounded-xl overflow-hidden">
-          <MediaSlot src={content.heroImage} label="cover photo — shop & clinic" className="absolute inset-0 w-full h-full" />
+          <MediaSlot src={content.heroImage} label="cover photo — shop & clinic" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
@@ -58,7 +58,7 @@ export default function HomePage() {
         </div>
         <div className="flex-1 flex flex-col gap-3.5">
           <div className="flex-1 relative rounded-xl overflow-hidden">
-            <MediaSlot src={content.banner1Image} label="promo — hot sale, shop deals" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={content.banner1Image} label="promo — hot sale, shop deals" fit="cover" className="absolute inset-0 w-full h-full" />
             {content.banner1Text && (
               <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
                 {content.banner1Text}
@@ -66,7 +66,7 @@ export default function HomePage() {
             )}
           </div>
           <div className="flex-1 relative rounded-xl overflow-hidden">
-            <MediaSlot src={content.banner2Image} label="promo — vet consult booking" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={content.banner2Image} label="promo — vet consult booking" fit="cover" className="absolute inset-0 w-full h-full" />
             {content.banner2Text && (
               <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
                 {content.banner2Text}
@@ -98,7 +98,7 @@ export default function HomePage() {
 
         {/* Microchip banner */}
         <div className="mx-8 mb-7 h-[140px] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-8 gap-3">
-          <MediaSlot src={content.microchipBannerImage} label="banner — pet microchipping" className="absolute inset-0 w-full h-full" />
+          <MediaSlot src={content.microchipBannerImage} label="banner — pet microchipping" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="relative text-white font-heading font-bold text-[19px]"
             style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
@@ -124,7 +124,7 @@ export default function HomePage() {
 
       {/* Hot Sales Banner */}
       <div className="mx-8 mt-[22px] mb-3.5 h-[110px] rounded-xl overflow-hidden relative">
-        <MediaSlot src={content.hotSaleBannerImage} label="banner" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={content.hotSaleBannerImage} label="banner" fit="cover" className="absolute inset-0 w-full h-full" />
       </div>
 
       {/* Today's Deals */}
@@ -142,7 +142,7 @@ export default function HomePage() {
 
       {/* Delivery banner */}
       <div className="mx-8 mb-8 h-[100px] rounded-xl overflow-hidden relative flex items-center justify-center">
-        <MediaSlot src={content.deliveryBannerImage} label="delivery banner" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={content.deliveryBannerImage} label="delivery banner" fit="cover" className="absolute inset-0 w-full h-full" />
         <div className="relative flex items-center gap-2.5 text-primary text-sm font-semibold bg-white/85 px-[18px] py-2 rounded-lg">
           🚚 {deliveryBannerText}
         </div>
@@ -159,7 +159,7 @@ export default function HomePage() {
 
       {/* Big grooming banner */}
       <div className="mx-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center justify-between px-8">
-        <MediaSlot src={content.groomingBannerImage} label="big banner — dog grooming services" className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={content.groomingBannerImage} label="big banner — dog grooming services" fit="cover" className="absolute inset-0 w-full h-full" />
         <div
           className="relative text-white font-heading font-bold text-xl"
           style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}

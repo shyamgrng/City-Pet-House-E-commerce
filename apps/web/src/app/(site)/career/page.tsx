@@ -11,7 +11,7 @@ export default function CareerPage() {
 
   return (
     <div>
-      <MediaSlot src={content.bannerImage} label="career banner image" className="w-full h-[280px]" />
+      <MediaSlot src={content.bannerImage} label="career banner image" fit="cover" className="w-full h-[280px]" />
 
       <div className="max-w-[1100px] mx-auto px-8 py-11 pb-14 flex gap-10 items-center flex-wrap">
         <MediaSlot src={content.teamPhoto} label="team / store photo" className="flex-1 min-w-[280px] h-[300px] rounded-2xl" />
