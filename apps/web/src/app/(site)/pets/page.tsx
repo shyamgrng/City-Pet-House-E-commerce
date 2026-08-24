@@ -70,7 +70,7 @@ function PetsAvailableContent() {
   );
 
   if (selected) {
-    const similar = available.filter((p) => p.species === selected.species && p.id !== selected.id).slice(0, 4);
+    const similar = available.filter((p) => p.species === selected.species && p.id !== selected.id).slice(0, 8);
     const photoEntries = selected.photos.map((src, i) => ({ src, i })).filter((p) => p.src);
     const galleryItems: ({ kind: "photo"; src: string; photoIndex: number } | { kind: "video"; src: string })[] = [
       ...photoEntries.map((p) => ({ kind: "photo" as const, src: p.src, photoIndex: p.i })),
@@ -229,7 +229,7 @@ function PetsAvailableContent() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
               {similar.map((p) => (
                 <div key={p.id} onClick={() => selectPet(p)} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
-                  <MediaSlot src={coverPhoto(p)} label="puppy photo" className="h-[110px]" />
+                  <MediaSlot src={coverPhoto(p)} label="puppy photo" className="aspect-square" />
                   <div className="p-2.5">
                     <div className="text-xs font-semibold text-[#1A2027]">{p.breed}</div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">
