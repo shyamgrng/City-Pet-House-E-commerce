@@ -1,7 +1,10 @@
 import { slugify, type AdoptionPost } from "./adoption-types";
 
-// Matches the design's adoptionPosts seed array exactly.
-const rows: Omit<AdoptionPost, "id" | "adopted">[] = [
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Matches the design's adoptionPosts seed array exactly (daysAgo converted to a postedAt
+// timestamp so the 15-day listing window counts down from real elapsed time).
+const rows: (Omit<AdoptionPost, "id" | "adopted" | "postedAt"> & { daysAgo: number })[] = [
   {
     photo: "",
     photoAlt: "",
@@ -13,7 +16,7 @@ const rows: Omit<AdoptionPost, "id" | "adopted">[] = [
     address: "Boudha, Gokarneshwor-6, Kathmandu",
     desc: "Friendly, house-trained, good with kids. Owner relocating abroad.",
     contact: "+977 9841122334",
-    postedDaysAgo: 2,
+    daysAgo: 2,
   },
   {
     photo: "",
@@ -26,7 +29,7 @@ const rows: Omit<AdoptionPost, "id" | "adopted">[] = [
     address: "Baneshwor-10, Kathmandu",
     desc: "Calm and loyal, needs a yard to play in. Vaccinated & neutered.",
     contact: "+977 9812233445",
-    postedDaysAgo: 6,
+    daysAgo: 6,
   },
   {
     photo: "",
@@ -39,12 +42,13 @@ const rows: Omit<AdoptionPost, "id" | "adopted">[] = [
     address: "Patan, Lalitpur",
     desc: "Energetic pup, great with other dogs. Looking for an active family.",
     contact: "+977 9860011223",
-    postedDaysAgo: 11,
+    daysAgo: 11,
   },
 ];
 
-export const adoptionSeed: AdoptionPost[] = rows.map((r) => ({
+export const adoptionSeed: AdoptionPost[] = rows.map(({ daysAgo, ...r }) => ({
   ...r,
   id: slugify(r.name),
+  postedAt: Date.now() - daysAgo * DAY_MS,
   adopted: false,
 }));

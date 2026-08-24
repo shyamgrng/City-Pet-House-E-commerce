@@ -6,7 +6,7 @@ import PetManageCard from "@/components/admin/PetManageCard";
 import MediaSlot from "@/components/MediaSlot";
 import { useAdoption } from "@/context/AdoptionContext";
 import { usePets } from "@/context/PetContext";
-import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
+import { daysLeft, isExpired, type AdoptionPost } from "@/lib/adoption-types";
 import { coverPhoto, dewormStages, PET_PHOTO_SLOTS, petSpeciesList, vaccineStages } from "@/lib/pet-types";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -25,7 +25,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function PetAvailablePage() {
   const { pets, addPet, updatePet } = usePets();
-  const { posts, addPost, updatePost, deletePost } = useAdoption();
+  const { posts, addPost, updatePost, deletePost, extendPost } = useAdoption();
   const [tab, setTab] = useState("Overview");
   const [adoptionModalOpen, setAdoptionModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<AdoptionPost | null>(null);
@@ -141,16 +141,24 @@ export default function PetAvailablePage() {
                 </div>
                 <div className="text-[#5B6773]">{p.contact}</div>
                 <div className="font-semibold">{daysLeft(p)} days</div>
-                <div className="text-[11px] font-semibold" style={{ color: p.adopted ? "#1F7A4D" : "#C9962B" }}>
-                  {p.adopted ? "Adopted" : "Active"}
+                <div
+                  className="text-[11px] font-semibold"
+                  style={{ color: p.adopted ? "#1F7A4D" : isExpired(p) ? "#D64545" : "#C9962B" }}
+                >
+                  {p.adopted ? "Adopted" : isExpired(p) ? "Expired" : "Active"}
                 </div>
-                <div className="flex gap-2.5 text-[11px] font-semibold">
+                <div className="flex gap-2.5 text-[11px] font-semibold flex-wrap">
                   <span onClick={() => openEditPost(p)} className="text-primary cursor-pointer">
                     Edit
                   </span>
                   <span onClick={() => toggleAdopted(p)} className="text-[#1F7A4D] cursor-pointer">
                     {p.adopted ? "Mark Active" : "Mark Adopted"}
                   </span>
+                  {isExpired(p) && !p.adopted && (
+                    <span onClick={() => extendPost(p.id)} className="text-[#1996C8] cursor-pointer">
+                      Extend
+                    </span>
+                  )}
                   <span onClick={() => deletePost(p.id)} className="text-[#D64545] cursor-pointer">
                     Delete
                   </span>

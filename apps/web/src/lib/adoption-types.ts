@@ -10,13 +10,22 @@ export type AdoptionPost = {
   address: string;
   desc: string;
   contact: string;
-  postedDaysAgo: number;
+  /** When the notice went live (ms epoch) — the listing expires 15 days after this. */
+  postedAt: number;
   adopted: boolean;
   ownerId?: string;
 };
 
-export function daysLeft(post: AdoptionPost) {
-  return Math.max(0, 15 - post.postedDaysAgo);
+const LISTING_DAYS = 15;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function daysLeft(post: Pick<AdoptionPost, "postedAt">) {
+  const elapsedDays = Math.floor((Date.now() - post.postedAt) / DAY_MS);
+  return Math.max(0, LISTING_DAYS - elapsedDays);
+}
+
+export function isExpired(post: Pick<AdoptionPost, "postedAt">) {
+  return daysLeft(post) <= 0;
 }
 
 export function slugify(name: string) {

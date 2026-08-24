@@ -7,12 +7,13 @@ import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAuth } from "@/context/AuthContext";
-import { daysLeft } from "@/lib/adoption-types";
+import { daysLeft, isExpired } from "@/lib/adoption-types";
 import { isValidNepalPhone } from "@/lib/phone";
 
 export default function AdoptionPage() {
-  const { posts } = useAdoption();
+  const { posts: allPosts } = useAdoption();
   const { user, ready } = useAuth();
+  const posts = allPosts.filter((p) => !isExpired(p));
 
   return (
     <div>
@@ -125,7 +126,7 @@ function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaul
 
   const submit = () => {
     if (!canSave) return;
-    addPost({ photo, photoAlt, name, breed, age, sex, vaccination, address, desc, contact, postedDaysAgo: 0, adopted: false, ownerId });
+    addPost({ photo, photoAlt, name, breed, age, sex, vaccination, address, desc, contact, postedAt: Date.now(), adopted: false, ownerId });
     setPhoto("");
     setPhotoAlt("");
     setName("");

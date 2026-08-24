@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrder } from "@/context/OrderContext";
 import { useVet } from "@/context/VetContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
+import { daysLeft, isExpired, type AdoptionPost } from "@/lib/adoption-types";
 import { formatRs } from "@/lib/catalog-types";
 import { isValidEmail } from "@/lib/email-format";
 import { STATUS_COLORS as ORDER_STATUS_COLORS } from "@/lib/order-types";
@@ -107,7 +107,7 @@ function WishlistTab() {
   );
 }
 
-const STATUS_COLORS: Record<string, string> = { Active: "#C9962B", Adopted: "#1F7A4D" };
+const STATUS_COLORS: Record<string, string> = { Active: "#C9962B", Adopted: "#1F7A4D", Expired: "#D64545" };
 
 function OrdersTab({ ownerId }: { ownerId: string }) {
   const { orders } = useOrder();
@@ -177,7 +177,7 @@ function AdoptionTab({ ownerId }: { ownerId: string }) {
   const current = selected ? (mine.find((p) => p.id === selected.id) ?? null) : null;
 
   if (current) {
-    const status = current.adopted ? "Adopted" : "Active";
+    const status = current.adopted ? "Adopted" : isExpired(current) ? "Expired" : "Active";
     return (
       <div>
         <div onClick={() => setSelected(null)} className="text-[13px] text-primary font-semibold cursor-pointer mb-4">
@@ -232,7 +232,7 @@ function AdoptionTab({ ownerId }: { ownerId: string }) {
   return (
     <div>
       {mine.map((p) => {
-        const status = p.adopted ? "Adopted" : "Active";
+        const status = p.adopted ? "Adopted" : isExpired(p) ? "Expired" : "Active";
         return (
           <div
             key={p.id}

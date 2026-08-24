@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
-import type { AdoptionPost } from "@/lib/adoption-types";
+import { daysLeft, type AdoptionPost } from "@/lib/adoption-types";
 
 type Draft = Omit<AdoptionPost, "id">;
 
@@ -17,7 +17,7 @@ const emptyDraft: Draft = {
   address: "",
   desc: "",
   contact: "",
-  postedDaysAgo: 0,
+  postedAt: Date.now(),
   adopted: false,
 };
 
@@ -98,8 +98,16 @@ export default function AdoptionFormModal({
         <Label>Address</Label>
         <Input value={draft.address} onChange={(v) => set("address", v)} />
 
-        <Label>Posted Days Ago</Label>
-        <Input type="number" value={String(draft.postedDaysAgo)} onChange={(v) => set("postedDaysAgo", Number(v) || 0)} />
+        {initial && (
+          <div className="flex items-center justify-between bg-[#F7F9FA] border border-[#E4E9EC] rounded-[10px] px-3.5 py-3 mb-3">
+            <div className="text-[13px] text-[#3A4652]">
+              <strong>{daysLeft(draft)}</strong> of 15 days left on listing
+            </div>
+            <span onClick={() => set("postedAt", Date.now())} className="text-xs font-semibold text-primary cursor-pointer">
+              Extend to 15 Days
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center justify-between py-2.5 border-t border-[#F0F2F4] mt-1 mb-4">
           <span className="text-[13px] text-[#1A2027]">Adopted</span>

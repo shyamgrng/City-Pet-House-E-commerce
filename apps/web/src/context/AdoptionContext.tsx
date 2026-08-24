@@ -13,12 +13,19 @@ type AdoptionValue = {
   addPost: (input: Omit<AdoptionPost, "id">) => void;
   updatePost: (id: string, input: Omit<AdoptionPost, "id">) => void;
   deletePost: (id: string) => void;
+  /** Resets the listing's 15-day countdown back to today. */
+  extendPost: (id: string) => void;
 };
 
 const AdoptionContext = createContext<AdoptionValue | null>(null);
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 // Backfills fields introduced after a post may have been saved to localStorage by an older build.
-function normalizePost(p: Partial<AdoptionPost> & { id: string; name: string }): AdoptionPost {
+// `postedDaysAgo` (a static "days ago" count that never advanced) predates the postedAt
+// timestamp -- convert it so old stored posts still get a real, ticking countdown.
+function normalizePost(p: Partial<AdoptionPost> & { id: string; name: string; postedDaysAgo?: number }): AdoptionPost {
+  const { postedDaysAgo, ...rest } = p;
   return {
     photo: "",
     photoAlt: "",
@@ -29,9 +36,9 @@ function normalizePost(p: Partial<AdoptionPost> & { id: string; name: string }):
     address: "",
     desc: "",
     contact: "",
-    postedDaysAgo: 0,
+    postedAt: postedDaysAgo !== undefined ? Date.now() - postedDaysAgo * DAY_MS : Date.now(),
     adopted: false,
-    ...p,
+    ...rest,
   };
 }
 
@@ -73,8 +80,12 @@ export function AdoptionProvider({ children }: { children: React.ReactNode }) {
     persist(state.posts.filter((p) => p.id !== id));
   };
 
+  const extendPost = (id: string) => {
+    persist(state.posts.map((p) => (p.id === id ? { ...p, postedAt: Date.now() } : p)));
+  };
+
   return (
-    <AdoptionContext.Provider value={{ posts: state.posts, ready: state.ready, addPost, updatePost, deletePost }}>
+    <AdoptionContext.Provider value={{ posts: state.posts, ready: state.ready, addPost, updatePost, deletePost, extendPost }}>
       {children}
     </AdoptionContext.Provider>
   );
