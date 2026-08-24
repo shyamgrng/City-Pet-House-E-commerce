@@ -3,13 +3,16 @@ type Props = {
   shape?: "rect" | "circle";
   className?: string;
   striped?: boolean;
+  hoverZoom?: boolean;
 };
 
-export default function ImagePlaceholder({ label, shape = "rect", className = "", striped = false }: Props) {
+export default function ImagePlaceholder({ label, shape = "rect", className = "", striped = false, hoverZoom = false }: Props) {
+  const zoomClass = hoverZoom ? "transition-transform duration-300 hover:scale-110" : "";
+
   if (striped) {
     return (
       <div
-        className={`flex items-center justify-center text-[#8A96A3] font-mono text-[9px] ${className}`}
+        className={`flex items-center justify-center text-[#8A96A3] font-mono text-[9px] ${zoomClass} ${className}`}
         style={{
           backgroundImage:
             "repeating-linear-gradient(45deg, #EDEFF1, #EDEFF1 8px, #E4E7EA 8px, #E4E7EA 16px)",
@@ -22,7 +25,7 @@ export default function ImagePlaceholder({ label, shape = "rect", className = ""
 
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-1.5 bg-[#E4E7EA] border border-[#D7DBDF] text-[#7A8592] ${
+      className={`flex flex-col items-center justify-center gap-1.5 bg-[#E4E7EA] border border-[#D7DBDF] text-[#7A8592] ${zoomClass} ${
         shape === "circle" ? "rounded-full" : ""
       } ${className}`}
     >

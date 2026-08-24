@@ -37,5 +37,5 @@ export default function MediaSlot({
       </div>
     );
   }
-  return <ImagePlaceholder label={label} shape={shape} className={className} striped={striped} />;
+  return <ImagePlaceholder label={label} shape={shape} className={className} striped={striped} hoverZoom={hoverZoom} />;
 }
