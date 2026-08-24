@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import ReactCrop, { centerCrop, convertToPixelCrop, cropToCanvas, makeAspectCrop, type Crop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 
-const VIEWPORT = 320;
+const PREVIEW_WIDTH = 380;
+const PANE_HEIGHT = 340;
 const OUTPUT_SIZE = 1000;
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 3;
+const MAX_ZOOM = 4;
 
 export default function ImageCropModal({
   file,
@@ -20,11 +23,10 @@ export default function ImageCropModal({
 }) {
   const [imgUrl, setImgUrl] = useState("");
   const imgRef = useRef<HTMLImageElement | null>(null);
-  const [natural, setNatural] = useState({ w: 0, h: 0 });
+  const [crop, setCrop] = useState<Crop>();
   const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [alt, setAlt] = useState(initialAlt);
-  const dragRef = useRef<{ startX: number; startY: number; startOffset: { x: number; y: number } } | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const url = URL.createObjectURL(file);
@@ -33,85 +35,57 @@ export default function ImageCropModal({
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  const baseScale = natural.w && natural.h ? VIEWPORT / Math.min(natural.w, natural.h) : 1;
-  const scale = baseScale * zoom;
-  const displayW = natural.w * scale;
-  const displayH = natural.h * scale;
-
-  const clamp = (o: { x: number; y: number }) => ({
-    x: Math.min(0, Math.max(VIEWPORT - displayW, o.x)),
-    y: Math.min(0, Math.max(VIEWPORT - displayH, o.y)),
-  });
-
-  const onImgLoad = () => {
-    const el = imgRef.current;
-    if (!el) return;
-    const w = el.naturalWidth;
-    const h = el.naturalHeight;
-    setNatural({ w, h });
-    const fitScale = VIEWPORT / Math.min(w, h);
-    setOffset({ x: (VIEWPORT - w * fitScale) / 2, y: (VIEWPORT - h * fitScale) / 2 });
+  const onImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    setCrop(centerCrop(makeAspectCrop({ unit: "%", width: 90 }, 1, width, height), width, height));
+    setReady(true);
   };
 
-  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = { startX: e.clientX, startY: e.clientY, startOffset: offset };
-  };
-  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (!dragRef.current) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    setOffset(clamp({ x: dragRef.current.startOffset.x + dx, y: dragRef.current.startOffset.y + dy }));
-  };
-  const onPointerUp = () => {
-    dragRef.current = null;
-  };
-
-  const changeZoom = (z: number) => {
-    setZoom(z);
-    setOffset((o) => clamp(o));
-  };
-
-  const confirm = () => {
-    const el = imgRef.current;
-    if (!el || !natural.w) return;
-    const cropX = -offset.x / scale;
-    const cropY = -offset.y / scale;
-    const cropSize = VIEWPORT / scale;
+  const confirm = async () => {
+    const img = imgRef.current;
+    if (!img || !crop) return;
+    const pixelCrop = convertToPixelCrop(crop, img.width, img.height);
     const canvas = document.createElement("canvas");
     canvas.width = OUTPUT_SIZE;
     canvas.height = OUTPUT_SIZE;
+    const tmp = document.createElement("canvas");
+    await cropToCanvas(img, tmp, pixelCrop);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(el, cropX, cropY, cropSize, cropSize, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.drawImage(tmp, 0, 0, tmp.width, tmp.height, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
     onConfirm(canvas.toDataURL("image/jpeg", 0.85), alt.trim());
   };
 
   return (
     <div onClick={onCancel} className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70] p-4">
-      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-5 w-[380px]">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-5 w-[440px]">
         <div className="text-[15px] font-bold text-[#1A2027] mb-1">Crop Photo</div>
-        <div className="text-[11px] text-[#8A96A3] mb-3.5">Drag to reposition, use the slider to zoom, then confirm.</div>
+        <div className="text-[11px] text-[#8A96A3] mb-3.5">
+          Drag the corners to crop manually, use the slider to zoom in for finer detail, and scroll/drag inside the frame to slide around when
+          zoomed in.
+        </div>
 
+        <style>{`
+          .cph-crop-pane .ReactCrop { max-width: none; }
+          .cph-crop-pane .ReactCrop__child-wrapper { overflow: visible; max-height: none; }
+          .cph-crop-pane .ReactCrop__child-wrapper > img { max-width: none; max-height: none; }
+        `}</style>
         <div
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerLeave={onPointerUp}
-          className="relative mx-auto rounded-lg overflow-hidden bg-[#1A2027] cursor-move touch-none"
-          style={{ width: VIEWPORT, height: VIEWPORT }}
+          className="cph-crop-pane mx-auto rounded-lg bg-[#1A2027] overflow-auto"
+          style={{ width: PREVIEW_WIDTH, height: PANE_HEIGHT }}
         >
           {imgUrl && (
-            // eslint-disable-next-line @next/next/no-img-element -- object URL used purely as a crop-editing source, never persisted
-            <img
-              ref={imgRef}
-              src={imgUrl}
-              alt=""
-              onLoad={onImgLoad}
-              draggable={false}
-              className="absolute select-none"
-              style={{ left: offset.x, top: offset.y, width: displayW || undefined, height: displayH || undefined }}
-            />
+            <ReactCrop crop={crop} onChange={(_, percentCrop) => setCrop(percentCrop)} aspect={1} minWidth={40} minHeight={40}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- object URL used purely as a crop-editing source, never persisted */}
+              <img
+                ref={imgRef}
+                src={imgUrl}
+                alt=""
+                onLoad={onImgLoad}
+                draggable={false}
+                style={{ width: PREVIEW_WIDTH * zoom, height: "auto", display: "block" }}
+              />
+            </ReactCrop>
           )}
         </div>
 
@@ -123,7 +97,7 @@ export default function ImageCropModal({
             max={MAX_ZOOM}
             step={0.01}
             value={zoom}
-            onChange={(e) => changeZoom(Number(e.target.value))}
+            onChange={(e) => setZoom(Number(e.target.value))}
             className="flex-1"
           />
         </div>
@@ -147,7 +121,7 @@ export default function ImageCropModal({
           <button
             type="button"
             onClick={confirm}
-            disabled={!natural.w}
+            disabled={!ready}
             className="flex-1 py-2.5 rounded-lg text-[13px] font-semibold text-white bg-primary cursor-pointer disabled:opacity-50"
           >
             Use Photo
