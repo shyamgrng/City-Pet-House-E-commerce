@@ -234,7 +234,7 @@ function PetsAvailableContent() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
               {similar.map((p) => (
                 <div key={p.id} onClick={() => selectPet(p)} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
-                  <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="aspect-square" />
+                  <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} fit="cover" className="aspect-square" />
                   <div className="p-2.5">
                     <div className="text-xs font-semibold text-[#1A2027]">{p.breed}</div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">
@@ -281,7 +281,7 @@ function PetsAvailableContent() {
           {filtered.map((p) => (
             <div key={p.id} onClick={() => selectPet(p)} className="border border-[#E4E9EC] rounded-xl overflow-hidden cursor-pointer">
               <div className="aspect-square relative">
-                <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="absolute inset-0 w-full h-full" />
+                <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} fit="cover" className="absolute inset-0 w-full h-full" />
                 <div className="absolute top-2 left-2 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
                   {p.status}
                 </div>
