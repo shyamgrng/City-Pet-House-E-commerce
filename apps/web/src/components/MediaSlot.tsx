@@ -15,9 +15,11 @@ export default function MediaSlot({
 }) {
   if (src) {
     return (
-      <div className={`bg-[#EDEFF1] flex items-center justify-center overflow-hidden ${shape === "circle" ? "rounded-full" : ""} ${className}`}>
+      <div className={`relative bg-[#EDEFF1] overflow-hidden ${shape === "circle" ? "rounded-full" : ""} ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URLs, not optimizable by next/image */}
-        <img src={src} alt={label} className="max-w-full max-h-full object-contain" />
+        <img src={src} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-60" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URLs, not optimizable by next/image */}
+        <img src={src} alt={label} className="absolute inset-0 w-full h-full object-contain" />
       </div>
     );
   }
