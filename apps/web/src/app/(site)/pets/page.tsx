@@ -191,20 +191,28 @@ function PetsAvailableContent() {
               {selected.sex} · {selected.age}
             </div>
             <div className="flex gap-1.5 flex-wrap my-3">
-              {selected.tags.map((tag) => (
-                <span key={tag} className="text-[11px] font-semibold text-[#1F7A4D] bg-[#E6F3EC] px-2 py-1 rounded-md">
-                  {tag}
-                </span>
-              ))}
+              {selected.tags
+                .filter((tag) => tag !== "Vaccinated" && tag !== "Dewormed")
+                .map((tag) => (
+                  <span key={tag} className="text-[11px] font-semibold text-[#1F7A4D] bg-[#E6F3EC] px-2 py-1 rounded-md">
+                    {tag}
+                  </span>
+                ))}
             </div>
-            <div className="flex gap-1.5 flex-wrap mb-3">
-              <span className="text-[11px] font-semibold text-[#146A8C] bg-[#EAF4F9] px-2 py-1 rounded-md">
-                💉 Vaccinated {selected.vaccinations.filter(Boolean).length}/{vaccineStages.length} doses
-              </span>
-              <span className="text-[11px] font-semibold text-[#8A6D1F] bg-[#FFF8E8] px-2 py-1 rounded-md">
-                🪱 Dewormed {selected.dewormings.filter(Boolean).length}/{dewormStages.length} doses
-              </span>
-            </div>
+            {(selected.vaccinations.some(Boolean) || selected.dewormings.some(Boolean)) && (
+              <div className="flex gap-1.5 flex-wrap mb-3">
+                {selected.vaccinations.some(Boolean) && (
+                  <span className="text-[11px] font-semibold text-[#146A8C] bg-[#EAF4F9] px-2 py-1 rounded-md">
+                    💉 Vaccinated {selected.vaccinations.filter(Boolean).length}/{vaccineStages.length} doses
+                  </span>
+                )}
+                {selected.dewormings.some(Boolean) && (
+                  <span className="text-[11px] font-semibold text-[#8A6D1F] bg-[#FFF8E8] px-2 py-1 rounded-md">
+                    🪱 Dewormed {selected.dewormings.filter(Boolean).length}/{dewormStages.length} doses
+                  </span>
+                )}
+              </div>
+            )}
             <div className="text-[22px] font-bold text-primary mb-0.5">{formatRs(selected.price)}</div>
             <div className="text-xs text-[#8A96A3] mb-[18px]">+ {formatRs(selected.deliveryFee)} delivery</div>
             <button
@@ -288,11 +296,19 @@ function PetsAvailableContent() {
                   {p.sex} · {p.age}
                 </div>
                 <div className="flex gap-1.5 flex-wrap my-2">
-                  {p.tags.map((tag) => (
-                    <span key={tag} className="text-[10px] font-semibold text-[#1F7A4D] bg-[#E6F3EC] px-2 py-1 rounded-md">
-                      {tag}
-                    </span>
-                  ))}
+                  {p.tags
+                    .filter((tag) => tag !== "Vaccinated" && tag !== "Dewormed")
+                    .map((tag) => (
+                      <span key={tag} className="text-[10px] font-semibold text-[#1F7A4D] bg-[#E6F3EC] px-2 py-1 rounded-md">
+                        {tag}
+                      </span>
+                    ))}
+                  {p.vaccinations.some(Boolean) && (
+                    <span className="text-[10px] font-semibold text-[#146A8C] bg-[#EAF4F9] px-2 py-1 rounded-md">💉 Vaccinated</span>
+                  )}
+                  {p.dewormings.some(Boolean) && (
+                    <span className="text-[10px] font-semibold text-[#8A6D1F] bg-[#FFF8E8] px-2 py-1 rounded-md">🪱 Dewormed</span>
+                  )}
                 </div>
                 <div className="text-[15px] font-bold text-primary mb-0.5">{formatRs(p.price)}</div>
                 <div className="text-[11px] text-[#8A96A3] mb-2.5">+ {formatRs(p.deliveryFee)} delivery</div>
