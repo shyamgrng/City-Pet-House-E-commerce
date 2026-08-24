@@ -11,7 +11,8 @@ export default function SiteFooter() {
   const { settings } = useSiteSettings();
 
   return (
-    <div className="bg-[#1A2027] text-[#C9CFD4] pt-11 px-8 pb-6">
+    <div className="bg-[#1A2027] text-[#C9CFD4] pt-11 pb-6">
+      <div className="max-w-7xl mx-auto px-8">
       <div className="flex items-center gap-3 mb-7">
         <Image src="/assets/cph-logo.jpeg" alt="logo" width={40} height={40} className="rounded-lg object-contain" />
         <span className="text-[22px] font-heading font-bold text-white">City Pet House</span>
@@ -126,6 +127,7 @@ export default function SiteFooter() {
 
       <div className="border-t border-[#3A4652] pt-[18px] text-xs text-[#8A96A3] text-center">
         Copyright © 2026 City Pet House &amp; Animal Clinic. All Rights Reserved.
+      </div>
       </div>
     </div>
   );

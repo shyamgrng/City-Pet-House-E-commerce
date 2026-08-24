@@ -45,53 +45,59 @@ export default function SiteHeader() {
 
   return (
     <div className="sticky top-0 z-10 bg-white">
-      <div className="flex items-center justify-center gap-4 px-8 py-1.5 bg-[#F7F9FA] text-[11px] text-[#5B6773] border-b border-[#E4E9EC]">
-        <div>📞 {settings.phone}</div>
-        <div>📍 {settings.address}</div>
-        <div>{settings.hours}</div>
+      <div className="bg-[#F7F9FA] border-b border-[#E4E9EC]">
+        <div className="flex items-center justify-center gap-4 max-w-7xl mx-auto px-8 py-1.5 text-[11px] text-[#5B6773]">
+          <div>📞 {settings.phone}</div>
+          <div>📍 {settings.address}</div>
+          <div>{settings.hours}</div>
+        </div>
       </div>
 
-      <div className="flex items-center gap-6 px-8 py-3.5 border-b border-[#E4E9EC]">
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <Image
-            src="/assets/cph-logo.jpeg"
-            alt="logo"
-            width={34}
-            height={34}
-            className="rounded-md object-contain"
-          />
-          <span className="font-heading font-bold text-[15px] text-[#1A2027]">City Pet House</span>
-        </Link>
-
-        <HeaderSearch />
-
-        <button onClick={handleTopSignInClick} className="text-[13px] font-semibold text-primary shrink-0 whitespace-nowrap cursor-pointer">
-          {isSignedIn ? "Sign Out" : "Pet Owner Sign In"}
-        </button>
-        <button onClick={handleAccountClick} className="text-[13px] font-medium text-[#3A4652] shrink-0 cursor-pointer">
-          Account
-        </button>
-        <Link href="/cart" className="flex items-center gap-1.5 text-[13px] font-semibold text-primary shrink-0">
-          🛒 Cart ({count})
-        </Link>
-      </div>
-
-      <nav className="flex gap-[22px] px-8 py-2.5 text-[13px] text-[#3A4652] font-medium border-b border-[#E4E9EC] overflow-x-auto">
-        {navLinks.map((l) => (
-          <Link key={l.href} href={l.href} className="cursor-pointer whitespace-nowrap hover:text-primary">
-            {l.label}
+      <div className="border-b border-[#E4E9EC]">
+        <div className="flex items-center gap-6 max-w-7xl mx-auto px-8 py-3.5">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <Image
+              src="/assets/cph-logo.jpeg"
+              alt="logo"
+              width={34}
+              height={34}
+              className="rounded-md object-contain"
+            />
+            <span className="font-heading font-bold text-[15px] text-[#1A2027]">City Pet House</span>
           </Link>
-        ))}
-        {isSignedIn ? (
-          <button onClick={handleTopSignInClick} className="cursor-pointer whitespace-nowrap hover:text-primary">
-            Sign Out
+
+          <HeaderSearch />
+
+          <button onClick={handleTopSignInClick} className="text-[13px] font-semibold text-primary shrink-0 whitespace-nowrap cursor-pointer">
+            {isSignedIn ? "Sign Out" : "Pet Owner Sign In"}
           </button>
-        ) : (
-          <Link href="/portal" className="cursor-pointer whitespace-nowrap hover:text-primary">
-            Sign In
+          <button onClick={handleAccountClick} className="text-[13px] font-medium text-[#3A4652] shrink-0 cursor-pointer">
+            Account
+          </button>
+          <Link href="/cart" className="flex items-center gap-1.5 text-[13px] font-semibold text-primary shrink-0">
+            🛒 Cart ({count})
           </Link>
-        )}
-      </nav>
+        </div>
+      </div>
+
+      <div className="border-b border-[#E4E9EC]">
+        <nav className="flex gap-[22px] max-w-7xl mx-auto px-8 py-2.5 text-[13px] text-[#3A4652] font-medium overflow-x-auto">
+          {navLinks.map((l) => (
+            <Link key={l.href} href={l.href} className="cursor-pointer whitespace-nowrap hover:text-primary">
+              {l.label}
+            </Link>
+          ))}
+          {isSignedIn ? (
+            <button onClick={handleTopSignInClick} className="cursor-pointer whitespace-nowrap hover:text-primary">
+              Sign Out
+            </button>
+          ) : (
+            <Link href="/portal" className="cursor-pointer whitespace-nowrap hover:text-primary">
+              Sign In
+            </Link>
+          )}
+        </nav>
+      </div>
     </div>
   );
 }
