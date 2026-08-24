@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import EmailInput from "@/components/EmailInput";
 import PhoneInput from "@/components/PhoneInput";
@@ -30,44 +30,59 @@ function SigninInner() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const redirectTo = searchParams.get("redirect") || "/account";
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setError(""), [name, sex, dob, phone, regEmail, address, regPassword, confirmPassword, email, password]);
+
+  const showError = (msg: string) => {
+    setError(msg);
+    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const submit = () => {
     setError("");
     if (mode === "signin") {
       if (!isValidEmail(email)) {
-        setError("Enter a valid email like abc@abc.com.");
+        showError("Enter a valid email like abc@abc.com.");
         return;
       }
       const res = signIn(email, password);
       if (!res.ok) {
-        setError(res.error);
+        showError(res.error);
         return;
       }
       router.push(redirectTo);
       return;
     }
-    if (!name.trim() || !dob.trim() || !phone.trim() || !regEmail.trim() || !address.trim() || !regPassword) {
-      setError("Please fill in all required fields.");
+    const missing = [
+      !name.trim() && "Full Name",
+      !dob.trim() && "Date of Birth",
+      !phone.trim() && "Phone Number",
+      !regEmail.trim() && "Email Address",
+      !address.trim() && "Address",
+      !regPassword && "Password",
+      !confirmPassword && "Confirm Password",
+    ].filter((v): v is string => Boolean(v));
+    if (missing.length > 0) {
+      showError(`Please fill in: ${missing.join(", ")}.`);
       return;
     }
     if (!isValidNepalPhone(phone)) {
-      setError("Enter a valid 10-digit phone number.");
+      showError("Enter a valid 10-digit phone number.");
       return;
     }
     if (!isValidEmail(regEmail)) {
-      setError("Enter a valid email like abc@abc.com.");
+      showError("Enter a valid email like abc@abc.com.");
       return;
     }
     if (regPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      showError("Passwords do not match.");
       return;
     }
     const res = signUp({ name, sex, dob, phone, email: regEmail, address, password: regPassword });
     if (!res.ok) {
-      setError(res.error);
+      showError(res.error);
       return;
     }
     router.push(redirectTo);
@@ -75,7 +90,7 @@ function SigninInner() {
 
   return (
     <div className="py-[60px] px-8 flex justify-center">
-      <div className="w-full max-w-[400px] border border-[#E4E9EC] rounded-[14px] p-8">
+      <div ref={cardRef} className="w-full max-w-[400px] border border-[#E4E9EC] rounded-[14px] p-8">
         <div className="flex gap-1.5 bg-[#F0F2F4] rounded-[9px] p-1 mb-6">
           {(["signin", "register"] as const).map((m) => (
             <button

@@ -74,10 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = (input: RegisterInput): Result => {
-    if (state.accounts.some((a) => a.email.toLowerCase() === input.email.toLowerCase())) {
+    const email = input.email.trim();
+    if (state.accounts.some((a) => a.email.toLowerCase() === email.toLowerCase())) {
       return { ok: false, error: "An account with this email already exists." };
     }
-    const account: Account = { ...input, id: "acc-" + Math.random().toString(36).slice(2, 9), createdAt: Date.now() };
+    const account: Account = { ...input, email, id: "acc-" + Math.random().toString(36).slice(2, 9), createdAt: Date.now() };
     const accounts = [...state.accounts, account];
     persistAccounts(accounts);
     window.localStorage.setItem(SESSION_KEY, account.id);
@@ -115,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = (email: string, password: string): Result => {
-    const account = state.accounts.find((a) => a.email.toLowerCase() === email.toLowerCase());
+    const account = state.accounts.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
     if (!account || account.password !== password) {
       return { ok: false, error: "Incorrect email or password." };
     }
