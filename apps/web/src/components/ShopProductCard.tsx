@@ -29,6 +29,12 @@ export default function ShopProductCard({ product }: { product: Product }) {
       </div>
       <div className="p-2.5">
         <div className="text-xs text-[#1A2027] font-medium">{product.name}</div>
+        {product.rating > 0 && (
+          <div className="text-[10px] text-[#C9962B] mt-0.5">
+            {"★".repeat(Math.round(product.rating))}
+            {"☆".repeat(5 - Math.round(product.rating))} <span className="text-[#8A96A3]">{product.rating}</span>
+          </div>
+        )}
         <div className="flex justify-between items-center mt-1">
           {product.hotSale ? (
             <div>

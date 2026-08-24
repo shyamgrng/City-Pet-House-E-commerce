@@ -21,6 +21,7 @@ const emptyDraft: Draft = {
   brand: "",
   price: 0,
   costPrice: 0,
+  rating: 5,
   qty: 0,
   lowStockAlert: 5,
   sizes: [],
@@ -173,6 +174,20 @@ export default function ProductFormModal({
             Profit per unit: <strong style={{ color: profitPerUnit >= 0 ? "#1F7A4D" : "#D64545" }}>{formatSigned(profitPerUnit)}</strong>
           </div>
         )}
+
+        <Label>Rating</Label>
+        <div className="flex gap-1.5 mb-3">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <span
+              key={n}
+              onClick={() => set("rating", draft.rating === n ? 0 : n)}
+              className="text-xl cursor-pointer leading-none"
+              style={{ color: n <= draft.rating ? "#C9962B" : "#D8DCE0" }}
+            >
+              ★
+            </span>
+          ))}
+        </div>
 
         <div className="grid grid-cols-2 gap-2.5 mb-3">
           <div>

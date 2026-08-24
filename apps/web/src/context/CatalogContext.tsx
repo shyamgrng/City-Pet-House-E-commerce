@@ -33,6 +33,7 @@ function normalizeProduct(p: Partial<Product> & { id: string; name: string }): P
     brand: "",
     price: 0,
     costPrice: 0,
+    rating: 4,
     qty: 0,
     lowStockAlert: 5,
     sizes: [],

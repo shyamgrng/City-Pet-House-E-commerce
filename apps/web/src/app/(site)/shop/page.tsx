@@ -70,7 +70,7 @@ function ShopContent() {
     return products.filter((p) => {
       if (brand && p.brand !== brand) return false;
       if (category && p.category !== category) return false;
-      if (rating > 0) return false; // no per-product rating data in the catalog yet
+      if (rating > 0 && p.rating < rating) return false;
       if (priceRange && !(p.price >= priceRange.min && p.price < priceRange.max)) return false;
       if (search.trim()) {
         const q = search.trim().toLowerCase();
@@ -178,7 +178,7 @@ function ShopContent() {
           </div>
         )}
 
-        {!aiNote && (brand || category) && (
+        {!aiNote && (brand || category || rating > 0 || priceRange) && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             {brand && (
               <>
@@ -192,6 +192,22 @@ function ShopContent() {
                 <span className="text-xs text-[#5B6773]">Filtered by category:</span>
                 <span className="bg-[#EAF4F9] text-primary text-xs font-semibold px-3 py-1.5 rounded-full">{category}</span>
                 <span onClick={() => setCategory("")} className="text-xs text-[#D64545] cursor-pointer">Clear ✕</span>
+              </>
+            )}
+            {rating > 0 && (
+              <>
+                <span className="text-xs text-[#5B6773]">Filtered by rating:</span>
+                <span className="bg-[#EAF4F9] text-primary text-xs font-semibold px-3 py-1.5 rounded-full">{rating} &amp; up</span>
+                <span onClick={() => setRating(0)} className="text-xs text-[#D64545] cursor-pointer">Clear ✕</span>
+              </>
+            )}
+            {priceRange && (
+              <>
+                <span className="text-xs text-[#5B6773]">Filtered by price:</span>
+                <span className="bg-[#EAF4F9] text-primary text-xs font-semibold px-3 py-1.5 rounded-full">
+                  {priceRangeOptions.find((pr) => pr.min === priceRange.min)?.label}
+                </span>
+                <span onClick={() => setPriceRange(null)} className="text-xs text-[#D64545] cursor-pointer">Clear ✕</span>
               </>
             )}
           </div>

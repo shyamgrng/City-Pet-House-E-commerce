@@ -13,6 +13,8 @@ export type Product = {
   brand: string;
   price: number;
   costPrice: number;
+  /** 0 = not yet rated. Otherwise 1-5, half-steps allowed (e.g. 4.5). */
+  rating: number;
   qty: number;
   lowStockAlert: number;
   sizes: string[];

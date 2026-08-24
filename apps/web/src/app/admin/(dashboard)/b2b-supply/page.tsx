@@ -27,6 +27,7 @@ export default function B2BSupplyPage() {
       brand: sub.brand,
       price: sub.price,
       costPrice: 0,
+      rating: 0,
       qty: sub.qty,
       lowStockAlert: sub.lowStockAlert,
       sizes: sub.sizes,

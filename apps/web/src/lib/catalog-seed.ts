@@ -55,6 +55,10 @@ const rows: SeedRow[] = [
   ["Pet Wipes (80pc)", "Grooming Supplies", 380, 20, "", 0],
 ];
 
+// Cycled deterministically over the catalog so ratings vary without relying on Math.random()
+// (which would differ between server and client renders).
+const ratingCycle = [4.5, 4, 5, 3.5, 4.5, 4, 5, 4.5];
+
 export const catalogSeed: Product[] = rows.map(([name, category, price, qty, badge, hotDiscount], i) => ({
   id: slugify(name),
   name,
@@ -67,6 +71,7 @@ export const catalogSeed: Product[] = rows.map(([name, category, price, qty, bad
   brand: brandNames[i % brandNames.length],
   price,
   costPrice: 0,
+  rating: ratingCycle[i % ratingCycle.length],
   qty,
   lowStockAlert: 5,
   sizes: [],
