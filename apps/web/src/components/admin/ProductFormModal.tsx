@@ -15,6 +15,7 @@ const emptyDraft: Draft = {
   desc: "",
   photo: "",
   photos: [],
+  photoAlts: [],
   category: "",
   sku: "",
   brand: "",
@@ -69,12 +70,19 @@ export default function ProductFormModal({
       setError("Please fill in name, category, price, and quantity.");
       return;
     }
-    const photos = draft.photos.filter(Boolean);
+    const photos: string[] = [];
+    const photoAlts: string[] = [];
+    draft.photos.forEach((p, i) => {
+      if (!p) return;
+      photos.push(p);
+      photoAlts.push(draft.photoAlts[i] || "");
+    });
     onSave({
       ...draft,
       name: draft.name.trim(),
       desc: draft.desc.trim(),
       photos,
+      photoAlts,
       photo: photos[0] || "",
       brand: draft.brand.trim(),
       tags: tagsText
@@ -110,6 +118,15 @@ export default function ProductFormModal({
               height="h-[80px]"
               maxWidth={800}
               maxHeight={800}
+              crop
+              alt={draft.photoAlts[i] || ""}
+              onAltChange={(v) =>
+                setDraft((d) => {
+                  const photoAlts = [...d.photoAlts];
+                  photoAlts[i] = v;
+                  return { ...d, photoAlts };
+                })
+              }
             />
           ))}
         </div>

@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { usePets } from "@/context/PetContext";
-import { IMAGE_ACCEPT, VIDEO_ACCEPT, isAllowedImageFile, isAllowedVideoFile, readVideoFile, resizeImageFile } from "@/lib/image-upload";
+import { IMAGE_ACCEPT, VIDEO_ACCEPT, isAllowedImageFile, isAllowedVideoFile, readVideoFile } from "@/lib/image-upload";
+import ImageCropModal from "./ImageCropModal";
 import { dewormStages, formatRs, petSpeciesList, vaccineStages, type Pet, type PetStatus } from "@/lib/pet-types";
 
 const SPECIES_COLORS: Record<string, string> = {
@@ -29,20 +30,10 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
     timerRef.current = setTimeout(() => setJustUpdated(false), 3000);
   };
 
-  const setPhotoAt = async (index: number, file: File | undefined) => {
-    if (!file) return;
-    setPhotoError("");
-    if (!isAllowedImageFile(file)) {
-      setPhotoError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
-      return;
-    }
-    try {
-      const dataUrl = await resizeImageFile(file, 1400, 1400);
-      const photos = pet.photos.map((p, i) => (i === index ? dataUrl : p));
-      patch({ photos });
-    } catch {
-      setPhotoError("Could not process that image — try a different file.");
-    }
+  const savePhotoAt = (index: number, dataUrl: string, alt: string) => {
+    const photos = pet.photos.map((p, i) => (i === index ? dataUrl : p));
+    const photoAlts = pet.photoAlts.map((a, i) => (i === index ? alt : a));
+    patch({ photos, photoAlts });
   };
 
   const setVideo = async (file: File | undefined) => {
@@ -70,7 +61,15 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
       </div>
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         {pet.photos.map((src, i) => (
-          <PhotoSlot key={i} src={src} index={i} isCover={pet.coverPhotoIndex === i} onFile={(f) => setPhotoAt(i, f)} onSetCover={() => patch({ coverPhotoIndex: i })} />
+          <PhotoSlot
+            key={i}
+            src={src}
+            alt={pet.photoAlts[i] || ""}
+            index={i}
+            isCover={pet.coverPhotoIndex === i}
+            onPhotoChange={(dataUrl, alt) => savePhotoAt(i, dataUrl, alt)}
+            onSetCover={() => patch({ coverPhotoIndex: i })}
+          />
         ))}
         <VideoSlot video={pet.video} onFile={setVideo} />
       </div>
@@ -221,28 +220,54 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function PhotoSlot({
   src,
+  alt,
   index,
   isCover,
-  onFile,
+  onPhotoChange,
   onSetCover,
 }: {
   src: string;
+  alt: string;
   index: number;
   isCover: boolean;
-  onFile: (file: File | undefined) => void;
+  onPhotoChange: (dataUrl: string, alt: string) => void;
   onSetCover: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [error, setError] = useState("");
+
+  const handleFile = (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (!isAllowedImageFile(file)) {
+      setError("Please choose an image file.");
+      return;
+    }
+    setPendingFile(file);
+  };
 
   return (
     <div className="relative shrink-0 w-[100px]">
-      <input ref={inputRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+      <input ref={inputRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+      {error && <div className="text-[9px] text-[#D64545] mb-1">{error}</div>}
+      {pendingFile && (
+        <ImageCropModal
+          file={pendingFile}
+          initialAlt={alt}
+          onCancel={() => setPendingFile(null)}
+          onConfirm={(dataUrl, newAlt) => {
+            setPendingFile(null);
+            onPhotoChange(dataUrl, newAlt);
+          }}
+        />
+      )}
       {src ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URL */}
           <img
             src={src}
-            alt={`pet photo ${index + 1}`}
+            alt={alt || `pet photo ${index + 1}`}
             onClick={() => inputRef.current?.click()}
             className="w-[100px] h-20 rounded-lg object-cover cursor-pointer"
           />

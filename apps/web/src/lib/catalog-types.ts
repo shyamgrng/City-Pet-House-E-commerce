@@ -6,6 +6,8 @@ export type Product = {
   desc: string;
   photo: string;
   photos: string[];
+  /** Aligned to photos[] — alt text for each photo (accessibility + shown if a photo fails to load). */
+  photoAlts: string[];
   category: string;
   sku: string;
   brand: string;

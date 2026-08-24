@@ -48,6 +48,7 @@ export default function PetAvailablePage() {
       tags: [],
       status: "Available",
       photos: Array(PET_PHOTO_SLOTS).fill(""),
+      photoAlts: Array(PET_PHOTO_SLOTS).fill(""),
       coverPhotoIndex: 0,
       video: "",
       vaccinations: Array(vaccineStages.length).fill(false),

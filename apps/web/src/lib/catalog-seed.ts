@@ -61,6 +61,7 @@ export const catalogSeed: Product[] = rows.map(([name, category, price, qty, bad
   desc: "",
   photo: "",
   photos: [],
+  photoAlts: [],
   category,
   sku: "",
   brand: brandNames[i % brandNames.length],

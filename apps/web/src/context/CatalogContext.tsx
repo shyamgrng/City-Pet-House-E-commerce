@@ -21,10 +21,13 @@ const CatalogContext = createContext<CatalogValue | null>(null);
 // Backfills fields introduced after this record may have been saved to localStorage by an
 // older build, so previously-saved catalogs don't crash the new field-reading UI.
 function normalizeProduct(p: Partial<Product> & { id: string; name: string }): Product {
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const photoAlts = Array.isArray(p.photoAlts)
+    ? [...p.photoAlts, ...Array(photos.length).fill("")].slice(0, photos.length)
+    : Array(photos.length).fill("");
   return {
     desc: "",
     photo: "",
-    photos: [],
     category: "",
     sku: "",
     brand: "",
@@ -47,6 +50,8 @@ function normalizeProduct(p: Partial<Product> & { id: string; name: string }): P
     outOfStock: false,
     status: "active",
     ...p,
+    photos,
+    photoAlts,
   };
 }
 

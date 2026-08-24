@@ -36,7 +36,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <div className="flex gap-8 px-8 py-7">
         <div className="flex-1">
           <div className="h-[380px] rounded-2xl relative overflow-hidden mb-2.5">
-            <MediaSlot src={product.photos[activePhoto] || product.photo} label="product gallery" className="absolute inset-0 w-full h-full" />
+            <MediaSlot
+              src={product.photos[activePhoto] || product.photo}
+              label={product.photoAlts[activePhoto] || product.name}
+              className="absolute inset-0 w-full h-full"
+            />
           </div>
           {product.photos.length > 1 && (
             <div className="flex gap-2">
@@ -47,7 +51,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   className="w-16 h-16 rounded-lg overflow-hidden relative cursor-pointer shrink-0"
                   style={{ outline: activePhoto === i ? "2px solid #1996C8" : "1px solid #E4E9EC", outlineOffset: "-1px" }}
                 >
-                  <MediaSlot src={photo} label={`photo ${i + 1}`} className="absolute inset-0 w-full h-full" />
+                  <MediaSlot src={photo} label={product.photoAlts[i] || `photo ${i + 1}`} className="absolute inset-0 w-full h-full" />
                 </button>
               ))}
             </div>

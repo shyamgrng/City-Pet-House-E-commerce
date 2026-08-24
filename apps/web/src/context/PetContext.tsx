@@ -15,6 +15,9 @@ function normalizePet(p: Partial<Pet> & Pick<Pet, "id" | "breed"> & { photo?: st
   const photos = Array.isArray(p.photos)
     ? [...p.photos, ...Array(PET_PHOTO_SLOTS).fill("")].slice(0, PET_PHOTO_SLOTS)
     : [p.photo || "", ...Array(PET_PHOTO_SLOTS - 1).fill("")];
+  const photoAlts = Array.isArray(p.photoAlts)
+    ? [...p.photoAlts, ...Array(PET_PHOTO_SLOTS).fill("")].slice(0, PET_PHOTO_SLOTS)
+    : Array(PET_PHOTO_SLOTS).fill("");
   const vaccinations = Array.isArray(p.vaccinations)
     ? [...p.vaccinations, ...Array(vaccineStages.length).fill(false)].slice(0, vaccineStages.length)
     : Array(vaccineStages.length).fill(false);
@@ -33,6 +36,7 @@ function normalizePet(p: Partial<Pet> & Pick<Pet, "id" | "breed"> & { photo?: st
     video: "",
     ...p,
     photos,
+    photoAlts,
     vaccinations,
     dewormings,
   };

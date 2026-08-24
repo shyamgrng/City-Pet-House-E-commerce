@@ -4,7 +4,7 @@ import Link from "next/link";
 import MediaSlot from "./MediaSlot";
 import { usePets } from "@/context/PetContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { coverPhoto, formatRs } from "@/lib/pet-types";
+import { coverPhoto, coverPhotoAlt, formatRs } from "@/lib/pet-types";
 
 export default function AvailablePuppiesRail() {
   const { pets } = usePets();
@@ -16,7 +16,7 @@ export default function AvailablePuppiesRail() {
       {available.map((p) => (
         <Link key={p.id} href="/pets" className="block border border-[#E4E9EC] rounded-[10px] overflow-hidden">
           <div className="h-[100px] relative">
-            <MediaSlot src={coverPhoto(p)} label="puppy photo" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="absolute inset-0 w-full h-full" />
             <div className="absolute top-1.5 left-1.5 bg-[#1F7A4D] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
               Available
             </div>

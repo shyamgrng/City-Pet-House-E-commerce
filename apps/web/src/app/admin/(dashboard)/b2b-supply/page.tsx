@@ -21,6 +21,7 @@ export default function B2BSupplyPage() {
       desc: sub.desc,
       photo: sub.photos[0] || "",
       photos: sub.photos,
+      photoAlts: sub.photos.map(() => ""),
       category: sub.category,
       sku: sub.sku,
       brand: sub.brand,

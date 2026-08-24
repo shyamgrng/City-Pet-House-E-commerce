@@ -27,6 +27,8 @@ export type Pet = {
   status: PetStatus;
   /** Always PET_PHOTO_SLOTS entries; "" for an empty slot. */
   photos: string[];
+  /** Aligned to photos[] — alt text for each photo (accessibility + shown if a photo fails to load). */
+  photoAlts: string[];
   /** Index into photos[] of the photo shown as the listing's cover/lead image. */
   coverPhotoIndex: number;
   video: string;
@@ -52,4 +54,11 @@ export function slugify(name: string) {
 /** The photo actually shown for a pet — its chosen cover photo, or the first non-empty slot. */
 export function coverPhoto(pet: Pick<Pet, "photos" | "coverPhotoIndex">): string {
   return pet.photos[pet.coverPhotoIndex] || pet.photos.find(Boolean) || "";
+}
+
+/** Alt text for the cover photo returned by coverPhoto(), aligned by the same index lookup. */
+export function coverPhotoAlt(pet: Pick<Pet, "photos" | "photoAlts" | "coverPhotoIndex">): string {
+  if (pet.photos[pet.coverPhotoIndex]) return pet.photoAlts[pet.coverPhotoIndex] || "";
+  const i = pet.photos.findIndex(Boolean);
+  return i >= 0 ? pet.photoAlts[i] || "" : "";
 }

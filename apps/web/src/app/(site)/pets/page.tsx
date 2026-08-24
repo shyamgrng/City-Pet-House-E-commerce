@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { usePets } from "@/context/PetContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { coverPhoto, dewormStages, formatRs, petSpeciesList, vaccineStages, type Pet } from "@/lib/pet-types";
+import { coverPhoto, coverPhotoAlt, dewormStages, formatRs, petSpeciesList, vaccineStages, type Pet } from "@/lib/pet-types";
 
 const chips = ["All", ...petSpeciesList];
 
@@ -82,6 +82,7 @@ function PetsAvailableContent() {
     const activePhotoOnlyIndex =
       activeItem?.kind === "photo" ? photoOnlyItems.findIndex((p) => p.kind === "photo" && p.photoIndex === activeItem.photoIndex) : -1;
     const heroSrc = activeItem?.kind === "photo" ? activeItem.src : coverPhoto(selected);
+    const heroAlt = (activeItem?.kind === "photo" ? selected.photoAlts[activeItem.photoIndex] : coverPhotoAlt(selected)) || selected.breed;
 
     const openZoom = () => {
       if (activeItem?.kind !== "photo") return;
@@ -113,7 +114,7 @@ function PetsAvailableContent() {
                 <video src={activeItem.src} controls autoPlay className="absolute inset-0 w-full h-full object-contain bg-black" />
               ) : (
                 <div onClick={openZoom} className="absolute inset-0 cursor-zoom-in">
-                  <MediaSlot src={heroSrc} label="puppy photo" className="absolute inset-0 w-full h-full" />
+                  <MediaSlot src={heroSrc} label={heroAlt} className="absolute inset-0 w-full h-full" />
                 </div>
               )}
               <div className="absolute top-2.5 left-2.5 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-1 rounded-md">
@@ -132,7 +133,11 @@ function PetsAvailableContent() {
                     {g.kind === "video" ? (
                       <div className="absolute inset-0 bg-[#1A2027] flex items-center justify-center text-white text-base">▶️</div>
                     ) : (
-                      <MediaSlot src={g.src} label={`photo ${i + 1}`} className="absolute inset-0 w-full h-full" />
+                      <MediaSlot
+                        src={g.src}
+                        label={(g.kind === "photo" ? selected.photoAlts[g.photoIndex] : "") || `photo ${i + 1}`}
+                        className="absolute inset-0 w-full h-full"
+                      />
                     )}
                   </button>
                 ))}
@@ -156,7 +161,7 @@ function PetsAvailableContent() {
                     {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URL, zoomed via inline transform */}
                     <img
                       src={activeItem.src}
-                      alt="puppy photo"
+                      alt={heroAlt}
                       className="max-w-full max-h-full object-contain"
                       style={{ transform: `scale(${zoomScale})`, transition: "transform 0.15s" }}
                     />
@@ -229,7 +234,7 @@ function PetsAvailableContent() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
               {similar.map((p) => (
                 <div key={p.id} onClick={() => selectPet(p)} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
-                  <MediaSlot src={coverPhoto(p)} label="puppy photo" className="aspect-square" />
+                  <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="aspect-square" />
                   <div className="p-2.5">
                     <div className="text-xs font-semibold text-[#1A2027]">{p.breed}</div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">
@@ -276,7 +281,7 @@ function PetsAvailableContent() {
           {filtered.map((p) => (
             <div key={p.id} onClick={() => selectPet(p)} className="border border-[#E4E9EC] rounded-xl overflow-hidden cursor-pointer">
               <div className="aspect-square relative">
-                <MediaSlot src={coverPhoto(p)} label="puppy photo" className="absolute inset-0 w-full h-full" />
+                <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="absolute inset-0 w-full h-full" />
                 <div className="absolute top-2 left-2 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
                   {p.status}
                 </div>
