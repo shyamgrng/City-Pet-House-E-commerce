@@ -42,9 +42,9 @@ export default function AdoptionPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {posts.map((post) => (
-                <div key={post.id} className="border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+                <div key={post.id} className="rounded-[10px] overflow-hidden">
                   <div className="aspect-square relative">
-                    <MediaSlot src={post.photo} label={post.photoAlt || post.breed} fit="cover" className="absolute inset-0 w-full h-full" />
+                    <MediaSlot src={post.photo} label={post.photoAlt || post.breed} className="absolute inset-0 w-full h-full" />
                     {!post.adopted && (
                       <div className="absolute top-1.5 left-1.5 bg-[#1F7A4D] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
                         For Adoption

@@ -14,9 +14,9 @@ export default function AvailablePuppiesRail() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-8 pb-8">
       {available.map((p) => (
-        <Link key={p.id} href="/pets" className="block border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+        <Link key={p.id} href="/pets" className="block rounded-[10px] overflow-hidden">
           <div className="h-[120px] relative">
-            <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} fit="cover" className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="absolute inset-0 w-full h-full" />
             <div className="absolute top-1.5 left-1.5 bg-[#1F7A4D] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
               Available
             </div>
