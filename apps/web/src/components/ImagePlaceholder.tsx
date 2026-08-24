@@ -22,7 +22,7 @@ export default function ImagePlaceholder({ label, shape = "rect", className = ""
 
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-1.5 bg-[#EDEFF1] text-[#8A96A3] ${
+      className={`flex flex-col items-center justify-center gap-1.5 bg-[#E4E7EA] border border-[#D7DBDF] text-[#7A8592] ${
         shape === "circle" ? "rounded-full" : ""
       } ${className}`}
     >
