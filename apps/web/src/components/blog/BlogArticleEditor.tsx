@@ -170,6 +170,20 @@ function computeSeoScore(focusKeyword: string, title: string, meta: string, slug
 
 const todayLabel = () => new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
+/** Four bars showing where the short line sits (or full-width for justify), so the four
+ *  alignment buttons are actually distinguishable at a glance instead of near-identical glyphs. */
+function AlignIcon({ variant }: { variant: "left" | "center" | "right" | "justify" }) {
+  const widths = variant === "justify" ? ["100%", "100%", "100%"] : ["100%", "70%", "85%"];
+  const justify = variant === "center" ? "center" : variant === "right" ? "flex-end" : "flex-start";
+  return (
+    <div className="flex flex-col gap-[2.5px] w-[14px]" style={{ alignItems: justify }}>
+      {widths.map((w, i) => (
+        <span key={i} className="h-[1.5px] bg-current" style={{ width: w }} />
+      ))}
+    </div>
+  );
+}
+
 export default function BlogArticleEditor({
   backLabel,
   onBack,
@@ -334,6 +348,13 @@ export default function BlogArticleEditor({
     handleContentInput();
     captureSelection();
   };
+  const toolbarAlign = (align: "left" | "center" | "right" | "justify") => {
+    restoreSelection();
+    document.execCommand({ left: "justifyLeft", center: "justifyCenter", right: "justifyRight", justify: "justifyFull" }[align], false);
+    handleContentInput();
+    captureSelection();
+  };
+
   const toolbarFont = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const f = e.target.value;
     e.target.value = "";
@@ -658,6 +679,18 @@ export default function BlogArticleEditor({
               <option value="5">18px</option>
               <option value="6">24px</option>
             </select>
+            <div onMouseDown={noPreventFocusLoss} onClick={() => toolbarAlign("left")} className={toolbarBtn} title="Align left">
+              <AlignIcon variant="left" />
+            </div>
+            <div onMouseDown={noPreventFocusLoss} onClick={() => toolbarAlign("center")} className={toolbarBtn} title="Align center">
+              <AlignIcon variant="center" />
+            </div>
+            <div onMouseDown={noPreventFocusLoss} onClick={() => toolbarAlign("right")} className={toolbarBtn} title="Align right">
+              <AlignIcon variant="right" />
+            </div>
+            <div onMouseDown={noPreventFocusLoss} onClick={() => toolbarAlign("justify")} className={toolbarBtn} title="Justify">
+              <AlignIcon variant="justify" />
+            </div>
             <div onMouseDown={noPreventFocusLoss} onClick={() => wrapSelection("strong")} className={`${toolbarBtn} font-bold`}>B</div>
             <div onMouseDown={noPreventFocusLoss} onClick={() => wrapSelection("em")} className={`${toolbarBtn} italic`}>I</div>
             <div onMouseDown={noPreventFocusLoss} onClick={() => wrapSelection("u")} className={`${toolbarBtn} underline`}>U</div>
