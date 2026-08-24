@@ -37,7 +37,7 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
       return;
     }
     try {
-      const dataUrl = await resizeImageFile(file, 800, 600);
+      const dataUrl = await resizeImageFile(file, 1400, 1400);
       const photos = pet.photos.map((p, i) => (i === index ? dataUrl : p));
       patch({ photos });
     } catch {

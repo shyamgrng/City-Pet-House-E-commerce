@@ -14,8 +14,12 @@ export default function MediaSlot({
   striped?: boolean;
 }) {
   if (src) {
-    // eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URLs, not optimizable by next/image
-    return <img src={src} alt={label} className={`object-cover ${shape === "circle" ? "rounded-full" : ""} ${className}`} />;
+    return (
+      <div className={`bg-[#EDEFF1] flex items-center justify-center overflow-hidden ${shape === "circle" ? "rounded-full" : ""} ${className}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URLs, not optimizable by next/image */}
+        <img src={src} alt={label} className="max-w-full max-h-full object-contain" />
+      </div>
+    );
   }
   return <ImagePlaceholder label={label} shape={shape} className={className} striped={striped} />;
 }
