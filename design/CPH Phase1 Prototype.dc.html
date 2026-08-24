@@ -3030,10 +3030,10 @@
                     <div onClick="{{ s.onClick }}" style="padding:7px 16px;borderRadius:999px;background:{{ s.bg }};color:{{ s.color }};fontSize:12px;fontWeight:600;cursor:pointer">{{ s.name }}</div>
                   </sc-for>
                 </div>
-                <div style="display:grid;gridTemplateColumns:repeat(2,1fr);gap:20px">
-                  <sc-for list="{{ puppiesList }}" as="pup" hint-placeholder-count="6">
+                <div style="display:grid;gridTemplateColumns:repeat(4,1fr);gap:16px">
+                  <sc-for list="{{ puppiesList }}" as="pup" hint-placeholder-count="8">
                     <div onClick="{{ pup.openDetail }}" style="border:1px solid #E4E9EC;borderRadius:12px;overflow:hidden;cursor:pointer">
-                      <div style="height:260px;position:relative">
+                      <div style="aspectRatio:1;position:relative">
                         <sc-if value="{{ pup.hasPhoto }}">
                           <image-slot id="{{ pup.slotId }}" shape="rect" placeholder="puppy photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot>
                         </sc-if>

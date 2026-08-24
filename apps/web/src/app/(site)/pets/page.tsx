@@ -272,10 +272,10 @@ function PetsAvailableContent() {
           No pets available in this category right now.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {filtered.map((p) => (
             <div key={p.id} onClick={() => selectPet(p)} className="border border-[#E4E9EC] rounded-xl overflow-hidden cursor-pointer">
-              <div className="h-[260px] relative">
+              <div className="aspect-square relative">
                 <MediaSlot src={coverPhoto(p)} label="puppy photo" className="absolute inset-0 w-full h-full" />
                 <div className="absolute top-2 left-2 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
                   {p.status}
