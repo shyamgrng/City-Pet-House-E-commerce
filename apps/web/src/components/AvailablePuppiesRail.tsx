@@ -16,7 +16,7 @@ export default function AvailablePuppiesRail() {
       {available.map((p) => (
         <Link key={p.id} href="/pets" className="block rounded-[10px] overflow-hidden">
           <div className="h-[120px] relative">
-            <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="absolute inset-0 w-full h-full" />
+            <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} hoverZoom className="absolute inset-0 w-full h-full" />
             <div className="absolute top-1.5 left-1.5 bg-[#1F7A4D] text-white text-[9px] font-semibold px-1.5 py-0.5 rounded">
               Available
             </div>
