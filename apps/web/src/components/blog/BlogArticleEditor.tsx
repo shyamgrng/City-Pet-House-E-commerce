@@ -216,9 +216,40 @@ export default function BlogArticleEditor({
     if (editorRef.current) setContent(editorRef.current.innerHTML);
   };
 
+  // Inserts HTML at the caret via direct Range/DOM ops rather than execCommand("insertHTML") --
+  // the browser's own insertHTML tends to merge block content (a table, another list) into
+  // whatever list item or cell the caret happens to be inside, nesting it deeper each time
+  // instead of placing it as a clean sibling. Range.insertNode() inserts exactly what we give it,
+  // and we explicitly move the caret to just after the inserted block so the next insertion
+  // continues at the same level rather than diving inside what was just added.
   const insertHtmlAtCaret = (html: string) => {
     restoreSelection();
-    document.execCommand("insertHTML", false, html);
+    const sel = window.getSelection();
+    let range = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+    if (!range || !editorRef.current || !editorRef.current.contains(range.startContainer)) {
+      if (!editorRef.current) return;
+      range = document.createRange();
+      range.selectNodeContents(editorRef.current);
+      range.collapse(false);
+    }
+    range.deleteContents();
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html;
+    const frag = document.createDocumentFragment();
+    let lastNode: ChildNode | null = null;
+    while (wrapper.firstChild) {
+      lastNode = wrapper.firstChild;
+      frag.appendChild(lastNode);
+    }
+    range.insertNode(frag);
+    if (lastNode && sel) {
+      const after = document.createRange();
+      after.setStartAfter(lastNode);
+      after.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(after);
+      savedRangeRef.current = after.cloneRange();
+    }
     handleContentInput();
   };
 
@@ -237,6 +268,7 @@ export default function BlogArticleEditor({
       range.insertNode(el);
     }
     handleContentInput();
+    captureSelection();
   };
 
   const noPreventFocusLoss = (e: React.MouseEvent) => e.preventDefault();
@@ -248,6 +280,7 @@ export default function BlogArticleEditor({
     restoreSelection();
     document.execCommand("formatBlock", false, `h${n}`);
     handleContentInput();
+    captureSelection();
   };
   const toolbarFont = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const f = e.target.value;
@@ -285,6 +318,7 @@ export default function BlogArticleEditor({
       editorRef.current.appendChild(a);
     }
     handleContentInput();
+    captureSelection();
     setShowLinkPanel(false);
   };
 
