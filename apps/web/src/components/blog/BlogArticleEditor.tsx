@@ -130,6 +130,17 @@ function toEmbedUrl(url: string): string | null {
   return null;
 }
 
+/** Strips editor-only chrome (the delete buttons on image/video/table/divider blocks, and the
+ *  contenteditable="false" markers that make them act as atomic blocks while editing) before the
+ *  content is saved -- none of that belongs in what gets rendered on the public article page. */
+function sanitizeForPublish(html: string): string {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  wrapper.querySelectorAll(".cph-block-delete").forEach((btn) => btn.remove());
+  wrapper.querySelectorAll("[contenteditable]").forEach((el) => el.removeAttribute("contenteditable"));
+  return wrapper.innerHTML;
+}
+
 function titleStatus(len: number) {
   if (len === 0) return { color: "#8A96A3", status: "—" };
   if (len >= 50 && len <= 60) return { color: "#1F7A4D", status: "Excellent" };
@@ -439,7 +450,7 @@ export default function BlogArticleEditor({
       author: author.trim() || defaultAuthor,
       isDoctorPost,
       excerpt: excerpt.trim(),
-      content: content.trim(),
+      content: sanitizeForPublish(content.trim()),
       slug: slug.trim(),
       metaDescription: meta.trim(),
     });
@@ -650,8 +661,22 @@ export default function BlogArticleEditor({
             <div onMouseDown={noPreventFocusLoss} onClick={() => wrapSelection("strong")} className={`${toolbarBtn} font-bold`}>B</div>
             <div onMouseDown={noPreventFocusLoss} onClick={() => wrapSelection("em")} className={`${toolbarBtn} italic`}>I</div>
             <div onMouseDown={noPreventFocusLoss} onClick={() => wrapSelection("u")} className={`${toolbarBtn} underline`}>U</div>
-            <div onMouseDown={noPreventFocusLoss} onClick={() => insertHtmlAtCaret("<ul><li>List item</li></ul>")} className={toolbarBtn}>•≡</div>
-            <div onMouseDown={noPreventFocusLoss} onClick={() => insertHtmlAtCaret("<ol><li>List item</li></ol>")} className={`${toolbarBtn} text-[11px]`}>1.≡</div>
+            <div
+              onMouseDown={noPreventFocusLoss}
+              onClick={() => insertHtmlAtCaret('<ul style="list-style:disc;padding-left:22px;margin:8px 0"><li>List item</li></ul>')}
+              className={toolbarBtn}
+              title="Bullet list"
+            >
+              •≡
+            </div>
+            <div
+              onMouseDown={noPreventFocusLoss}
+              onClick={() => insertHtmlAtCaret('<ol style="list-style:decimal;padding-left:22px;margin:8px 0"><li>List item</li></ol>')}
+              className={`${toolbarBtn} text-[11px]`}
+              title="Numbered list"
+            >
+              1.≡
+            </div>
             <div
               onMouseDown={noPreventFocusLoss}
               onClick={() =>

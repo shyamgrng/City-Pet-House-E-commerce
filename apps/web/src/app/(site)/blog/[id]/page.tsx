@@ -33,7 +33,15 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
       <div className="h-[280px] rounded-xl relative overflow-hidden mb-5">
         <MediaSlot src={post.photo} label="article photo" className="absolute inset-0 w-full h-full" />
       </div>
-      <div className="text-sm text-[#3A4652] leading-loose whitespace-pre-line">{post.content}</div>
+      {/<[a-z][\s\S]*>/i.test(post.content) ? (
+        // Written with the rich-text editor -- content is HTML authored by admin/doctor
+        // accounts only (never public user input), so rendering it directly is safe here.
+        <div className="text-sm text-[#3A4652] leading-loose" dangerouslySetInnerHTML={{ __html: post.content }} />
+      ) : (
+        // Written with the plain-text "Full Article" field (doctor/admin quick-edit form) --
+        // no HTML tags, so preserve line breaks instead of interpreting markup.
+        <div className="text-sm text-[#3A4652] leading-loose whitespace-pre-line">{post.content}</div>
+      )}
     </div>
   );
 }
