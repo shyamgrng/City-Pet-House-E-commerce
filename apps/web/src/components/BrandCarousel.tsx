@@ -44,7 +44,7 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
         <div
           ref={scrollerRef}
           onScroll={updateEdges}
-          className="flex gap-3 overflow-x-auto py-2 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex justify-between gap-3 overflow-x-auto py-2 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {brands.map((b) => (
             <Link
