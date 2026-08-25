@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
+import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { useB2BAuth } from "@/context/B2BAuthContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
@@ -71,73 +72,112 @@ export default function MicrochippingArchivePage() {
   if (result) {
     const address = microchipAddress(result);
     return (
-      <div>
-        <div style={{ background: "linear-gradient(135deg, #7A56C8, #4E3A8A)" }} className="p-8 text-center relative">
-          <Link href="/" className="absolute top-6 left-8 text-[13px] text-white font-semibold opacity-90">
-            ← Back to Home
+      <div className="bg-[#F7F5FC] min-h-screen">
+        <div className="flex items-center gap-3 px-6 py-4 bg-white border-b border-[#E4E9EC]">
+          <Link
+            href="/microchipping-archive"
+            onClick={() => setResult(null)}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-lg text-[#1A2027] hover:bg-[#F0F2F4] cursor-pointer"
+            aria-label="Back"
+          >
+            ←
           </Link>
-          <div className="text-xs text-white/85 font-bold tracking-[0.6px]">💠 CITY PET HOUSE · MICROCHIP RECORD</div>
+          <div className="font-heading font-bold text-[17px] text-[#1A2027]">Pet Profile</div>
         </div>
 
-        <div className="flex justify-center px-8 pb-12">
-          <div className="w-full max-w-[520px] -mt-14">
-            <div className="bg-white rounded-2xl p-7 text-center mb-5" style={{ boxShadow: "0 12px 30px rgba(0,0,0,0.1)" }}>
-              <div className="w-[100px] h-[100px] -mt-[72px] mb-3 mx-auto rounded-full border-[5px] border-white shadow-[0_6px_14px_rgba(0,0,0,0.14)]">
-                <ImagePlaceholder label="🐾" shape="circle" className="w-full h-full" />
-              </div>
-              <div className="font-heading font-bold text-[22px] text-[#1A2027]">{result.petName}</div>
-              <div className="text-[13px] text-[#8A96A3] mt-1">
-                {result.breed} · {result.color} · {result.sex}, {result.age}
-              </div>
-              <div className="inline-block mt-3 bg-[#F3EEFB] rounded-full px-3.5 py-1.5 text-xs text-[#5B3FA0] font-semibold">
-                Microchip: {result.mcNumber}
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#E4E9EC] rounded-2xl p-6 mb-5">
-              <div className="text-xs font-bold text-[#7A56C8] tracking-[0.5px] mb-3.5">OWNER CONTACT</div>
-              <div className="text-lg font-bold text-[#1A2027] mb-3.5">{result.ownerName}</div>
-              <a href={`tel:${result.phone}`} className="flex items-center gap-3 bg-[#F3EEFB] rounded-xl px-4 py-3.5 mb-2.5 no-underline">
-                <div className="text-xl">📞</div>
-                <div>
-                  <div className="text-sm font-bold text-[#1A2027]">{result.phone}</div>
-                  <div className="text-[11px] text-[#7A56C8]">Click to call</div>
+        <div className="flex justify-center px-4 py-7">
+          <div className="w-full max-w-[520px]">
+            <div className="bg-white rounded-2xl overflow-hidden border border-[#E4E9EC]" style={{ boxShadow: "0 12px 30px rgba(0,0,0,0.06)" }}>
+              <div className="relative h-[220px]">
+                <MediaSlot src={result.photo} label={result.petName || "pet photo"} fit="cover" className="absolute inset-0 w-full h-full" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/0 pointer-events-none" />
+                <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between gap-3">
+                  <div>
+                    <div className="font-heading font-bold text-[26px] text-white" style={{ textShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
+                      {result.petName}
+                    </div>
+                    <div className="text-[13px] text-white/90" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>
+                      {[result.breed, result.color].filter(Boolean).join(" · ") || "Microchipped Pet"}
+                    </div>
+                  </div>
+                  <div className="shrink-0 bg-white text-[#5B3FA0] rounded-full px-3 py-1.5 text-[11px] font-bold flex items-center gap-1.5">
+                    💠 {result.mcNumber}
+                  </div>
                 </div>
-              </a>
-              {result.altPhone && (
-                <a href={`tel:${result.altPhone}`} className="flex items-center gap-3 bg-[#F7F9FA] rounded-xl px-4 py-3.5 mb-2.5 no-underline">
+              </div>
+
+              <div className="p-6">
+                <SectionHeading>Basic Info</SectionHeading>
+                <InfoGrid>
+                  <InfoItem icon="🐾" label="Name" value={result.petName || "—"} />
+                  <InfoItem icon="🧬" label="Breed" value={result.breed || "—"} />
+                  <InfoItem icon={result.sex === "Female" ? "🚺" : "🚹"} label="Sex" value={result.sex} />
+                  <InfoItem icon="🎂" label="Age" value={result.age || "—"} />
+                  <InfoItem icon="🎨" label="Colour" value={result.color || "—"} />
+                  <InfoItem icon="💠" label="Microchip #" value={result.mcNumber} />
+                </InfoGrid>
+
+                {(result.vetName || result.clinic || result.mcDate) && (
+                  <>
+                    <SectionHeading>Microchip Record</SectionHeading>
+                    <InfoGrid>
+                      {result.clinic && <InfoItem icon="🏥" label="Clinic" value={result.clinic} />}
+                      {result.vetName && <InfoItem icon="🩺" label="Veterinarian" value={result.vetName} />}
+                      {result.mcDate && <InfoItem icon="📅" label="Chipped On" value={result.mcDate} />}
+                    </InfoGrid>
+                  </>
+                )}
+
+                <SectionHeading>Owner Contact</SectionHeading>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#F3EEFB] flex items-center justify-center text-lg shrink-0">👤</div>
+                  <div>
+                    <div className="text-[11px] text-[#8A96A3]">Owner</div>
+                    <div className="text-[13px] font-bold text-[#1A2027]">{result.ownerName}</div>
+                  </div>
+                </div>
+                <a href={`tel:${result.phone}`} className="flex items-center gap-3 bg-[#F3EEFB] rounded-xl px-4 py-3.5 mb-2.5 no-underline">
                   <div className="text-xl">📞</div>
                   <div>
-                    <div className="text-sm font-bold text-[#1A2027]">{result.altPhone}</div>
-                    <div className="text-[11px] text-[#8A96A3]">Alternative number</div>
+                    <div className="text-sm font-bold text-[#1A2027]">{result.phone}</div>
+                    <div className="text-[11px] text-[#7A56C8]">Click to call</div>
                   </div>
                 </a>
-              )}
-              {address && (
-                <div className="flex items-start gap-3 mt-3">
-                  <div className="text-lg">📍</div>
-                  <div className="text-[13px] text-[#3A4652] leading-relaxed">
-                    {address}
-                    {result.mapLink && (
-                      <div>
-                        <a href={result.mapLink} target="_blank" rel="noopener noreferrer" className="text-xs text-[#7A56C8] font-semibold">
-                          View on Google Maps →
-                        </a>
-                      </div>
-                    )}
+                {result.altPhone && (
+                  <a href={`tel:${result.altPhone}`} className="flex items-center gap-3 bg-[#F7F9FA] rounded-xl px-4 py-3.5 mb-2.5 no-underline">
+                    <div className="text-xl">📞</div>
+                    <div>
+                      <div className="text-sm font-bold text-[#1A2027]">{result.altPhone}</div>
+                      <div className="text-[11px] text-[#8A96A3]">Alternative number</div>
+                    </div>
+                  </a>
+                )}
+                {address && (
+                  <div className="flex items-start gap-3 mt-3">
+                    <div className="text-lg">📍</div>
+                    <div className="text-[13px] text-[#3A4652] leading-relaxed">
+                      {address}
+                      {result.mapLink && (
+                        <div>
+                          <a href={result.mapLink} target="_blank" rel="noopener noreferrer" className="text-xs text-[#7A56C8] font-semibold">
+                            View on Google Maps →
+                          </a>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {result.notes && (
+                  <div className="bg-[#FFF8EA] border border-[#F0DFAE] rounded-xl px-4 py-3.5 mt-5">
+                    <div className="text-xs font-bold text-[#6B5D2E] tracking-[0.5px] mb-1.5">📝 NOTES FOR CARE</div>
+                    <div className="text-[13px] text-[#6B5D2E] leading-relaxed">{result.notes}</div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {result.notes && (
-              <div className="bg-[#FFF8EA] border border-[#F0DFAE] rounded-2xl px-5 py-[18px] mb-5">
-                <div className="text-xs font-bold text-[#6B5D2E] tracking-[0.5px] mb-1.5">📝 NOTES FOR CARE</div>
-                <div className="text-[13px] text-[#6B5D2E] leading-relaxed">{result.notes}</div>
-              </div>
-            )}
-
-            <div className="text-center text-xs text-[#B0B8BF]">Microchip {result.mcNumber} · Registered with City Pet House</div>
+            <div className="text-center text-xs text-[#B0B8BF] mt-5">Microchip {result.mcNumber} · Registered with City Pet House</div>
           </div>
         </div>
       </div>
@@ -348,6 +388,26 @@ function RegisterModal({
             Register
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return <div className="font-heading font-bold text-[15px] text-[#1A2027] pt-5 pb-3.5 border-t border-[#EEF0F2] first:border-t-0 first:pt-0">{children}</div>;
+}
+
+function InfoGrid({ children }: { children: React.ReactNode }) {
+  return <div className="grid grid-cols-2 gap-x-4 gap-y-4 mb-1">{children}</div>;
+}
+
+function InfoItem({ icon, label, value }: { icon: string; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="w-10 h-10 rounded-xl bg-[#F3EEFB] flex items-center justify-center text-lg shrink-0">{icon}</div>
+      <div className="min-w-0">
+        <div className="text-[11px] text-[#8A96A3]">{label}</div>
+        <div className="text-[13px] font-bold text-[#1A2027] truncate">{value}</div>
       </div>
     </div>
   );
