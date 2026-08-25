@@ -93,7 +93,7 @@ export default function HomePage() {
       </div>
 
       {/* Available Puppies */}
-      <div className="bg-[#F3F9FC] pt-1">
+      <div className="pt-1">
         <div className="px-8 pb-2.5 flex justify-between items-center">
           <div className="font-heading font-bold text-base text-[#1A2027]">Available Puppies</div>
           <Link href="/pets" className="text-xs text-primary font-semibold cursor-pointer">
