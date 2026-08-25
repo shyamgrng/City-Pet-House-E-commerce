@@ -116,7 +116,7 @@ export default function HomePage() {
       </div>
 
       {/* Health & Wellness Care */}
-      <div className="px-5 pt-5 pb-6 bg-[#E7EFEC]">
+      <div className="mx-8 px-5 pt-5 pb-6 rounded-xl bg-[#E7EFEC]">
         <div className="flex justify-center items-center mb-[26px] relative">
           <div className="font-heading font-bold text-lg text-[#1A2027]">City Pet Health &amp; Wellness Care</div>
           <Link href="/services" className="text-xs text-[#1F7A4D] font-semibold cursor-pointer absolute right-0">
