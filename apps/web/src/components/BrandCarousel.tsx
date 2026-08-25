@@ -17,7 +17,15 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
   };
 
   useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
     updateEdges();
+    // Re-check whenever the row's size or content changes (window resize, images/fonts
+    // loading in, brand list edited in admin) -- a single mount-time check can go stale
+    // and leave the arrow hidden even though the row has since started overflowing.
+    const observer = new ResizeObserver(updateEdges);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [brands.length]);
 
   const scrollByPage = (dir: 1 | -1) => {
