@@ -44,7 +44,7 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
         <div
           ref={scrollerRef}
           onScroll={updateEdges}
-          className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex overflow-x-auto py-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {pages.map((page, i) => (
             <div key={i} className="grid grid-cols-7 gap-3 w-full shrink-0 snap-start">
@@ -65,7 +65,7 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
           <button
             onClick={() => scrollByPage(-1)}
             aria-label="Previous brands"
-            className="absolute -left-4 top-11 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] border border-[#E4E9EC] flex items-center justify-center text-sm text-[#1A2027] cursor-pointer"
+            className="absolute -left-4 top-[52px] -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] border border-[#E4E9EC] flex items-center justify-center text-sm text-[#1A2027] cursor-pointer"
           >
             ‹
           </button>
@@ -74,7 +74,7 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
           <button
             onClick={() => scrollByPage(1)}
             aria-label="Next brands"
-            className="absolute -right-4 top-11 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] border border-[#E4E9EC] flex items-center justify-center text-sm text-[#1A2027] cursor-pointer"
+            className="absolute -right-4 top-[52px] -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.18)] border border-[#E4E9EC] flex items-center justify-center text-sm text-[#1A2027] cursor-pointer"
           >
             ›
           </button>
