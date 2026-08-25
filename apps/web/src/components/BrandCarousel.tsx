@@ -58,7 +58,7 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
                     src={images[b]}
                     label={b}
                     shape="circle"
-                    className="w-[88px] h-[88px] transition-shadow duration-200 group-hover:shadow-lg"
+                    className="w-[88px] h-[88px] transition-shadow duration-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
                   />
                   <div className="text-[11px] font-semibold text-[#1A2027] text-center truncate w-full">{b}</div>
                 </Link>

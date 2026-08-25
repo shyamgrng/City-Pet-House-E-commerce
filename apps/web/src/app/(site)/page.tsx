@@ -88,7 +88,7 @@ export default function HomePage() {
               src={content.categoryImages[cat.name]}
               label={cat.name}
               shape="circle"
-              className="w-[115px] h-[115px] transition-shadow duration-200 group-hover:shadow-lg"
+              className="w-[115px] h-[115px] transition-shadow duration-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
             />
             <div className="text-xs font-semibold text-[#1A2027]">{cat.name}</div>
           </Link>
