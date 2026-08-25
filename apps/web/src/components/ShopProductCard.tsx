@@ -10,9 +10,9 @@ export default function ShopProductCard({ product }: { product: Product }) {
   const saved = has(product.id, "product");
 
   return (
-    <Link href={`/product/${product.id}`} className="block rounded-[10px] overflow-hidden transition-shadow duration-200 hover:shadow-lg">
+    <Link href={`/product/${product.id}`} className="block rounded-[10px] overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-lg">
       <div className="h-[110px] relative">
-        <MediaSlot src={product.photo} label={product.photoAlts[0] || product.name} hoverZoom className="absolute inset-0 w-full h-full" />
+        <MediaSlot src={product.photo} label={product.photoAlts[0] || product.name} className="absolute inset-0 w-full h-full" />
         {product.newArrival && (
           <div className="absolute top-1.5 left-1.5 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded bg-primary">New</div>
         )}

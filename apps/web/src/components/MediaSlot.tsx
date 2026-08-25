@@ -7,7 +7,6 @@ export default function MediaSlot({
   className = "",
   striped = false,
   fit = "contain",
-  hoverZoom = false,
 }: {
   src?: string;
   label: string;
@@ -17,8 +16,6 @@ export default function MediaSlot({
   /** "contain" (default) shows the whole photo uncropped, letterboxed on white -- right for product/pet photos.
    *  "cover" fills the box edge-to-edge, cropping as needed -- right for full-bleed hero/banner backgrounds. */
   fit?: "contain" | "cover";
-  /** Gently scales the photo up on hover, clipped by this slot's own bounds -- for clickable cards. */
-  hoverZoom?: boolean;
 }) {
   if (src) {
     // Callers that pass their own `absolute` positioning class (e.g. hero/banner slots) must not
@@ -29,13 +26,9 @@ export default function MediaSlot({
     return (
       <div className={`${selfPositioned ? "" : "relative"} ${fit === "contain" ? "bg-white" : ""} overflow-hidden ${shape === "circle" ? "rounded-full" : ""} ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URLs, not optimizable by next/image */}
-        <img
-          src={src}
-          alt={label}
-          className={`absolute inset-0 w-full h-full ${fit === "contain" ? "object-contain" : "object-cover"} ${hoverZoom ? "transition-transform duration-300 hover:scale-110" : ""}`}
-        />
+        <img src={src} alt={label} className={`absolute inset-0 w-full h-full ${fit === "contain" ? "object-contain" : "object-cover"}`} />
       </div>
     );
   }
-  return <ImagePlaceholder label={label} shape={shape} className={className} striped={striped} hoverZoom={hoverZoom} />;
+  return <ImagePlaceholder label={label} shape={shape} className={className} striped={striped} />;
 }

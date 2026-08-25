@@ -233,8 +233,8 @@ function PetsAvailableContent() {
             <div className="font-heading font-bold text-base text-[#1A2027] mb-3.5">Other Puppies Available</div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
               {similar.map((p) => (
-                <div key={p.id} onClick={() => selectPet(p)} className="rounded-[10px] overflow-hidden cursor-pointer transition-shadow duration-200 hover:shadow-lg">
-                  <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} hoverZoom className="aspect-square" />
+                <div key={p.id} onClick={() => selectPet(p)} className="rounded-[10px] overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg">
+                  <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="aspect-square" />
                   <div className="p-2.5">
                     <div className="text-xs font-semibold text-[#1A2027]">{p.breed}</div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">
@@ -279,9 +279,9 @@ function PetsAvailableContent() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {filtered.map((p) => (
-            <div key={p.id} onClick={() => selectPet(p)} className="rounded-xl overflow-hidden cursor-pointer transition-shadow duration-200 hover:shadow-lg">
+            <div key={p.id} onClick={() => selectPet(p)} className="rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg">
               <div className="aspect-square relative">
-                <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} hoverZoom className="absolute inset-0 w-full h-full" />
+                <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="absolute inset-0 w-full h-full" />
                 <div className="absolute top-2 left-2 bg-[#1F7A4D] text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">
                   {p.status}
                 </div>
