@@ -80,7 +80,13 @@ export default function HomePage() {
       <div className="flex flex-wrap gap-3.5 px-8 pt-4 pb-6">
         {categories.map((cat) => (
           <Link key={cat.slug} href={`/pets?species=${encodeURIComponent(cat.name)}`} className="flex-1 min-w-[110px] flex flex-col items-center gap-2 cursor-pointer">
-            <MediaSlot src={content.categoryImages[cat.name]} label={cat.name} shape="circle" className="w-[115px] h-[115px]" />
+            <MediaSlot
+              src={content.categoryImages[cat.name]}
+              label={cat.name}
+              shape="circle"
+              hoverZoom
+              className="w-[115px] h-[115px] transition-shadow duration-200 hover:shadow-lg"
+            />
             <div className="text-xs font-semibold text-[#1A2027]">{cat.name}</div>
           </Link>
         ))}
