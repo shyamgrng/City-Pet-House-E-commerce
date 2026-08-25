@@ -183,7 +183,7 @@ export default function HomePage() {
       </div>
 
       {/* Testimonials + Blog (cream section) */}
-      <div className="bg-[#F7F4EF] pt-1">
+      <div className="pt-1">
         <div className="px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Our Happy Customers</div>
         </div>
