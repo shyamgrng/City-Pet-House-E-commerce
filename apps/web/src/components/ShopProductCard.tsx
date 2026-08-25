@@ -10,7 +10,7 @@ export default function ShopProductCard({ product }: { product: Product }) {
   const saved = has(product.id, "product");
 
   return (
-    <Link href={`/product/${product.id}`} className="block rounded-[10px] overflow-hidden">
+    <Link href={`/product/${product.id}`} className="block rounded-[10px] overflow-hidden transition-shadow duration-200 hover:shadow-lg">
       <div className="h-[110px] relative">
         <MediaSlot src={product.photo} label={product.photoAlts[0] || product.name} hoverZoom className="absolute inset-0 w-full h-full" />
         {product.newArrival && (
