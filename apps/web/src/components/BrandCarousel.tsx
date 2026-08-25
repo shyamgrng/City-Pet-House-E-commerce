@@ -52,7 +52,7 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
                 <Link
                   key={b}
                   href={`/shop?brand=${encodeURIComponent(b)}`}
-                  className="flex flex-col items-center gap-2 cursor-pointer"
+                  className="flex flex-col items-center gap-2 cursor-pointer transition-transform duration-200 hover:scale-105"
                 >
                   <MediaSlot src={images[b]} label={b} shape="circle" className="w-[88px] h-[88px]" />
                   <div className="text-[11px] font-semibold text-[#1A2027] text-center truncate w-full">{b}</div>
