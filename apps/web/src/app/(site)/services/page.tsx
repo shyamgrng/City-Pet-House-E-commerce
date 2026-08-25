@@ -16,7 +16,7 @@ export default function ServicesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {services.map((svc) => (
-          <div key={svc.id} className="border border-[#E4E9EC] rounded-xl overflow-hidden">
+          <div key={svc.id} className="border border-[#E4E9EC] rounded-xl overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-lg">
             <Link href={`/services/${svc.id}`} className="block h-[190px] relative cursor-pointer">
               <MediaSlot src={svc.photo} label="service photo" className="absolute inset-0 w-full h-full" />
             </Link>

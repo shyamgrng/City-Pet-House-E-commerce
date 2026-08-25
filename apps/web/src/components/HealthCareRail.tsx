@@ -21,7 +21,11 @@ export default function HealthCareRail() {
       {items.map((item) => {
         const service = findServiceByKeyword(services, item.keyword);
         return (
-          <Link key={item.title} href={service ? `/services/${service.id}` : "/services"} className="flex-1 min-w-[150px] text-center cursor-pointer">
+          <Link
+            key={item.title}
+            href={service ? `/services/${service.id}` : "/services"}
+            className="flex-1 min-w-[150px] text-center cursor-pointer transition-transform duration-200 hover:scale-105"
+          >
             <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center mx-auto mb-4 bg-[#E7EFEC] overflow-hidden">
               <Image src={item.icon} alt={item.title} width={104} height={104} className="object-contain w-full h-full" />
             </div>
