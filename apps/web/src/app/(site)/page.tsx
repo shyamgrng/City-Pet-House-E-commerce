@@ -160,7 +160,7 @@ export default function HomePage() {
       </div>
 
       {/* Shop by Brand + Grooming Accessories (light blue section) */}
-      <div className="bg-[#F3F9FC] pt-1">
+      <div className="pt-1">
         <div className="px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Shop by Brand</div>
         </div>
