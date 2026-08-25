@@ -38,6 +38,7 @@ export const footerGeneralLinks = [
   { label: "Dog Breed Archive", href: "/dog-breed-archive" },
   { label: "Terms & Conditions", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },
+  { label: "Merchant Login", href: "/portal" },
 ];
 
 export const footerCustomerCareLinks = [
