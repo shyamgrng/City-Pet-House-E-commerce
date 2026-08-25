@@ -174,17 +174,16 @@ export default function HomePage() {
       </div>
 
       {/* Big grooming banner */}
-      <div className="mx-8 mt-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center justify-between px-8">
+      <div className="mx-8 mt-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center px-8">
         <MediaSlot src={content.groomingBannerImage} label="big banner — dog grooming services" fit="cover" className="absolute inset-0 w-full h-full" />
-        <div
-          className="relative text-white font-heading font-bold text-xl"
-          style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}
-        >
-          {groomingBannerText}
+        <div className="relative flex flex-col items-start gap-4">
+          <div className="text-white font-heading font-bold text-xl" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+            {groomingBannerText}
+          </div>
+          <Link href="/services/pet-grooming" className="bg-[#1F7A4D] text-white px-6 py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer shrink-0">
+            Book Now
+          </Link>
         </div>
-        <Link href="/services/pet-grooming" className="relative bg-[#1F7A4D] text-white px-6 py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer shrink-0">
-          Book Now
-        </Link>
       </div>
 
       {/* Testimonials + Blog (cream section) */}
