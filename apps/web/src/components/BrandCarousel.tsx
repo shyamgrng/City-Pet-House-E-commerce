@@ -23,7 +23,9 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
   const scrollByPage = (dir: 1 | -1) => {
     const el = scrollerRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
+    const maxLeft = el.scrollWidth - el.clientWidth;
+    const target = Math.max(0, Math.min(maxLeft, el.scrollLeft + dir * el.clientWidth));
+    el.scrollTo({ left: target, behavior: "smooth" });
   };
 
   const showArrows = !(atStart && atEnd);
@@ -34,13 +36,13 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
         <div
           ref={scrollerRef}
           onScroll={updateEdges}
-          className="flex gap-3 overflow-x-auto py-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-3 overflow-x-auto py-2 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {brands.map((b) => (
             <Link
               key={b}
               href={`/shop?brand=${encodeURIComponent(b)}`}
-              className="group flex flex-col items-center gap-2 cursor-pointer shrink-0 w-[88px] snap-start transition-transform duration-200 hover:scale-105"
+              className="group flex flex-col items-center gap-2 cursor-pointer shrink-0 w-[88px] transition-transform duration-200 hover:scale-105"
             >
               <MediaSlot
                 src={images[b]}
