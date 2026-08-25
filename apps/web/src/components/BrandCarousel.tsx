@@ -4,20 +4,10 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import MediaSlot from "./MediaSlot";
 
-const VISIBLE_COUNT = 7;
-
-function chunk(items: string[], size: number): string[][] {
-  const pages: string[][] = [];
-  for (let i = 0; i < items.length; i += size) pages.push(items.slice(i, i + size));
-  return pages;
-}
-
 export default function BrandCarousel({ brands, images }: { brands: string[]; images: Record<string, string> }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(true);
-
-  const pages = chunk(brands, VISIBLE_COUNT);
 
   const updateEdges = () => {
     const el = scrollerRef.current;
@@ -36,7 +26,7 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
     el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
   };
 
-  const showArrows = pages.length > 1;
+  const showArrows = !(atStart && atEnd);
 
   return (
     <div className="px-8 pb-7">
@@ -44,26 +34,22 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
         <div
           ref={scrollerRef}
           onScroll={updateEdges}
-          className="flex overflow-x-auto py-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-3 overflow-x-auto py-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {pages.map((page, i) => (
-            <div key={i} className="grid grid-cols-7 gap-3 w-full shrink-0 snap-start">
-              {page.map((b) => (
-                <Link
-                  key={b}
-                  href={`/shop?brand=${encodeURIComponent(b)}`}
-                  className="group flex flex-col items-center gap-2 cursor-pointer transition-transform duration-200 hover:scale-105"
-                >
-                  <MediaSlot
-                    src={images[b]}
-                    label={b}
-                    shape="circle"
-                    className="w-[88px] h-[88px] transition-shadow duration-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
-                  />
-                  <div className="text-[11px] font-semibold text-[#1A2027] text-center truncate w-full">{b}</div>
-                </Link>
-              ))}
-            </div>
+          {brands.map((b) => (
+            <Link
+              key={b}
+              href={`/shop?brand=${encodeURIComponent(b)}`}
+              className="group flex flex-col items-center gap-2 cursor-pointer shrink-0 w-[88px] snap-start transition-transform duration-200 hover:scale-105"
+            >
+              <MediaSlot
+                src={images[b]}
+                label={b}
+                shape="circle"
+                className="w-[88px] h-[88px] transition-shadow duration-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
+              />
+              <div className="text-[11px] font-semibold text-[#1A2027] text-center truncate w-full">{b}</div>
+            </Link>
           ))}
         </div>
         {showArrows && !atStart && (
