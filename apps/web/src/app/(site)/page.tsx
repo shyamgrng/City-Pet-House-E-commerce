@@ -47,10 +47,16 @@ export default function HomePage() {
             </div>
             <div className="text-[13px] text-[#EDF2F5] mt-2.5 mb-[18px] max-w-[400px]">{heroSubtext}</div>
             <div className="flex gap-2.5 pointer-events-auto">
-              <Link href="/shop" className="bg-primary text-white px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
+              <Link
+                href="/shop"
+                className="bg-primary text-white px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
+              >
                 Shop Now
               </Link>
-              <Link href="/vet" className="bg-white text-[#1A2027] px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
+              <Link
+                href="/vet"
+                className="bg-white text-[#1A2027] px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
+              >
                 Book a Vet
               </Link>
             </div>
@@ -114,7 +120,10 @@ export default function HomePage() {
           >
             {microchipBannerText}
           </div>
-          <Link href="/services/dog-cat-microchipping" className="relative bg-primary text-white px-[22px] py-2.5 rounded-[9px] text-[13px] font-semibold cursor-pointer">
+          <Link
+            href="/services/dog-cat-microchipping"
+            className="relative bg-primary text-white px-[22px] py-2.5 rounded-[9px] text-[13px] font-semibold cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
+          >
             Book Now
           </Link>
         </div>
@@ -180,7 +189,10 @@ export default function HomePage() {
           <div className="text-white font-heading font-bold text-xl" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
             {groomingBannerText}
           </div>
-          <Link href="/services/pet-grooming" className="bg-[#1F7A4D] text-white px-6 py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer shrink-0">
+          <Link
+            href="/services/pet-grooming"
+            className="bg-[#1F7A4D] text-white px-6 py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer shrink-0 transition-all duration-200 hover:scale-105 hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
+          >
             Book Now
           </Link>
         </div>
