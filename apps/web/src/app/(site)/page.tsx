@@ -152,8 +152,8 @@ export default function HomePage() {
       {/* Delivery banner */}
       <div className="mx-8 mb-8 aspect-[1400/280] rounded-xl overflow-hidden relative flex items-center justify-center">
         <MediaSlot src={content.deliveryBannerImage} label="delivery banner" fit="cover" className="absolute inset-0 w-full h-full" />
-        <div className="relative flex items-center gap-2.5 text-primary text-sm font-semibold bg-white/85 px-[18px] py-2 rounded-lg">
-          🚚 {deliveryBannerText}
+        <div className="relative text-primary text-sm font-semibold bg-white/85 px-[18px] py-2 rounded-lg">
+          {deliveryBannerText}
         </div>
       </div>
 
