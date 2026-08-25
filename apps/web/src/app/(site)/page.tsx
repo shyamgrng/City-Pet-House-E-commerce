@@ -101,7 +101,7 @@ export default function HomePage() {
         <AvailablePuppiesRail />
 
         {/* Microchip banner */}
-        <div className="mx-8 mb-7 aspect-[1400/240] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-8 gap-3">
+        <div className="mx-8 mb-7 aspect-[1400/200] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-8 gap-3">
           <MediaSlot src={content.microchipBannerImage} label="banner — pet microchipping" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="relative text-white font-heading font-bold text-[19px]"
@@ -127,7 +127,7 @@ export default function HomePage() {
       </div>
 
       {/* Hot Sales Banner */}
-      <div className="mx-8 mt-[22px] mb-3.5 aspect-[1400/240] rounded-xl overflow-hidden relative flex items-center px-8">
+      <div className="mx-8 mt-[22px] mb-3.5 aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center px-8">
         <MediaSlot src={content.hotSaleBannerImage} label="banner" fit="cover" className="absolute inset-0 w-full h-full" />
         {hotSaleBannerText && (
           <div className="relative text-white font-heading font-bold text-lg" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
@@ -150,7 +150,7 @@ export default function HomePage() {
       <ProductRail title="Toys for Your Pet" category="Pet Toys" />
 
       {/* Delivery banner */}
-      <div className="mx-8 mb-8 aspect-[1400/240] rounded-xl overflow-hidden relative flex items-center justify-center">
+      <div className="mx-8 mb-8 aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center justify-center">
         <MediaSlot src={content.deliveryBannerImage} label="delivery banner" fit="cover" className="absolute inset-0 w-full h-full" />
         {deliveryBannerText && (
           <div className="relative text-primary text-sm font-semibold bg-white/85 px-[18px] py-2 rounded-lg">

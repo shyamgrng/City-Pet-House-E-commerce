@@ -128,7 +128,7 @@ export default function AdminHomePage() {
         ))}
       </div>
 
-      <SectionLabel hint="The long promo banner between Today's Deals and Pet Food. Recommended size: 1400×240px.">
+      <SectionLabel hint="The long promo banner between Today's Deals and Pet Food. Recommended size: 1400×200px.">
         Hot Sales Banner
       </SectionLabel>
       <Card>
@@ -138,13 +138,13 @@ export default function AdminHomePage() {
           label="banner"
           height="h-[90px]"
           maxWidth={1400}
-          maxHeight={240}
+          maxHeight={200}
         />
         <Label>Text</Label>
         <Input value={content.hotSaleBannerText} onChange={(v) => update({ hotSaleBannerText: v })} last />
       </Card>
 
-      <SectionLabel hint='The "Book Now" banner above Our Services. Recommended size: 1400×240px.'>Microchipping Banner</SectionLabel>
+      <SectionLabel hint='The "Book Now" banner above Our Services. Recommended size: 1400×200px.'>Microchipping Banner</SectionLabel>
       <Card>
         <ImageUploadField
           value={content.microchipBannerImage}
@@ -152,13 +152,13 @@ export default function AdminHomePage() {
           label="banner — pet microchipping"
           height="h-[90px]"
           maxWidth={1400}
-          maxHeight={240}
+          maxHeight={200}
         />
         <Label>Text</Label>
         <Input value={content.microchipBannerText} onChange={(v) => update({ microchipBannerText: v })} last />
       </Card>
 
-      <SectionLabel hint="The delivery-coverage strip above Shop by Brand. Recommended size: 1400×240px.">Delivery Banner</SectionLabel>
+      <SectionLabel hint="The delivery-coverage strip above Shop by Brand. Recommended size: 1400×200px.">Delivery Banner</SectionLabel>
       <Card>
         <ImageUploadField
           value={content.deliveryBannerImage}
@@ -166,7 +166,7 @@ export default function AdminHomePage() {
           label="delivery banner"
           height="h-[90px]"
           maxWidth={1400}
-          maxHeight={240}
+          maxHeight={200}
         />
         <Label>Text</Label>
         <Input value={content.deliveryBannerText} onChange={(v) => update({ deliveryBannerText: v })} last />
