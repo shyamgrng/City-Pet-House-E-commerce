@@ -136,8 +136,8 @@ export default function HomePage() {
       {/* Today's Deals */}
       <DealsRail />
 
-      {/* Pet Food / Pet Accessories / Fashion Wear (cream section) */}
-      <div className="bg-[#F7F4EF] pt-1">
+      {/* Pet Food / Pet Accessories / Fashion Wear */}
+      <div className="pt-1">
         <ProductRail title="Pet Food" category="Pet Food" />
         <ProductRail title="Pet Accessories" category="Pet Accessories" />
         <ProductRail title="Fashion Wear" category="Fashion Wear" />
