@@ -14,6 +14,7 @@ export const homeContentSeed: HomeContent = {
   categoryImages: {},
   brandImages: {},
   hotSaleBannerImage: "",
+  hotSaleBannerText: "Hot Sale — up to 30% off this week only",
   microchipBannerImage: "",
   microchipBannerText: "Dog & Cat Microchipping — quick, permanent ID for your pet.",
   deliveryBannerImage: "",

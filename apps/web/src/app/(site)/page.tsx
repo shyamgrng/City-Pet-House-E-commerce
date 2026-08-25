@@ -19,7 +19,7 @@ export default function HomePage() {
   const { content, ready } = useHomeContent();
   const { brands } = useBrand();
   if (!ready) return null;
-  const { heroHeadline, heroSubtext, microchipBannerText, deliveryBannerText, groomingBannerText } = content;
+  const { heroHeadline, heroSubtext, hotSaleBannerText, microchipBannerText, deliveryBannerText, groomingBannerText } = content;
 
   return (
     <div className="bg-[#FDFEFE]">
@@ -127,8 +127,13 @@ export default function HomePage() {
       </div>
 
       {/* Hot Sales Banner */}
-      <div className="mx-8 mt-[22px] mb-3.5 h-[110px] rounded-xl overflow-hidden relative">
+      <div className="mx-8 mt-[22px] mb-3.5 h-[110px] rounded-xl overflow-hidden relative flex items-center px-8">
         <MediaSlot src={content.hotSaleBannerImage} label="banner" fit="cover" className="absolute inset-0 w-full h-full" />
+        {hotSaleBannerText && (
+          <div className="relative text-white font-heading font-bold text-lg" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+            {hotSaleBannerText}
+          </div>
+        )}
       </div>
 
       {/* Today's Deals */}

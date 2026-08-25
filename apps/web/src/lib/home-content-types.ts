@@ -11,6 +11,7 @@ export type HomeContent = {
   categoryImages: Record<string, string>;
   brandImages: Record<string, string>;
   hotSaleBannerImage: string;
+  hotSaleBannerText: string;
   microchipBannerImage: string;
   microchipBannerText: string;
   deliveryBannerImage: string;

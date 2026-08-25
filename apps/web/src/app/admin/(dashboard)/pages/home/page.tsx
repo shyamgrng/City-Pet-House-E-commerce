@@ -140,6 +140,8 @@ export default function AdminHomePage() {
           maxWidth={1400}
           maxHeight={280}
         />
+        <Label>Text</Label>
+        <Input value={content.hotSaleBannerText} onChange={(v) => update({ hotSaleBannerText: v })} last />
       </Card>
 
       <SectionLabel hint='The "Book Now" banner above Our Services. Recommended size: 1400×280px.'>Microchipping Banner</SectionLabel>
