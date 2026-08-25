@@ -89,7 +89,7 @@ export default function MicrochippingArchivePage() {
           <div className="w-full max-w-[520px]">
             <div className="bg-white rounded-2xl overflow-hidden border border-[#E4E9EC]" style={{ boxShadow: "0 12px 30px rgba(0,0,0,0.06)" }}>
               <div className="relative h-[220px]">
-                <MediaSlot src={result.photo} label={result.petName || "pet photo"} fit="cover" className="absolute inset-0 w-full h-full" />
+                <MediaSlot src={result.photo} label={result.petName || "pet photo"} fit="contain" className="absolute inset-0 w-full h-full" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/0 pointer-events-none" />
                 <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between gap-3">
                   <div>
