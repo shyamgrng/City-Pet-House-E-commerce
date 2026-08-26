@@ -139,7 +139,7 @@ function SigninInner() {
             </div>
 
             <Label required>Date of Birth</Label>
-            <Input value={dob} onChange={setDob} type="date" />
+            <Input value={dob} onChange={setDob} placeholder="DD/MM/YYYY" />
             <Label required>Phone Number</Label>
             <PhoneInput value={phone} onChange={setPhone} className="mb-3.5" />
             <Label required>Email Address</Label>
