@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import ImagePlaceholder from "@/components/ImagePlaceholder";
 import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
-import { useB2BAuth } from "@/context/B2BAuthContext";
-import { useDoctorAuth } from "@/context/DoctorAuthContext";
+import { useAdminAuth } from "@/context/AdminAuthContext";
 import { microchipAddress, useMicrochip } from "@/context/MicrochipContext";
 import { isValidNepalPhone } from "@/lib/phone";
 import type { MicrochipRecord } from "@/lib/microchip-types";
@@ -38,23 +38,42 @@ const EMPTY_REGISTER: RegisterForm = {
   mcDate: "",
 };
 
-export default function MicrochippingArchivePage() {
+function MicrochippingArchiveInner() {
   const { content, lookupRecord, addRecord, ready } = useMicrochip();
-  const { doctor, ready: doctorReady } = useDoctorAuth();
-  const { supplier, ready: b2bReady } = useB2BAuth();
+  const { user: admin, ready: adminReady } = useAdminAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<MicrochipRecord | null>(null);
   const [showRegister, setShowRegister] = useState(false);
   const [registerForm, setRegisterForm] = useState<RegisterForm>(EMPTY_REGISTER);
   const [registered, setRegistered] = useState(false);
+  const [autoSearchDone, setAutoSearchDone] = useState(false);
 
-  if (!ready || !doctorReady || !b2bReady) return null;
+  // After a redirect through /admin/login, re-run the search the admin originally typed.
+  useEffect(() => {
+    if (!ready || !adminReady || !admin || autoSearchDone) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration of the ?mc= query param once the admin session is known, not a render-loop update
+    setAutoSearchDone(true);
+    const mc = searchParams.get("mc");
+    if (mc) {
+      setQuery(mc);
+      setResult(lookupRecord(mc));
+      setSubmitted(true);
+    }
+  }, [ready, adminReady, admin, autoSearchDone, searchParams, lookupRecord]);
 
-  const accessAllowed = !!doctor || !!supplier;
+  if (!ready || !adminReady) return null;
 
   const submit = () => {
-    setResult(lookupRecord(query));
+    const q = query.trim();
+    if (!q) return;
+    if (!admin) {
+      router.push(`/admin/login?redirect=${encodeURIComponent(`/microchipping-archive?mc=${encodeURIComponent(q)}`)}`);
+      return;
+    }
+    setResult(lookupRecord(q));
     setSubmitted(true);
   };
 
@@ -203,33 +222,18 @@ export default function MicrochippingArchivePage() {
             <div className="h-1 bg-[#7A56C8]" />
             <div className="p-6">
               <div className="text-[13px] font-bold text-[#1A2027] mb-3.5">Search This Archive</div>
-              {accessAllowed ? (
-                <>
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && submit()}
-                    placeholder="Microchip number or pet name"
-                    className="w-full box-border px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5"
-                  />
-                  <button onClick={submit} className="w-full bg-[#7A56C8] text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer mb-2.5">
-                    Search
-                  </button>
-                  {submitted && !result && <div className="text-xs text-[#D64545] mb-1.5">No pet found matching that microchip number or name.</div>}
-                </>
-              ) : (
-                <div className="text-xs text-[#8A96A3] leading-relaxed bg-[#F7F9FA] rounded-lg px-3 py-2.5 mb-1.5">
-                  🔒 Only signed-in vets or B2B suppliers can search owner contact details. {" "}
-                  <Link href="/doctor/login" className="text-[#7A56C8] font-semibold">
-                    Sign in as a vet
-                  </Link>{" "}
-                  or{" "}
-                  <Link href="/b2b/login" className="text-[#7A56C8] font-semibold">
-                    B2B supplier
-                  </Link>
-                  .
-                </div>
-              )}
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submit()}
+                placeholder="Microchip number or pet name"
+                className="w-full box-border px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5"
+              />
+              <button onClick={submit} className="w-full bg-[#7A56C8] text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer mb-2.5">
+                Search
+              </button>
+              {submitted && !result && <div className="text-xs text-[#D64545] mb-1.5">No pet found matching that microchip number or name.</div>}
+              {!admin && <div className="text-xs text-[#8A96A3] leading-relaxed mb-1.5">🔒 Admin sign-in is required to view owner contact details.</div>}
               <div className="text-xs text-[#8A96A3] leading-relaxed mt-1.5">{content.searchCaption}</div>
             </div>
           </div>
@@ -289,6 +293,14 @@ export default function MicrochippingArchivePage() {
         />
       )}
     </div>
+  );
+}
+
+export default function MicrochippingArchivePage() {
+  return (
+    <Suspense fallback={null}>
+      <MicrochippingArchiveInner />
+    </Suspense>
   );
 }
 

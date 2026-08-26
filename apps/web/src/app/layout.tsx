@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import { AboutProvider } from "@/context/AboutContext";
+import { AdminAuthProvider } from "@/context/AdminAuthContext";
 import { AdoptionProvider } from "@/context/AdoptionContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { B2BAuthProvider } from "@/context/B2BAuthContext";
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <BrandProvider>
         <DeliverySettingsProvider>
         <AuthProvider>
+        <AdminAuthProvider>
           <DoctorAuthProvider>
             <B2BAuthProvider>
               <B2BProvider>
@@ -111,6 +113,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </B2BProvider>
             </B2BAuthProvider>
           </DoctorAuthProvider>
+        </AdminAuthProvider>
         </AuthProvider>
         </DeliverySettingsProvider>
         </BrandProvider>

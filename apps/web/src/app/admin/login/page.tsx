@@ -1,22 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import EmailInput from "@/components/EmailInput";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { isValidEmail } from "@/lib/email-format";
 
-export default function AdminLoginPage() {
+function AdminLoginInner() {
   const { user, ready, login } = useAdminAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/admin/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (ready && user) router.replace("/admin/dashboard");
-  }, [ready, user, router]);
+    if (ready && user) router.replace(redirectTo);
+  }, [ready, user, router, redirectTo]);
 
   const submit = () => {
     if (!isValidEmail(email)) {
@@ -24,7 +26,7 @@ export default function AdminLoginPage() {
       return;
     }
     if (login(email, password)) {
-      router.replace("/admin/dashboard");
+      router.replace(redirectTo);
     } else {
       setError("Incorrect email or password.");
     }
@@ -62,5 +64,13 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminLoginInner />
+    </Suspense>
   );
 }
