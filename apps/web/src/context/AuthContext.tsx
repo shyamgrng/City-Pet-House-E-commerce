@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { accountSeed } from "@/lib/account-seed";
 import { notifyEvent } from "@/lib/notify-client";
-import type { Account, RegisterInput } from "@/lib/auth-types";
+import type { Account, RegisterInput, SavedAddress } from "@/lib/auth-types";
 
 const ACCOUNTS_KEY = "cph_accounts";
 const SESSION_KEY = "cph_current_account_id";
@@ -24,16 +24,29 @@ type AuthValue = {
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (email: string) => Result;
   resetPassword: (email: string, code: string, newPassword: string) => Result;
+  addAddress: (label: string, line: string) => void;
+  updateAddress: (id: string, patch: Partial<Pick<SavedAddress, "label" | "line">>) => void;
+  removeAddress: (id: string) => void;
+  setPrimaryAddress: (id: string) => void;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
 
+// Backfills the saved-addresses book for an account created before that feature existed,
+// seeding it with a single entry that mirrors the account's existing address field.
+function normalizeAccount(a: Account): Account {
+  if (a.addresses && a.addresses.length > 0 && a.primaryAddressId) return a;
+  const id = "addr-" + Math.random().toString(36).slice(2, 9);
+  return { ...a, addresses: [{ id, label: "Home", line: a.address }], primaryAddressId: id };
+}
+
 function loadAccounts(): Account[] {
   try {
     const raw = window.localStorage.getItem(ACCOUNTS_KEY);
-    return raw ? (JSON.parse(raw) as Account[]) : accountSeed;
+    const accounts = raw ? (JSON.parse(raw) as Account[]) : accountSeed;
+    return accounts.map(normalizeAccount);
   } catch {
-    return accountSeed;
+    return accountSeed.map(normalizeAccount);
   }
 }
 
@@ -78,7 +91,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (state.accounts.some((a) => a.email.toLowerCase() === email.toLowerCase())) {
       return { ok: false, error: "An account with this email already exists." };
     }
-    const account: Account = { ...input, email, id: "acc-" + Math.random().toString(36).slice(2, 9), createdAt: Date.now() };
+    const addressId = "addr-" + Math.random().toString(36).slice(2, 9);
+    const account: Account = {
+      ...input,
+      email,
+      id: "acc-" + Math.random().toString(36).slice(2, 9),
+      createdAt: Date.now(),
+      addresses: [{ id: addressId, label: "Home", line: input.address }],
+      primaryAddressId: addressId,
+    };
     const accounts = [...state.accounts, account];
     persistAccounts(accounts);
     window.localStorage.setItem(SESSION_KEY, account.id);
@@ -150,6 +171,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const addAddress = (label: string, line: string) => {
+    setState((s) => {
+      if (!s.user) return s;
+      const entry: SavedAddress = { id: "addr-" + Math.random().toString(36).slice(2, 9), label, line };
+      const updated = { ...s.user, addresses: [...s.user.addresses, entry] };
+      const accounts = s.accounts.map((a) => (a.id === updated.id ? updated : a));
+      persistAccounts(accounts);
+      return { accounts, user: updated, ready: true };
+    });
+  };
+
+  const updateAddress = (id: string, patch: Partial<Pick<SavedAddress, "label" | "line">>) => {
+    setState((s) => {
+      if (!s.user) return s;
+      const addresses = s.user.addresses.map((entry) => (entry.id === id ? { ...entry, ...patch } : entry));
+      // Keep the top-level `address` field (the one every other page reads) in sync when the primary entry's line changes.
+      const address = id === s.user.primaryAddressId && patch.line !== undefined ? patch.line : s.user.address;
+      const updated = { ...s.user, addresses, address };
+      const accounts = s.accounts.map((a) => (a.id === updated.id ? updated : a));
+      persistAccounts(accounts);
+      return { accounts, user: updated, ready: true };
+    });
+  };
+
+  const removeAddress = (id: string) => {
+    setState((s) => {
+      if (!s.user) return s;
+      // Always keep at least one saved address so there's never a moment with no primary.
+      if (s.user.addresses.length <= 1) return s;
+      const addresses = s.user.addresses.filter((entry) => entry.id !== id);
+      const stillPrimary = addresses.find((entry) => entry.id === s.user!.primaryAddressId);
+      const primaryAddressId = stillPrimary ? s.user.primaryAddressId : addresses[0].id;
+      const address = stillPrimary ? s.user.address : addresses[0].line;
+      const updated = { ...s.user, addresses, primaryAddressId, address };
+      const accounts = s.accounts.map((a) => (a.id === updated.id ? updated : a));
+      persistAccounts(accounts);
+      return { accounts, user: updated, ready: true };
+    });
+  };
+
+  const setPrimaryAddress = (id: string) => {
+    setState((s) => {
+      if (!s.user) return s;
+      const entry = s.user.addresses.find((a) => a.id === id);
+      if (!entry) return s;
+      const updated = { ...s.user, primaryAddressId: id, address: entry.line };
+      const accounts = s.accounts.map((a) => (a.id === updated.id ? updated : a));
+      persistAccounts(accounts);
+      return { accounts, user: updated, ready: true };
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -163,6 +236,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         changePassword,
         requestPasswordReset,
         resetPassword,
+        addAddress,
+        updateAddress,
+        removeAddress,
+        setPrimaryAddress,
       }}
     >
       {children}

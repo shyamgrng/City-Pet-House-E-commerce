@@ -13,6 +13,7 @@ import { usePets } from "@/context/PetContext";
 import { useVet } from "@/context/VetContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { daysLeft, isExpired, type AdoptionPost } from "@/lib/adoption-types";
+import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import { isValidEmail } from "@/lib/email-format";
 import { STATUS_COLORS as ORDER_STATUS_COLORS } from "@/lib/order-types";
@@ -352,6 +353,8 @@ function ProfileTab() {
         </div>
       )}
 
+      <SavedAddressesCard user={user} />
+
       <div className="border border-[#E4E9EC] rounded-xl p-5 max-w-[440px] mt-4">
         <div className="text-sm font-bold text-[#1A2027] mb-3.5">Change Password</div>
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">New Password</div>
@@ -377,6 +380,146 @@ function ProfileTab() {
           Update Password
         </button>
       </div>
+    </div>
+  );
+}
+
+function SavedAddressesCard({ user }: { user: Account }) {
+  const { addAddress, updateAddress, removeAddress, setPrimaryAddress } = useAuth();
+  const [adding, setAdding] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [newLine, setNewLine] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [editLine, setEditLine] = useState("");
+
+  const startAdd = () => {
+    setNewLabel("");
+    setNewLine("");
+    setAdding(true);
+  };
+
+  const saveAdd = () => {
+    if (!newLine.trim()) return;
+    addAddress(newLabel.trim() || "Address", newLine.trim());
+    setAdding(false);
+  };
+
+  const startEdit = (id: string, label: string, line: string) => {
+    setEditingId(id);
+    setEditLabel(label);
+    setEditLine(line);
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !editLine.trim()) return;
+    updateAddress(editingId, { label: editLabel.trim() || "Address", line: editLine.trim() });
+    setEditingId(null);
+  };
+
+  return (
+    <div className="border border-[#E4E9EC] rounded-xl p-5 max-w-[500px] mt-4">
+      <div className="flex items-center justify-between mb-3.5 pb-2 border-b border-[#EEF1F3]">
+        <div className="text-[13px] font-bold text-[#1A2027]">Saved Addresses</div>
+        {!adding && (
+          <button onClick={startAdd} className="text-xs font-semibold text-primary cursor-pointer">
+            + Add Address
+          </button>
+        )}
+      </div>
+
+      {user.addresses.map((entry) =>
+        editingId === entry.id ? (
+          <div key={entry.id} className="border border-[#E4E9EC] rounded-lg p-3 mb-2.5">
+            <input
+              value={editLabel}
+              onChange={(e) => setEditLabel(e.target.value)}
+              placeholder="Label, e.g. Home or Work"
+              className="w-full px-2.5 py-2 rounded-md border border-[#E4E9EC] text-[13px] mb-2 box-border"
+            />
+            <input
+              value={editLine}
+              onChange={(e) => setEditLine(e.target.value)}
+              placeholder="Full address"
+              className="w-full px-2.5 py-2 rounded-md border border-[#E4E9EC] text-[13px] mb-2 box-border"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={saveEdit}
+                disabled={!editLine.trim()}
+                className="flex-1 bg-primary text-white text-center py-2 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditingId(null)}
+                className="px-3.5 py-2 rounded-md text-xs font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div key={entry.id} className="flex items-start justify-between gap-3 border border-[#E4E9EC] rounded-lg p-3 mb-2.5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <div className="text-[13px] font-bold text-[#1A2027]">{entry.label}</div>
+                {entry.id === user.primaryAddressId && (
+                  <div className="text-[10px] font-semibold text-[#1F7A4D] bg-[#E6F3EC] px-1.5 py-0.5 rounded">Primary</div>
+                )}
+              </div>
+              <div className="text-xs text-[#5B6773]">{entry.line}</div>
+            </div>
+            <div className="flex gap-2.5 shrink-0 items-center">
+              {entry.id !== user.primaryAddressId && (
+                <button onClick={() => setPrimaryAddress(entry.id)} className="text-[11px] font-semibold text-primary cursor-pointer whitespace-nowrap">
+                  Set as Primary
+                </button>
+              )}
+              <button onClick={() => startEdit(entry.id, entry.label, entry.line)} className="text-[11px] font-semibold text-[#5B6773] cursor-pointer">
+                Edit
+              </button>
+              {user.addresses.length > 1 && (
+                <button onClick={() => removeAddress(entry.id)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+        )
+      )}
+
+      {adding && (
+        <div className="border border-dashed border-[#E4E9EC] rounded-lg p-3">
+          <input
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+            placeholder="Label, e.g. Home or Work"
+            className="w-full px-2.5 py-2 rounded-md border border-[#E4E9EC] text-[13px] mb-2 box-border"
+          />
+          <input
+            value={newLine}
+            onChange={(e) => setNewLine(e.target.value)}
+            placeholder="Full address"
+            className="w-full px-2.5 py-2 rounded-md border border-[#E4E9EC] text-[13px] mb-2 box-border"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={saveAdd}
+              disabled={!newLine.trim()}
+              className="flex-1 bg-primary text-white text-center py-2 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Save Address
+            </button>
+            <button
+              onClick={() => setAdding(false)}
+              className="px-3.5 py-2 rounded-md text-xs font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
