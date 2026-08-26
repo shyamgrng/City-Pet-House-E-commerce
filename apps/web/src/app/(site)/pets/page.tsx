@@ -11,6 +11,18 @@ import { coverPhoto, coverPhotoAlt, dewormStages, formatRs, petSpeciesList, vacc
 
 const chips = ["All", ...petSpeciesList];
 
+const OTHER_ANIMALS_LABELS: Record<string, string> = {
+  Dog: "Other Puppies Available",
+  Cat: "Other Kittens Available",
+  "Small Pets": "Other Small Pets Available",
+  Birds: "Other Birds Available",
+  Fish: "Other Fish Available",
+};
+
+function otherAnimalsLabel(species: string): string {
+  return OTHER_ANIMALS_LABELS[species] ?? "Other Pets Available";
+}
+
 export default function PetsAvailablePage() {
   return (
     <Suspense fallback={null}>
@@ -242,8 +254,8 @@ function PetsAvailableContent() {
 
         {similar.length > 0 && (
           <>
-            <div className="font-heading font-bold text-base text-[#1A2027] mb-3.5">Other Puppies Available</div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            <div className="font-heading font-bold text-base text-[#1A2027] mb-3.5">{otherAnimalsLabel(selected.species)}</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {similar.map((p) => (
                 <div key={p.id} onClick={() => selectPet(p)} className="rounded-[10px] overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg">
                   <MediaSlot src={coverPhoto(p)} label={coverPhotoAlt(p) || p.breed} className="aspect-square" />
