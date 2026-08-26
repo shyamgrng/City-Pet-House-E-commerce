@@ -87,11 +87,6 @@ export default function SiteHeader() {
               {l.label}
             </Link>
           ))}
-          {isSignedIn && (
-            <button onClick={handleTopSignInClick} className="cursor-pointer whitespace-nowrap hover:text-primary">
-              Sign Out
-            </button>
-          )}
         </nav>
       </div>
     </div>
