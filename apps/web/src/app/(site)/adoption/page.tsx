@@ -121,12 +121,19 @@ function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaul
   const [desc, setDesc] = useState("");
   const [contact, setContact] = useState(defaultContact);
   const [posted, setPosted] = useState(false);
+  const [error, setError] = useState("");
 
   const canSave = name.trim().length > 0 && breed.trim().length > 0 && isValidNepalPhone(contact);
 
   const submit = () => {
     if (!canSave) return;
-    addPost({ photo, photoAlt, name, breed, age, sex, vaccination, address, desc, contact, postedAt: Date.now(), adopted: false, ownerId });
+    setError("");
+    try {
+      addPost({ photo, photoAlt, name, breed, age, sex, vaccination, address, desc, contact, postedAt: Date.now(), adopted: false, ownerId });
+    } catch {
+      setError("Couldn't post — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.");
+      return;
+    }
     setPhoto("");
     setPhotoAlt("");
     setName("");
@@ -187,6 +194,7 @@ function PostAdoptionForm({ ownerId, defaultContact }: { ownerId: string; defaul
       <FormInput value={address} onChange={setAddress} />
 
       {posted && <div className="text-xs text-[#1F7A4D] mb-2.5">✓ Your adoption notice is live.</div>}
+      {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
       <button
         disabled={!canSave}
         onClick={submit}
