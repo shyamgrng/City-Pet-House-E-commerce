@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState, type WheelEvent } from "react";
+import { Suspense, useEffect, useState, type WheelEvent } from "react";
 import MediaSlot from "@/components/MediaSlot";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -34,6 +34,7 @@ function PetsAvailableContent() {
   const [activePhoto, setActivePhoto] = useState(0);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+  const [urlIdApplied, setUrlIdApplied] = useState(false);
 
   const available = pets.filter((p) => p.status === "Available");
   const filtered = species === "All" ? available : available.filter((p) => p.species === species);
@@ -45,6 +46,17 @@ function PetsAvailableContent() {
     setActivePhoto(coverPos >= 0 ? coverPos : 0);
     setZoomOpen(false);
   };
+
+  // Opens straight to a specific pet's detail view when linked here with ?id=<petId>
+  // (e.g. clicking a puppy card on the homepage) instead of always landing on the grid.
+  useEffect(() => {
+    if (urlIdApplied || pets.length === 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration of the ?id= query param once pet data is loaded
+    setUrlIdApplied(true);
+    const id = searchParams.get("id");
+    const match = id ? pets.find((p) => p.id === id) : undefined;
+    if (match) selectPet(match);
+  }, [pets, searchParams, urlIdApplied]);
 
   const bookPuppy = (pet: Pet) => {
     if (!user) {
