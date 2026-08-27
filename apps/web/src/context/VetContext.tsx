@@ -45,6 +45,7 @@ type VetValue = {
   webVetActive: boolean;
   ready: boolean;
   saveError: string | null;
+  addDoctor: (doctor: Doctor) => boolean;
   toggleDoctorOnline: (doctorId: string) => void;
   setDoctorFee: (doctorId: string, feeRs: number) => void;
   toggleAvailabilitySlot: (doctorId: string, date: string, time: string) => void;
@@ -150,14 +151,15 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
   // being nested inside a caller's setState updater -- a quota-exceeded error thrown from inside
   // a setState updater is treated by React as a render-time error and crashes to the error page,
   // instead of just failing the one save.
-  const persistDoctors = (doctors: Doctor[]) => {
+  const persistDoctors = (doctors: Doctor[]): boolean => {
     try {
       window.localStorage.setItem(DOCTORS_KEY, JSON.stringify(doctors));
     } catch {
       setState((s) => ({ ...s, saveError: STORAGE_FULL_MESSAGE }));
-      return;
+      return false;
     }
     setState((s) => ({ ...s, doctors, saveError: null }));
+    return true;
   };
 
   const persistBookings = (bookings: VetBooking[]): boolean => {
@@ -201,6 +203,10 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     const entry: ActivityEntry = { id: Math.random().toString(36).slice(2, 9), type, text, ts: Date.now() };
     const activityLog = [entry, ...state.activityLog].slice(0, 500);
     persistActivityLog(activityLog);
+  };
+
+  const addDoctor = (doctor: Doctor): boolean => {
+    return persistDoctors([...state.doctors, doctor]);
   };
 
   const toggleDoctorOnline = (doctorId: string) => {
@@ -382,6 +388,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
         webVetActive: state.webVetActive,
         ready: state.ready,
         saveError: state.saveError,
+        addDoctor,
         toggleDoctorOnline,
         setDoctorFee,
         toggleAvailabilitySlot,

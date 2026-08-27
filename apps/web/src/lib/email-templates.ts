@@ -9,7 +9,9 @@ export type EmailEvent =
   | "vet_confirmed"
   | "vet_completed"
   | "account_created"
-  | "forgot_password";
+  | "forgot_password"
+  | "doctor_registration_received"
+  | "doctor_registration_approved";
 
 type Rendered = { subject: string; html: string };
 
@@ -173,6 +175,29 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
           `Hi ${name}, use this code to reset your password:<br /><br />
           <div style="font-size:28px;font-weight:700;letter-spacing:4px;color:#1996C8;">${code}</div><br />
           This code expires in 15 minutes. If you didn't request this, you can safely ignore this email.`
+        ),
+      };
+    }
+    case "doctor_registration_received": {
+      const { name } = data as { name: string };
+      return {
+        subject: `We've received your doctor application — ${siteSettings.shortName}`,
+        html: shell(
+          "Application received",
+          `Hi ${name}, thanks for applying to join ${siteSettings.shortName} as a doctor. Our admin team is reviewing your details and documents — we'll email you your Doctor ID and password once you're verified.`
+        ),
+      };
+    }
+    case "doctor_registration_approved": {
+      const { name, doctorId, password } = data as { name: string; doctorId: string; password: string };
+      return {
+        subject: `You're verified — Doctor Sign In details — ${siteSettings.shortName}`,
+        html: shell(
+          "Welcome to the team ✓",
+          `Hi ${name}, your doctor application has been verified. Sign in to the Doctor Portal with:<br /><br />
+          <div style="font-size:14px;"><strong>Doctor ID:</strong> ${doctorId}</div>
+          <div style="font-size:14px;margin-bottom:10px;"><strong>Password:</strong> ${password}</div>
+          Please sign in and change your password from your profile.`
         ),
       };
     }

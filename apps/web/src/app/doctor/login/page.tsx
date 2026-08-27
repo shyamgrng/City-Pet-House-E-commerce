@@ -55,11 +55,10 @@ export default function DoctorLoginPage() {
           Sign In
         </button>
         <div className="text-center text-[11px] text-[#8A96A3] mt-3.5">
-          New doctor? Contact us at{" "}
-          <a href="mailto:citypethouse@gmail.com" className="text-primary font-semibold">
-            citypethouse@gmail.com
-          </a>{" "}
-          to get set up.
+          New doctor?{" "}
+          <Link href="/doctor/register" className="text-primary font-semibold">
+            Register here
+          </Link>
         </div>
         <div className="text-[10px] text-[#8A96A3] mt-3.5 leading-relaxed">Demo: DR-1042 / doctor123</div>
       </div>

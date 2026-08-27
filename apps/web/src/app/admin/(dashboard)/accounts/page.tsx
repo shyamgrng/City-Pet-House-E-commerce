@@ -5,15 +5,19 @@ import { useAdoption } from "@/context/AdoptionContext";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCourierAuth } from "@/context/CourierAuthContext";
+import { useDoctorAuth } from "@/context/DoctorAuthContext";
+import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { useVet } from "@/context/VetContext";
 import { b2bAccountSeed } from "@/lib/b2b-auth-types";
 import type { CourierAccount } from "@/lib/courier-auth-types";
-import { doctorAccountSeed } from "@/lib/doctor-auth-types";
+import type { DoctorAccount } from "@/lib/doctor-auth-types";
+import { generateDoctorId, generateTempPassword, type DoctorRegistration } from "@/lib/doctor-registration-types";
+import { notifyEvent } from "@/lib/notify-client";
+import type { Doctor } from "@/lib/vet-types";
 import type { Account } from "@/lib/auth-types";
 
 const subTabs = ["Overview", "Client Account", "Doctor Account", "Courier Account", "B2B Account", "Staff Account"];
 
-const accountDoctors = doctorAccountSeed.map((d) => ({ name: d.name, status: "Active" }));
 const accountB2b = b2bAccountSeed.map((a) => ({ name: a.companyName, status: "Active" }));
 
 export default function AccountsPage() {
@@ -21,7 +25,46 @@ export default function AccountsPage() {
   const { accounts } = useAuth();
   const { users: adminUsers } = useAdminAuth();
   const { accounts: courierAccounts } = useCourierAuth();
+  const { accounts: doctorAccounts, addAccount: addDoctorAccount, saveError: doctorSaveError } = useDoctorAuth();
+  const { addDoctor } = useVet();
+  const { registrations, setRegistrationStatus, saveError: registrationSaveError } = useDoctorRegistration();
   const accountCouriers = courierAccounts.map((a) => ({ name: a.companyName, status: "Active" }));
+  const accountDoctors = doctorAccounts.map((d) => ({ name: d.name, status: "Active" }));
+  const pendingRegistrations = registrations.filter((r) => r.status === "Pending");
+
+  const approveRegistration = (reg: DoctorRegistration) => {
+    const doctorId = generateDoctorId(doctorAccounts);
+    const password = generateTempPassword();
+    const account: DoctorAccount = {
+      doctorId,
+      name: reg.fullName,
+      password,
+      email: reg.email,
+      phone: reg.phone,
+      emergencyPhone: reg.emergencyNumber,
+      address: reg.address,
+      photo: reg.profilePhoto,
+    };
+    if (!addDoctorAccount(account)) return;
+    const doctor: Doctor = {
+      id: doctorId,
+      name: reg.fullName,
+      qualification: reg.qualification,
+      nvcNumber: reg.nvcNumber,
+      online: false,
+      verified: true,
+      consults: 0,
+      completed: 0,
+      feeRs: 800,
+    };
+    addDoctor(doctor);
+    setRegistrationStatus(reg.id, "Approved");
+    notifyEvent("doctor_registration_approved", reg.email, reg.fullName, { name: reg.fullName, doctorId, password });
+  };
+
+  const rejectRegistration = (reg: DoctorRegistration) => {
+    setRegistrationStatus(reg.id, "Rejected");
+  };
 
   return (
     <div>
@@ -45,7 +88,7 @@ export default function AccountsPage() {
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-4">
             <Stat label="Client Accounts" value={accounts.length} />
-            <Stat label="Doctor Accounts" value={doctorAccountSeed.length} />
+            <Stat label="Doctor Accounts" value={doctorAccounts.length} />
             <Stat label="Courier Accounts" value={courierAccounts.length} />
             <Stat label="Staff Accounts" value={adminUsers.length} />
           </div>
@@ -57,9 +100,46 @@ export default function AccountsPage() {
           </div>
 
           <div className="text-[13px] font-bold text-[#1A2027] mb-2">Pending Registrations</div>
-          <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">
-            No pending registrations
-          </div>
+          {(doctorSaveError || registrationSaveError) && (
+            <div className="text-xs text-[#D64545] mb-2">{doctorSaveError || registrationSaveError}</div>
+          )}
+          {pendingRegistrations.length === 0 ? (
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">
+              No pending registrations
+            </div>
+          ) : (
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+              {pendingRegistrations.map((r) => (
+                <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-[#F0F2F4] last:border-0 text-xs">
+                  <div>
+                    <div className="font-semibold text-[#1A2027]">
+                      {r.fullName} <span className="text-[10px] font-bold text-[#8A96A3]">· Doctor</span>
+                    </div>
+                    <div className="text-[#8A96A3] mt-0.5">
+                      {r.qualification} · {r.nvcNumber}
+                    </div>
+                    <div className="text-[#8A96A3]">
+                      {r.email} · {r.phone}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={() => rejectRegistration(r)}
+                      className="px-3 py-1.5 rounded-md text-[11px] font-semibold border border-[#E4E9EC] text-[#5B6773] cursor-pointer"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      onClick={() => approveRegistration(r)}
+                      className="px-3 py-1.5 rounded-md text-[11px] font-semibold bg-primary text-white cursor-pointer"
+                    >
+                      Approve
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 
