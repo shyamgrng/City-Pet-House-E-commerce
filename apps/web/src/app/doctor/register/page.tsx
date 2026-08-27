@@ -28,22 +28,36 @@ export default function DoctorRegisterPage() {
   const [accountHolderName, setAccountHolderName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [profilePhoto, setProfilePhoto] = useState("");
+  const [profilePhotoName, setProfilePhotoName] = useState("");
   const [cvFileName, setCvFileName] = useState("");
   const [degreeCertificate, setDegreeCertificate] = useState("");
+  const [degreeCertificateName, setDegreeCertificateName] = useState("");
   const [nvcLicense, setNvcLicense] = useState("");
+  const [nvcLicenseName, setNvcLicenseName] = useState("");
   const [nationalId, setNationalId] = useState("");
+  const [nationalIdName, setNationalIdName] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
 
   const setFieldError = (key: string, msg: string) => setFieldErrors((s) => ({ ...s, [key]: msg }));
 
   // Accepts a photo, a PDF, or a Word document -- all three are common ways people have their
-  // certificate/license/ID saved, so we shouldn't force one over the other.
-  const handleDoc = async (file: File | undefined, key: string, setValue: (v: string) => void, maxW: number, maxH: number) => {
+  // certificate/license/ID saved, so we shouldn't force one over the other. A resized image data
+  // URL doesn't carry the original filename, so we track that separately (setName) so the field
+  // can always show both the filename and a preview once something is attached.
+  const handleDoc = async (
+    file: File | undefined,
+    key: string,
+    setValue: (v: string) => void,
+    setName: (v: string) => void,
+    maxW: number,
+    maxH: number
+  ) => {
     if (!file) return;
     setFieldError(key, "");
     if (isAllowedDocumentFile(file)) {
       setValue(`DOC:${file.name}`);
+      setName(file.name);
       return;
     }
     if (!isAllowedImageFile(file)) {
@@ -53,12 +67,20 @@ export default function DoctorRegisterPage() {
     try {
       const dataUrl = await resizeImageFile(file, maxW, maxH);
       setValue(dataUrl);
+      setName(file.name);
     } catch {
       setFieldError(key, "Could not process that file — try a different one.");
     }
   };
 
-  const handlePhoto = async (file: File | undefined, key: string, setValue: (v: string) => void, maxW: number, maxH: number) => {
+  const handlePhoto = async (
+    file: File | undefined,
+    key: string,
+    setValue: (v: string) => void,
+    setName: (v: string) => void,
+    maxW: number,
+    maxH: number
+  ) => {
     if (!file) return;
     setFieldError(key, "");
     if (!isAllowedImageFile(file)) {
@@ -68,6 +90,7 @@ export default function DoctorRegisterPage() {
     try {
       const dataUrl = await resizeImageFile(file, maxW, maxH);
       setValue(dataUrl);
+      setName(file.name);
     } catch {
       setFieldError(key, "Could not process that image — try a different file.");
     }
@@ -190,8 +213,9 @@ export default function DoctorRegisterPage() {
           label="Profile Photo"
           required
           value={profilePhoto}
+          fileName={profilePhotoName}
           error={fieldErrors.profilePhoto}
-          onFile={(f) => handlePhoto(f, "profilePhoto", setProfilePhoto, 500, 500)}
+          onFile={(f) => handlePhoto(f, "profilePhoto", setProfilePhoto, setProfilePhotoName, 500, 500)}
         />
         <FileDrop label="Upload CV" fileName={cvFileName} accept={DOCUMENT_UPLOAD_ACCEPT} onFile={(f) => f && setCvFileName(f.name)} />
         <DocDrop
@@ -199,24 +223,27 @@ export default function DoctorRegisterPage() {
           dropLabel="Certificate"
           required
           value={degreeCertificate}
+          fileName={degreeCertificateName}
           error={fieldErrors.degreeCertificate}
-          onFile={(f) => handleDoc(f, "degreeCertificate", setDegreeCertificate, 1000, 1400)}
+          onFile={(f) => handleDoc(f, "degreeCertificate", setDegreeCertificate, setDegreeCertificateName, 1000, 1400)}
         />
         <DocDrop
           label="NVC License"
           dropLabel="License"
           required
           value={nvcLicense}
+          fileName={nvcLicenseName}
           error={fieldErrors.nvcLicense}
-          onFile={(f) => handleDoc(f, "nvcLicense", setNvcLicense, 1000, 1400)}
+          onFile={(f) => handleDoc(f, "nvcLicense", setNvcLicense, setNvcLicenseName, 1000, 1400)}
         />
         <DocDrop
           label="National Identity Card"
           dropLabel="National ID"
           required
           value={nationalId}
+          fileName={nationalIdName}
           error={fieldErrors.nationalId}
-          onFile={(f) => handleDoc(f, "nationalId", setNationalId, 1000, 1400)}
+          onFile={(f) => handleDoc(f, "nationalId", setNationalId, setNationalIdName, 1000, 1400)}
           mb="mb-1"
         />
 
@@ -264,6 +291,7 @@ function PhotoDrop({
   dropLabel = "Photo",
   required,
   value,
+  fileName,
   error,
   onFile,
   mb = "mb-3",
@@ -272,6 +300,7 @@ function PhotoDrop({
   dropLabel?: string;
   required?: boolean;
   value: string;
+  fileName?: string;
   error?: string;
   onFile: (file: File | undefined) => void;
   mb?: string;
@@ -284,10 +313,13 @@ function PhotoDrop({
       </div>
       <input ref={inputRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
       {value ? (
-        <div onClick={() => inputRef.current?.click()} className="relative cursor-pointer">
+        <div onClick={() => inputRef.current?.click()} className="cursor-pointer border border-[#E4E9EC] rounded-lg p-2 flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt={label} className="w-full h-[90px] object-cover rounded-lg border border-[#E4E9EC]" />
-          <div className="absolute bottom-1 right-1 bg-white/90 text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded">Replace</div>
+          <img src={value} alt={label} className="w-14 h-14 object-cover rounded-md border border-[#E4E9EC] shrink-0" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold text-[#1A2027] truncate">{fileName || "Photo attached"}</div>
+            <div className="text-[10px] text-primary underline mt-0.5">Replace</div>
+          </div>
         </div>
       ) : (
         <div
@@ -312,6 +344,7 @@ function DocDrop({
   dropLabel = "Photo",
   required,
   value,
+  fileName,
   error,
   onFile,
   mb = "mb-3",
@@ -320,12 +353,14 @@ function DocDrop({
   dropLabel?: string;
   required?: boolean;
   value: string;
+  fileName?: string;
   error?: string;
   onFile: (file: File | undefined) => void;
   mb?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isDoc = value.startsWith("DOC:");
+  const docExt = isDoc ? (value.slice(4).split(".").pop() ?? "").slice(0, 4).toUpperCase() : "";
   return (
     <div className={mb}>
       <div className="text-[11px] font-semibold text-[#3A4652] mb-1.5">
@@ -333,18 +368,23 @@ function DocDrop({
       </div>
       <input ref={inputRef} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
       {value && !isDoc ? (
-        <div onClick={() => inputRef.current?.click()} className="relative cursor-pointer">
+        <div onClick={() => inputRef.current?.click()} className="cursor-pointer border border-[#E4E9EC] rounded-lg p-2 flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={value} alt={label} className="w-full h-[90px] object-cover rounded-lg border border-[#E4E9EC]" />
-          <div className="absolute bottom-1 right-1 bg-white/90 text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded">Replace</div>
+          <img src={value} alt={label} className="w-14 h-14 object-cover rounded-md border border-[#E4E9EC] shrink-0" />
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold text-[#1A2027] truncate">{fileName || "Photo attached"}</div>
+            <div className="text-[10px] text-primary underline mt-0.5">Replace</div>
+          </div>
         </div>
       ) : value && isDoc ? (
-        <div
-          onClick={() => inputRef.current?.click()}
-          className="w-full h-[90px] rounded-lg border border-[#E4E9EC] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer px-2 text-center"
-        >
-          <div className="text-[11px] font-semibold text-[#1A2027] truncate max-w-full">{value.slice(4)}</div>
-          <div className="text-[10px] text-primary underline mt-1">replace</div>
+        <div onClick={() => inputRef.current?.click()} className="cursor-pointer border border-[#E4E9EC] rounded-lg p-2 flex items-center gap-3">
+          <div className="w-14 h-14 rounded-md bg-[#EEF1F3] flex items-center justify-center text-[10px] font-bold text-[#5B6773] shrink-0">
+            {docExt}
+          </div>
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold text-[#1A2027] truncate">{value.slice(4)}</div>
+            <div className="text-[10px] text-primary underline mt-0.5">Replace</div>
+          </div>
         </div>
       ) : (
         <div
