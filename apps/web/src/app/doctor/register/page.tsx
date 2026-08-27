@@ -7,13 +7,11 @@ import EmailInput from "@/components/EmailInput";
 import PhoneInput from "@/components/PhoneInput";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { isValidEmail } from "@/lib/email-format";
-import { IMAGE_ACCEPT, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
+import { DOCUMENT_UPLOAD_ACCEPT, IMAGE_ACCEPT, isAllowedDocumentFile, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
 const STORAGE_FULL_MESSAGE =
   "Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.";
-
-const DOC_ACCEPT = `${IMAGE_ACCEPT},.pdf,application/pdf`;
 
 export default function DoctorRegisterPage() {
   const { submitRegistration } = useDoctorRegistration();
@@ -39,18 +37,17 @@ export default function DoctorRegisterPage() {
 
   const setFieldError = (key: string, msg: string) => setFieldErrors((s) => ({ ...s, [key]: msg }));
 
-  // Accepts either a photo of the document or a PDF scan -- both are common ways people have
-  // their certificate/license/ID saved, so we shouldn't force one over the other.
+  // Accepts a photo, a PDF, or a Word document -- all three are common ways people have their
+  // certificate/license/ID saved, so we shouldn't force one over the other.
   const handleDoc = async (file: File | undefined, key: string, setValue: (v: string) => void, maxW: number, maxH: number) => {
     if (!file) return;
     setFieldError(key, "");
-    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-    if (isPdf) {
-      setValue(`PDF:${file.name}`);
+    if (isAllowedDocumentFile(file)) {
+      setValue(`DOC:${file.name}`);
       return;
     }
     if (!isAllowedImageFile(file)) {
-      setFieldError(key, "Please choose an image (JPEG, PNG, HEIC, WEBP...) or a PDF.");
+      setFieldError(key, "Please choose a PNG or JPG photo, a PDF, or a Word document.");
       return;
     }
     try {
@@ -65,7 +62,7 @@ export default function DoctorRegisterPage() {
     if (!file) return;
     setFieldError(key, "");
     if (!isAllowedImageFile(file)) {
-      setFieldError(key, "Please choose an image file (JPEG, PNG, HEIC, WEBP...).");
+      setFieldError(key, "Please choose a PNG or JPG image.");
       return;
     }
     try {
@@ -196,7 +193,7 @@ export default function DoctorRegisterPage() {
           error={fieldErrors.profilePhoto}
           onFile={(f) => handlePhoto(f, "profilePhoto", setProfilePhoto, 500, 500)}
         />
-        <FileDrop label="Upload CV (PDF)" fileName={cvFileName} accept=".pdf,application/pdf" onFile={(f) => f && setCvFileName(f.name)} />
+        <FileDrop label="Upload CV" fileName={cvFileName} accept={DOCUMENT_UPLOAD_ACCEPT} onFile={(f) => f && setCvFileName(f.name)} />
         <DocDrop
           label="Primary Degree Certificate"
           dropLabel="Certificate"
@@ -306,9 +303,10 @@ function PhotoDrop({
   );
 }
 
-/** Same as PhotoDrop, but also accepts a PDF scan -- a photo of a document and a PDF scan of it
- * are equally common ways people have their certificate/license/ID saved. A PDF is stored as
- * just its filename (no reliable in-browser PDF thumbnail), an image is resized and previewed. */
+/** Same as PhotoDrop, but also accepts a PDF or Word document -- a photo of a document, a PDF
+ * scan, and the original Word file are all common ways people have their certificate/license/ID
+ * saved. A PDF/Word file is stored as just its filename (no reliable in-browser thumbnail for
+ * either), an image is resized and previewed. */
 function DocDrop({
   label,
   dropLabel = "Photo",
@@ -327,20 +325,20 @@ function DocDrop({
   mb?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const isPdf = value.startsWith("PDF:");
+  const isDoc = value.startsWith("DOC:");
   return (
     <div className={mb}>
       <div className="text-[11px] font-semibold text-[#3A4652] mb-1.5">
         {label} {required && <span className="text-[#D64545]">*</span>}
       </div>
-      <input ref={inputRef} type="file" accept={DOC_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
-      {value && !isPdf ? (
+      <input ref={inputRef} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+      {value && !isDoc ? (
         <div onClick={() => inputRef.current?.click()} className="relative cursor-pointer">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={value} alt={label} className="w-full h-[90px] object-cover rounded-lg border border-[#E4E9EC]" />
           <div className="absolute bottom-1 right-1 bg-white/90 text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded">Replace</div>
         </div>
-      ) : value && isPdf ? (
+      ) : value && isDoc ? (
         <div
           onClick={() => inputRef.current?.click()}
           className="w-full h-[90px] rounded-lg border border-[#E4E9EC] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer px-2 text-center"
@@ -354,7 +352,7 @@ function DocDrop({
           className="w-full h-[90px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer"
         >
           <div className="text-[11px] font-semibold text-[#5B6773]">{dropLabel}</div>
-          <div className="text-[10px] text-primary underline">photo or PDF — browse files</div>
+          <div className="text-[10px] text-primary underline">photo, PDF, or Word — browse files</div>
         </div>
       )}
       {error && <div className="text-[11px] text-[#D64545] mt-1">{error}</div>}

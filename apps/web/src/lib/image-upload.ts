@@ -1,20 +1,20 @@
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".tif", ".tiff", ".raw", ".cr2", ".heic", ".heif", ".webp", ".bmp"];
 const VIDEO_EXTENSIONS = [".mp4", ".mpg", ".mpeg", ".wmv"];
+const DOCUMENT_EXTENSIONS = [".doc", ".docx"];
+const DOCUMENT_MIME_TYPES = ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 
-/** Passed to <input accept> so the OS file picker shows these formats even when the browser doesn't know their MIME type (e.g. .raw, .cr2). */
-export const IMAGE_ACCEPT = [
-  ...IMAGE_EXTENSIONS,
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/svg+xml",
-  "image/tiff",
-  "image/heic",
-  "image/heif",
-  "image/webp",
-  "image/bmp",
-].join(",");
+/**
+ * A long list of specific extensions/MIME types in <input accept> can make mobile browsers fall
+ * back to a generic file browser instead of the native Photos picker, which makes it look like
+ * photos "can't be uploaded" even though the picker would technically allow it. The broad
+ * "image/*" wildcard is what reliably opens the native photo picker on iOS/Android and still
+ * covers PNG/JPEG/HEIC/etc.; isAllowedImageFile below stays permissive for the rare RAW/CR2 file
+ * someone selects via "browse all files".
+ */
+export const IMAGE_ACCEPT = "image/*";
 export const VIDEO_ACCEPT = [...VIDEO_EXTENSIONS, "video/mp4", "video/mpeg", "video/x-ms-wmv"].join(",");
+/** For fields that accept a document as either a photo, a PDF, or a Word file. */
+export const DOCUMENT_UPLOAD_ACCEPT = ["image/*", "application/pdf", ...DOCUMENT_EXTENSIONS, ...DOCUMENT_MIME_TYPES].join(",");
 
 /** file.type is often blank for formats the browser doesn't recognize (RAW, TIFF), so fall back to the extension. */
 export function isAllowedImageFile(file: File): boolean {
@@ -27,6 +27,13 @@ export function isAllowedVideoFile(file: File): boolean {
   if (file.type.startsWith("video/")) return true;
   const name = file.name.toLowerCase();
   return VIDEO_EXTENSIONS.some((ext) => name.endsWith(ext));
+}
+
+/** PDF or Word document (.doc/.docx) -- used for fields where either a scan or the original file is fine. */
+export function isAllowedDocumentFile(file: File): boolean {
+  if (file.type === "application/pdf" || DOCUMENT_MIME_TYPES.includes(file.type)) return true;
+  const name = file.name.toLowerCase();
+  return name.endsWith(".pdf") || DOCUMENT_EXTENSIONS.some((ext) => name.endsWith(ext));
 }
 
 const MAX_FALLBACK_BYTES = 8 * 1024 * 1024;
