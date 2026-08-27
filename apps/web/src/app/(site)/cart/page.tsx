@@ -143,6 +143,7 @@ function CheckoutSection({
   const [address, setAddress] = useState(user.address);
   const [phone, setPhone] = useState(user.phone);
   const [receiptPhoto, setReceiptPhoto] = useState("");
+  const [receiptUploading, setReceiptUploading] = useState(false);
   const [error, setError] = useState("");
   const [previewQr, setPreviewQr] = useState<{ src: string; label: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -154,11 +155,14 @@ function CheckoutSection({
       setError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
       return;
     }
+    setReceiptUploading(true);
     try {
       const dataUrl = await resizeImageFile(file, 1000, 1400);
       setReceiptPhoto(dataUrl);
     } catch {
       setError("Could not process that image — try a different file.");
+    } finally {
+      setReceiptUploading(false);
     }
   };
 
@@ -293,9 +297,10 @@ function CheckoutSection({
         ) : (
           <button
             onClick={() => fileRef.current?.click()}
+            disabled={receiptUploading}
             className="w-full h-[120px] mb-1 rounded-lg border-2 border-dashed border-[#C7DCE6] bg-white flex items-center justify-center text-xs text-[#8A96A3] cursor-pointer"
           >
-            Drop your payment receipt screenshot
+            {receiptUploading ? "Processing photo…" : "Drop your payment receipt screenshot"}
           </button>
         )}
       </div>

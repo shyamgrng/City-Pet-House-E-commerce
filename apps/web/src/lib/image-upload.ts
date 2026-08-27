@@ -38,11 +38,16 @@ export function isAllowedDocumentFile(file: File): boolean {
 
 const MAX_FALLBACK_BYTES = 8 * 1024 * 1024;
 
+const DECODE_TIMEOUT_MS = 6000;
+
 /**
  * Reads an image file, downscales it to fit within maxWidth/maxHeight, and returns a JPEG data URL.
- * Resizing is best-effort: some browsers (notably Safari, for certain wide-gamut/ICC-profile PNGs)
- * can fail to decode an image onto a canvas even though the file itself is perfectly valid. Rather
- * than blocking the upload on that, we fall back to storing the original file's data URL untouched.
+ * Resizing is best-effort: some browsers (notably Safari, for certain wide-gamut/ICC-profile PNGs,
+ * or HEIC photos straight off an iPhone camera) can fail to decode an image onto a canvas even
+ * though the file itself is perfectly valid -- and on some mobile browsers that failure doesn't
+ * even fire img.onerror, it just never fires anything, leaving the upload hanging forever with no
+ * value set and no error shown (looks exactly like "nothing happened"). A timeout guarantees this
+ * always settles one way or another: falls back to storing the original file's data URL untouched.
  */
 export function resizeImageFile(file: File, maxWidth: number, maxHeight: number, quality = 0.82): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -51,14 +56,23 @@ export function resizeImageFile(file: File, maxWidth: number, maxHeight: number,
     reader.onload = () => {
       const original = reader.result as string;
       const img = new Image();
-      img.onerror = () => {
+      let settled = false;
+      const fallbackToOriginal = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
         if (file.size > MAX_FALLBACK_BYTES) {
           reject(new Error(`Could not process that image, and it's too large (over ${Math.round(MAX_FALLBACK_BYTES / (1024 * 1024))}MB) to use as-is.`));
           return;
         }
         resolve(original);
       };
+      const timeoutId = setTimeout(fallbackToOriginal, DECODE_TIMEOUT_MS);
+      img.onerror = fallbackToOriginal;
       img.onload = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
         try {
           const scale = Math.min(1, maxWidth / img.width, maxHeight / img.height);
           const width = Math.round(img.width * scale);

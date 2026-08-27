@@ -37,9 +37,11 @@ export default function DoctorRegisterPage() {
   const [nationalId, setNationalId] = useState("");
   const [nationalIdName, setNationalIdName] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [busyFields, setBusyFields] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
 
   const setFieldError = (key: string, msg: string) => setFieldErrors((s) => ({ ...s, [key]: msg }));
+  const setFieldBusy = (key: string, busy: boolean) => setBusyFields((s) => ({ ...s, [key]: busy }));
 
   // Accepts a photo, a PDF, or a Word document -- all three are common ways people have their
   // certificate/license/ID saved, so we shouldn't force one over the other. A resized image data
@@ -64,12 +66,15 @@ export default function DoctorRegisterPage() {
       setFieldError(key, "Please choose a PNG or JPG photo, a PDF, or a Word document.");
       return;
     }
+    setFieldBusy(key, true);
     try {
       const dataUrl = await resizeImageFile(file, maxW, maxH);
       setValue(dataUrl);
       setName(file.name);
     } catch {
       setFieldError(key, "Could not process that file — try a different one.");
+    } finally {
+      setFieldBusy(key, false);
     }
   };
 
@@ -87,12 +92,15 @@ export default function DoctorRegisterPage() {
       setFieldError(key, "Please choose a PNG or JPG image.");
       return;
     }
+    setFieldBusy(key, true);
     try {
       const dataUrl = await resizeImageFile(file, maxW, maxH);
       setValue(dataUrl);
       setName(file.name);
     } catch {
       setFieldError(key, "Could not process that image — try a different file.");
+    } finally {
+      setFieldBusy(key, false);
     }
   };
 
@@ -215,6 +223,7 @@ export default function DoctorRegisterPage() {
           value={profilePhoto}
           fileName={profilePhotoName}
           error={fieldErrors.profilePhoto}
+          busy={busyFields.profilePhoto}
           onFile={(f) => handlePhoto(f, "profilePhoto", setProfilePhoto, setProfilePhotoName, 500, 500)}
         />
         <FileDrop label="Upload CV" fileName={cvFileName} accept={DOCUMENT_UPLOAD_ACCEPT} onFile={(f) => f && setCvFileName(f.name)} />
@@ -225,6 +234,7 @@ export default function DoctorRegisterPage() {
           value={degreeCertificate}
           fileName={degreeCertificateName}
           error={fieldErrors.degreeCertificate}
+          busy={busyFields.degreeCertificate}
           onFile={(f) => handleDoc(f, "degreeCertificate", setDegreeCertificate, setDegreeCertificateName, 1000, 1400)}
         />
         <DocDrop
@@ -234,6 +244,7 @@ export default function DoctorRegisterPage() {
           value={nvcLicense}
           fileName={nvcLicenseName}
           error={fieldErrors.nvcLicense}
+          busy={busyFields.nvcLicense}
           onFile={(f) => handleDoc(f, "nvcLicense", setNvcLicense, setNvcLicenseName, 1000, 1400)}
         />
         <DocDrop
@@ -243,6 +254,7 @@ export default function DoctorRegisterPage() {
           value={nationalId}
           fileName={nationalIdName}
           error={fieldErrors.nationalId}
+          busy={busyFields.nationalId}
           onFile={(f) => handleDoc(f, "nationalId", setNationalId, setNationalIdName, 1000, 1400)}
           mb="mb-1"
         />
@@ -293,6 +305,7 @@ function PhotoDrop({
   value,
   fileName,
   error,
+  busy,
   onFile,
   mb = "mb-3",
 }: {
@@ -302,6 +315,7 @@ function PhotoDrop({
   value: string;
   fileName?: string;
   error?: string;
+  busy?: boolean;
   onFile: (file: File | undefined) => void;
   mb?: string;
 }) {
@@ -312,7 +326,11 @@ function PhotoDrop({
         {label} {required && <span className="text-[#D64545]">*</span>}
       </div>
       <input ref={inputRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
-      {value ? (
+      {busy ? (
+        <div className="w-full h-[90px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex items-center justify-center">
+          <div className="text-[11px] font-semibold text-[#5B6773]">Processing photo…</div>
+        </div>
+      ) : value ? (
         <div onClick={() => inputRef.current?.click()} className="cursor-pointer border border-[#E4E9EC] rounded-lg p-2 flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={value} alt={label} className="w-14 h-14 object-cover rounded-md border border-[#E4E9EC] shrink-0" />
@@ -346,6 +364,7 @@ function DocDrop({
   value,
   fileName,
   error,
+  busy,
   onFile,
   mb = "mb-3",
 }: {
@@ -355,6 +374,7 @@ function DocDrop({
   value: string;
   fileName?: string;
   error?: string;
+  busy?: boolean;
   onFile: (file: File | undefined) => void;
   mb?: string;
 }) {
@@ -367,7 +387,11 @@ function DocDrop({
         {label} {required && <span className="text-[#D64545]">*</span>}
       </div>
       <input ref={inputRef} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
-      {value && !isDoc ? (
+      {busy ? (
+        <div className="w-full h-[90px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex items-center justify-center">
+          <div className="text-[11px] font-semibold text-[#5B6773]">Processing…</div>
+        </div>
+      ) : value && !isDoc ? (
         <div onClick={() => inputRef.current?.click()} className="cursor-pointer border border-[#E4E9EC] rounded-lg p-2 flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={value} alt={label} className="w-14 h-14 object-cover rounded-md border border-[#E4E9EC] shrink-0" />

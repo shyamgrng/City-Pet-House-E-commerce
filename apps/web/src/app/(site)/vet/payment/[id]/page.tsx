@@ -12,6 +12,7 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
   const { bookings, submitPayment } = useVet();
   const booking = bookings.find((b) => b.id === id);
   const [receiptPhoto, setReceiptPhoto] = useState("");
+  const [receiptUploading, setReceiptUploading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -30,11 +31,14 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
       setError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
       return;
     }
+    setReceiptUploading(true);
     try {
       const dataUrl = await resizeImageFile(file, 1000, 1400);
       setReceiptPhoto(dataUrl);
     } catch {
       setError("Could not process that image — try a different file.");
+    } finally {
+      setReceiptUploading(false);
     }
   };
 
@@ -92,9 +96,10 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
         ) : (
           <button
             onClick={() => fileRef.current?.click()}
+            disabled={receiptUploading}
             className="w-full h-[150px] mb-4 rounded-lg border-2 border-dashed border-[#E4E9EC] flex items-center justify-center text-xs text-[#8A96A3] cursor-pointer"
           >
-            Drop your payment screenshot
+            {receiptUploading ? "Processing photo…" : "Drop your payment screenshot"}
           </button>
         )}
 
