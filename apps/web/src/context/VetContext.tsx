@@ -44,12 +44,13 @@ type VetValue = {
   activityLog: ActivityEntry[];
   webVetActive: boolean;
   ready: boolean;
+  saveError: string | null;
   toggleDoctorOnline: (doctorId: string) => void;
   setDoctorFee: (doctorId: string, feeRs: number) => void;
   toggleAvailabilitySlot: (doctorId: string, date: string, time: string) => void;
   toggleWebVetActive: () => void;
-  bookConsult: (input: NewBookingInput) => VetBooking;
-  submitPayment: (bookingId: string, receiptPhoto: string) => void;
+  bookConsult: (input: NewBookingInput) => VetBooking | null;
+  submitPayment: (bookingId: string, receiptPhoto: string) => boolean;
   approvePayment: (bookingId: string) => void;
   rejectPayment: (bookingId: string) => void;
   finalizeBooking: (bookingId: string) => void;
@@ -119,6 +120,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     activityLog: ActivityEntry[];
     webVetActive: boolean;
     ready: boolean;
+    saveError: string | null;
   }>({
     doctors: doctorSeed,
     bookings: vetBookingSeed,
@@ -126,6 +128,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     activityLog: [],
     webVetActive: true,
     ready: false,
+    saveError: null,
   });
 
   useEffect(() => {
@@ -137,67 +140,98 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       activityLog: loadActivityLog(),
       webVetActive: loadWebVetActive(),
       ready: true,
+      saveError: null,
     });
   }, []);
 
-  const persistDoctors = (doctors: Doctor[]) => window.localStorage.setItem(DOCTORS_KEY, JSON.stringify(doctors));
-  const persistBookings = (bookings: VetBooking[]) => window.localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
-  const persistAvailability = (availability: AvailabilityMap) => window.localStorage.setItem(AVAILABILITY_KEY, JSON.stringify(availability));
-  const persistActivityLog = (activityLog: ActivityEntry[]) => window.localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activityLog));
+  const STORAGE_FULL_MESSAGE = "Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.";
 
-  const updateBooking = (bookingId: string, patch: Partial<VetBooking> | ((b: VetBooking) => Partial<VetBooking>)) => {
-    setState((s) => {
-      const bookings = s.bookings.map((b) => (b.id === bookingId ? { ...b, ...(typeof patch === "function" ? patch(b) : patch) } : b));
-      persistBookings(bookings);
-      return { ...s, bookings };
-    });
+  // Each persist* helper does its own single setState call (success or failure) rather than
+  // being nested inside a caller's setState updater -- a quota-exceeded error thrown from inside
+  // a setState updater is treated by React as a render-time error and crashes to the error page,
+  // instead of just failing the one save.
+  const persistDoctors = (doctors: Doctor[]) => {
+    try {
+      window.localStorage.setItem(DOCTORS_KEY, JSON.stringify(doctors));
+    } catch {
+      setState((s) => ({ ...s, saveError: STORAGE_FULL_MESSAGE }));
+      return;
+    }
+    setState((s) => ({ ...s, doctors, saveError: null }));
+  };
+
+  const persistBookings = (bookings: VetBooking[]): boolean => {
+    try {
+      window.localStorage.setItem(BOOKINGS_KEY, JSON.stringify(bookings));
+    } catch {
+      setState((s) => ({ ...s, saveError: STORAGE_FULL_MESSAGE }));
+      return false;
+    }
+    setState((s) => ({ ...s, bookings, saveError: null }));
+    return true;
+  };
+
+  const persistAvailability = (availability: AvailabilityMap) => {
+    try {
+      window.localStorage.setItem(AVAILABILITY_KEY, JSON.stringify(availability));
+    } catch {
+      setState((s) => ({ ...s, saveError: STORAGE_FULL_MESSAGE }));
+      return;
+    }
+    setState((s) => ({ ...s, availability, saveError: null }));
+  };
+
+  const persistActivityLog = (activityLog: ActivityEntry[]) => {
+    try {
+      window.localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activityLog));
+    } catch {
+      // The activity log is a nice-to-have audit trail -- if storage is full, drop the new
+      // entry rather than surfacing an error for something the user didn't directly act on.
+      return;
+    }
+    setState((s) => ({ ...s, activityLog }));
+  };
+
+  const updateBooking = (bookingId: string, patch: Partial<VetBooking> | ((b: VetBooking) => Partial<VetBooking>)): boolean => {
+    const bookings = state.bookings.map((b) => (b.id === bookingId ? { ...b, ...(typeof patch === "function" ? patch(b) : patch) } : b));
+    return persistBookings(bookings);
   };
 
   const logActivity = (type: ActivityType, text: string) => {
-    setState((s) => {
-      const entry: ActivityEntry = { id: Math.random().toString(36).slice(2, 9), type, text, ts: Date.now() };
-      const activityLog = [entry, ...s.activityLog].slice(0, 500);
-      persistActivityLog(activityLog);
-      return { ...s, activityLog };
-    });
+    const entry: ActivityEntry = { id: Math.random().toString(36).slice(2, 9), type, text, ts: Date.now() };
+    const activityLog = [entry, ...state.activityLog].slice(0, 500);
+    persistActivityLog(activityLog);
   };
 
   const toggleDoctorOnline = (doctorId: string) => {
-    setState((s) => {
-      const doctors = s.doctors.map((d) => (d.id === doctorId ? { ...d, online: !d.online } : d));
-      persistDoctors(doctors);
-      return { ...s, doctors };
-    });
+    const doctors = state.doctors.map((d) => (d.id === doctorId ? { ...d, online: !d.online } : d));
+    persistDoctors(doctors);
   };
 
   const setDoctorFee = (doctorId: string, feeRs: number) => {
-    setState((s) => {
-      const doctors = s.doctors.map((d) => (d.id === doctorId ? { ...d, feeRs } : d));
-      persistDoctors(doctors);
-      return { ...s, doctors };
-    });
+    const doctors = state.doctors.map((d) => (d.id === doctorId ? { ...d, feeRs } : d));
+    persistDoctors(doctors);
   };
 
   const toggleAvailabilitySlot = (doctorId: string, date: string, time: string) => {
-    setState((s) => {
-      const forDoctor = s.availability[doctorId] ?? {};
-      const openTimes = forDoctor[date] ?? [];
-      const nextTimes = openTimes.includes(time) ? openTimes.filter((t) => t !== time) : [...openTimes, time];
-      const availability: AvailabilityMap = { ...s.availability, [doctorId]: { ...forDoctor, [date]: nextTimes } };
-      persistAvailability(availability);
-      return { ...s, availability };
-    });
+    const forDoctor = state.availability[doctorId] ?? {};
+    const openTimes = forDoctor[date] ?? [];
+    const nextTimes = openTimes.includes(time) ? openTimes.filter((t) => t !== time) : [...openTimes, time];
+    const availability: AvailabilityMap = { ...state.availability, [doctorId]: { ...forDoctor, [date]: nextTimes } };
+    persistAvailability(availability);
   };
 
   const toggleWebVetActive = () => {
-    setState((s) => {
-      const webVetActive = !s.webVetActive;
+    const webVetActive = !state.webVetActive;
+    try {
       window.localStorage.setItem(ACTIVE_KEY, webVetActive ? "1" : "0");
-      return { ...s, webVetActive };
-    });
+    } catch {
+      // Not worth surfacing an error for a small on/off flag -- just update in-memory state.
+    }
+    setState((s) => ({ ...s, webVetActive }));
   };
 
-  const bookConsult = (input: NewBookingInput): VetBooking => {
+  const bookConsult = (input: NewBookingInput): VetBooking | null => {
     const id = "VET-" + Math.random().toString(36).slice(2, 8).toUpperCase();
     const booking: VetBooking = {
       ...input,
@@ -215,11 +249,8 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       invoiceSent: false,
       createdAt: Date.now(),
     };
-    setState((s) => {
-      const bookings = [booking, ...s.bookings];
-      persistBookings(bookings);
-      return { ...s, bookings };
-    });
+    const ok = persistBookings([booking, ...state.bookings]);
+    if (!ok) return null;
     logActivity("Booking", `${booking.ownerName} requested a consult with ${booking.doctorName}`);
     notifyEvent("vet_booked", booking.ownerEmail, booking.ownerName, {
       bookingId: booking.id,
@@ -232,10 +263,12 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     return booking;
   };
 
-  const submitPayment = (bookingId: string, receiptPhoto: string) => {
-    updateBooking(bookingId, { paymentReceiptUploaded: true, receiptPhoto, status: "Payment Review" as VetStatus });
+  const submitPayment = (bookingId: string, receiptPhoto: string): boolean => {
+    const ok = updateBooking(bookingId, { paymentReceiptUploaded: true, receiptPhoto, status: "Payment Review" as VetStatus });
+    if (!ok) return false;
     const booking = state.bookings.find((b) => b.id === bookingId);
     if (booking) logActivity("Payment", `${booking.ownerName} submitted a payment receipt for approval`);
+    return true;
   };
 
   const approvePayment = (bookingId: string) => {
@@ -261,11 +294,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
   const rejectPayment = (bookingId: string) => {
     const booking = state.bookings.find((b) => b.id === bookingId);
     if (!booking) return;
-    setState((s) => {
-      const bookings = s.bookings.filter((b) => b.id !== bookingId);
-      persistBookings(bookings);
-      return { ...s, bookings };
-    });
+    persistBookings(state.bookings.filter((b) => b.id !== bookingId));
     logActivity("Payment", `Admin rejected payment receipt from ${booking.ownerName}`);
   };
 
@@ -352,6 +381,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
         activityLog: state.activityLog,
         webVetActive: state.webVetActive,
         ready: state.ready,
+        saveError: state.saveError,
         toggleDoctorOnline,
         setDoctorFee,
         toggleAvailabilitySlot,

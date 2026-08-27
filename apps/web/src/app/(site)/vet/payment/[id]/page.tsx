@@ -43,7 +43,11 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
       setError("Please upload your payment receipt to continue.");
       return;
     }
-    submitPayment(booking.id, receiptPhoto);
+    const ok = submitPayment(booking.id, receiptPhoto);
+    if (!ok) {
+      setError("Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.");
+      return;
+    }
     router.push(`/vet/status/${booking.id}`);
   };
 

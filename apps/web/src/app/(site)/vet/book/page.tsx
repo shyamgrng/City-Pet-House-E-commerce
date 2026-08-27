@@ -109,6 +109,10 @@ function BookInner() {
       scheduledTime: doctor.online ? "" : time,
       amount: doctor.feeRs,
     });
+    if (!booking) {
+      setError("Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.");
+      return;
+    }
     router.push(`/vet/payment/${booking.id}`);
   };
 
