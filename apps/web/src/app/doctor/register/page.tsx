@@ -13,6 +13,8 @@ import { isValidNepalPhone } from "@/lib/phone";
 const STORAGE_FULL_MESSAGE =
   "Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.";
 
+const DOC_ACCEPT = `${IMAGE_ACCEPT},.pdf,application/pdf`;
+
 export default function DoctorRegisterPage() {
   const { submitRegistration } = useDoctorRegistration();
   const [submitted, setSubmitted] = useState(false);
@@ -32,20 +34,45 @@ export default function DoctorRegisterPage() {
   const [degreeCertificate, setDegreeCertificate] = useState("");
   const [nvcLicense, setNvcLicense] = useState("");
   const [nationalId, setNationalId] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
 
-  const handleImage = async (file: File | undefined, setValue: (v: string) => void, maxW: number, maxH: number) => {
+  const setFieldError = (key: string, msg: string) => setFieldErrors((s) => ({ ...s, [key]: msg }));
+
+  // Accepts either a photo of the document or a PDF scan -- both are common ways people have
+  // their certificate/license/ID saved, so we shouldn't force one over the other.
+  const handleDoc = async (file: File | undefined, key: string, setValue: (v: string) => void, maxW: number, maxH: number) => {
     if (!file) return;
-    setError("");
+    setFieldError(key, "");
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    if (isPdf) {
+      setValue(`PDF:${file.name}`);
+      return;
+    }
     if (!isAllowedImageFile(file)) {
-      setError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
+      setFieldError(key, "Please choose an image (JPEG, PNG, HEIC, WEBP...) or a PDF.");
       return;
     }
     try {
       const dataUrl = await resizeImageFile(file, maxW, maxH);
       setValue(dataUrl);
     } catch {
-      setError("Could not process that image — try a different file.");
+      setFieldError(key, "Could not process that file — try a different one.");
+    }
+  };
+
+  const handlePhoto = async (file: File | undefined, key: string, setValue: (v: string) => void, maxW: number, maxH: number) => {
+    if (!file) return;
+    setFieldError(key, "");
+    if (!isAllowedImageFile(file)) {
+      setFieldError(key, "Please choose an image file (JPEG, PNG, HEIC, WEBP...).");
+      return;
+    }
+    try {
+      const dataUrl = await resizeImageFile(file, maxW, maxH);
+      setValue(dataUrl);
+    } catch {
+      setFieldError(key, "Could not process that image — try a different file.");
     }
   };
 
@@ -162,11 +189,39 @@ export default function DoctorRegisterPage() {
         <RegField label="Account Holder Name" required value={accountHolderName} onChange={setAccountHolderName} placeholder="As per bank records" />
         <RegField label="Account Number" required value={accountNumber} onChange={setAccountNumber} placeholder="e.g. 01234567890" mb="mb-4" />
 
-        <PhotoDrop label="Profile Photo" required value={profilePhoto} onFile={(f) => handleImage(f, setProfilePhoto, 500, 500)} />
+        <PhotoDrop
+          label="Profile Photo"
+          required
+          value={profilePhoto}
+          error={fieldErrors.profilePhoto}
+          onFile={(f) => handlePhoto(f, "profilePhoto", setProfilePhoto, 500, 500)}
+        />
         <FileDrop label="Upload CV (PDF)" fileName={cvFileName} accept=".pdf,application/pdf" onFile={(f) => f && setCvFileName(f.name)} />
-        <PhotoDrop label="Primary Degree Certificate" dropLabel="Certificate" required value={degreeCertificate} onFile={(f) => handleImage(f, setDegreeCertificate, 1000, 1400)} />
-        <PhotoDrop label="NVC License" dropLabel="License" required value={nvcLicense} onFile={(f) => handleImage(f, setNvcLicense, 1000, 1400)} />
-        <PhotoDrop label="National Identity Card" dropLabel="National ID" required value={nationalId} onFile={(f) => handleImage(f, setNationalId, 1000, 1400)} mb="mb-1" />
+        <DocDrop
+          label="Primary Degree Certificate"
+          dropLabel="Certificate"
+          required
+          value={degreeCertificate}
+          error={fieldErrors.degreeCertificate}
+          onFile={(f) => handleDoc(f, "degreeCertificate", setDegreeCertificate, 1000, 1400)}
+        />
+        <DocDrop
+          label="NVC License"
+          dropLabel="License"
+          required
+          value={nvcLicense}
+          error={fieldErrors.nvcLicense}
+          onFile={(f) => handleDoc(f, "nvcLicense", setNvcLicense, 1000, 1400)}
+        />
+        <DocDrop
+          label="National Identity Card"
+          dropLabel="National ID"
+          required
+          value={nationalId}
+          error={fieldErrors.nationalId}
+          onFile={(f) => handleDoc(f, "nationalId", setNationalId, 1000, 1400)}
+          mb="mb-1"
+        />
 
         {error && <div className="text-xs text-[#D64545] mt-3 mb-1">{error}</div>}
         <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer mt-4">
@@ -212,6 +267,7 @@ function PhotoDrop({
   dropLabel = "Photo",
   required,
   value,
+  error,
   onFile,
   mb = "mb-3",
 }: {
@@ -219,6 +275,7 @@ function PhotoDrop({
   dropLabel?: string;
   required?: boolean;
   value: string;
+  error?: string;
   onFile: (file: File | undefined) => void;
   mb?: string;
 }) {
@@ -244,6 +301,63 @@ function PhotoDrop({
           <div className="text-[10px] text-primary underline">or browse files</div>
         </div>
       )}
+      {error && <div className="text-[11px] text-[#D64545] mt-1">{error}</div>}
+    </div>
+  );
+}
+
+/** Same as PhotoDrop, but also accepts a PDF scan -- a photo of a document and a PDF scan of it
+ * are equally common ways people have their certificate/license/ID saved. A PDF is stored as
+ * just its filename (no reliable in-browser PDF thumbnail), an image is resized and previewed. */
+function DocDrop({
+  label,
+  dropLabel = "Photo",
+  required,
+  value,
+  error,
+  onFile,
+  mb = "mb-3",
+}: {
+  label: string;
+  dropLabel?: string;
+  required?: boolean;
+  value: string;
+  error?: string;
+  onFile: (file: File | undefined) => void;
+  mb?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isPdf = value.startsWith("PDF:");
+  return (
+    <div className={mb}>
+      <div className="text-[11px] font-semibold text-[#3A4652] mb-1.5">
+        {label} {required && <span className="text-[#D64545]">*</span>}
+      </div>
+      <input ref={inputRef} type="file" accept={DOC_ACCEPT} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+      {value && !isPdf ? (
+        <div onClick={() => inputRef.current?.click()} className="relative cursor-pointer">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt={label} className="w-full h-[90px] object-cover rounded-lg border border-[#E4E9EC]" />
+          <div className="absolute bottom-1 right-1 bg-white/90 text-[10px] font-semibold text-primary px-1.5 py-0.5 rounded">Replace</div>
+        </div>
+      ) : value && isPdf ? (
+        <div
+          onClick={() => inputRef.current?.click()}
+          className="w-full h-[90px] rounded-lg border border-[#E4E9EC] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer px-2 text-center"
+        >
+          <div className="text-[11px] font-semibold text-[#1A2027] truncate max-w-full">{value.slice(4)}</div>
+          <div className="text-[10px] text-primary underline mt-1">replace</div>
+        </div>
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          className="w-full h-[90px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer"
+        >
+          <div className="text-[11px] font-semibold text-[#5B6773]">{dropLabel}</div>
+          <div className="text-[10px] text-primary underline">photo or PDF — browse files</div>
+        </div>
+      )}
+      {error && <div className="text-[11px] text-[#D64545] mt-1">{error}</div>}
     </div>
   );
 }
@@ -268,9 +382,9 @@ function FileDrop({
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
       <div
         onClick={() => inputRef.current?.click()}
-        className="w-full h-[90px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer"
+        className="w-full h-[90px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer px-2 text-center"
       >
-        <div className="text-[11px] font-semibold text-[#5B6773]">{fileName || label}</div>
+        <div className="text-[11px] font-semibold text-[#5B6773] truncate max-w-full">{fileName || label}</div>
         <div className="text-[10px] text-primary underline">or browse files</div>
       </div>
     </div>

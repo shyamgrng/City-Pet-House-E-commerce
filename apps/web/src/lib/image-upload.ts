@@ -1,8 +1,19 @@
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".tif", ".tiff", ".raw", ".cr2"];
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".tif", ".tiff", ".raw", ".cr2", ".heic", ".heif", ".webp", ".bmp"];
 const VIDEO_EXTENSIONS = [".mp4", ".mpg", ".mpeg", ".wmv"];
 
 /** Passed to <input accept> so the OS file picker shows these formats even when the browser doesn't know their MIME type (e.g. .raw, .cr2). */
-export const IMAGE_ACCEPT = [...IMAGE_EXTENSIONS, "image/jpeg", "image/png", "image/gif", "image/svg+xml", "image/tiff"].join(",");
+export const IMAGE_ACCEPT = [
+  ...IMAGE_EXTENSIONS,
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/svg+xml",
+  "image/tiff",
+  "image/heic",
+  "image/heif",
+  "image/webp",
+  "image/bmp",
+].join(",");
 export const VIDEO_ACCEPT = [...VIDEO_EXTENSIONS, "video/mp4", "video/mpeg", "video/x-ms-wmv"].join(",");
 
 /** file.type is often blank for formats the browser doesn't recognize (RAW, TIFF), so fall back to the extension. */
