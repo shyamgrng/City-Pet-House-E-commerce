@@ -54,6 +54,13 @@ export default function DoctorLoginPage() {
         <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer">
           Sign In
         </button>
+        <div className="text-center text-[11px] text-[#8A96A3] mt-3.5">
+          New doctor? Contact us at{" "}
+          <a href="mailto:citypethouse@gmail.com" className="text-primary font-semibold">
+            citypethouse@gmail.com
+          </a>{" "}
+          to get set up.
+        </div>
         <div className="text-[10px] text-[#8A96A3] mt-3.5 leading-relaxed">Demo: DR-1042 / doctor123</div>
       </div>
     </div>
