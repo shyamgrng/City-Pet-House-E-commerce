@@ -89,6 +89,10 @@ type VetValue = {
   addClientDocument: (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }) => boolean;
   addDoctorDocument: (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }) => boolean;
   cancelBooking: (bookingId: string) => void;
+  /** Re-fetches one booking's chat/files/status from the cloud database -- a no-op in local
+   * mode. Used as a polling backstop so chat feels live even if the realtime push isn't
+   * reaching a particular browser/network. */
+  refreshBooking: (bookingId: string) => void;
 };
 
 const VetContext = createContext<VetValue | null>(null);
@@ -658,6 +662,27 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     updateBooking(bookingId, { status: "Cancelled" as VetStatus });
   };
 
+  const refreshBooking = (bookingId: string) => {
+    if (!supabase) return;
+    const db = supabase;
+    void Promise.all([
+      db.from("vet_chat_messages").select("*").eq("booking_id", bookingId),
+      db.from("vet_shared_docs").select("*").eq("booking_id", bookingId),
+      db.from("vet_bookings").select("id, data").eq("id", bookingId).maybeSingle(),
+    ]).then(([chatRes, docsRes, bookingRes]) => {
+      if (chatRes.error || docsRes.error || bookingRes.error) return;
+      const chatRows = (chatRes.data ?? []) as ChatRow[];
+      const docRows = (docsRes.data ?? []) as DocRow[];
+      const core = bookingRes.data?.data as BookingCore | undefined;
+      setState((s) => {
+        const existing = s.bookings.find((b) => b.id === bookingId);
+        if (!existing) return s;
+        const [assembled] = assembleBookings([{ id: bookingId, data: core ?? existing }], chatRows, docRows);
+        return { ...s, bookings: s.bookings.map((b) => (b.id === bookingId ? assembled : b)) };
+      });
+    });
+  };
+
   return (
     <VetContext.Provider
       value={{
@@ -685,6 +710,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
         sendMessage,
         addClientDocument,
         addDoctorDocument,
+        refreshBooking,
         cancelBooking,
       }}
     >

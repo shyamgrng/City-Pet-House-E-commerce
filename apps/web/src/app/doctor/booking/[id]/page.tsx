@@ -119,8 +119,16 @@ function DetailField({ label, value }: { label: string; value: string }) {
 /** Chat available as soon as the consult is confirmed -- the call icons launch the actual
  * video call (transitions the booking to "In Progress", which mounts ConsultRoom). */
 function ChatPanel({ booking, onCall }: { booking: VetBooking; onCall: () => void }) {
-  const { sendMessage } = useVet();
+  const { sendMessage, refreshBooking } = useVet();
   const [chatInput, setChatInput] = useState("");
+
+  // Backstop for the realtime push -- polls for the client's messages every few seconds so
+  // chat still arrives promptly even if a network drops the live subscription.
+  useEffect(() => {
+    const interval = setInterval(() => refreshBooking(booking.id), 3000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking.id]);
 
   const send = () => {
     if (!chatInput.trim()) return;

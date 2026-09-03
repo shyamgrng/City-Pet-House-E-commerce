@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useVet } from "@/context/VetContext";
 import type { ChatMessage, SharedDoc, VetBooking } from "@/lib/vet-types";
 import { isAllowedDocumentFile, isAllowedImageFile, isAllowedVideoFile, readVideoFile, resizeImageFile } from "@/lib/image-upload";
@@ -19,12 +19,20 @@ export default function ConsultRoom({
   viewer: "client" | "doctor";
   onLeave?: () => void;
 }) {
-  const { sendMessage, addClientDocument, addDoctorDocument, saveRecording, saveError } = useVet();
+  const { sendMessage, addClientDocument, addDoctorDocument, saveRecording, saveError, refreshBooking } = useVet();
   const [chatInput, setChatInput] = useState("");
   const [recording, setRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [attachError, setAttachError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Backstop for the realtime push -- polls for the other side's messages/files every few
+  // seconds so chat still arrives promptly even if a network drops the live subscription.
+  useEffect(() => {
+    const interval = setInterval(() => refreshBooking(booking.id), 3000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking.id]);
 
   const toggleRecording = () => {
     if (recording) saveRecording(booking.id);
