@@ -6,7 +6,7 @@ import { use, useEffect, useState } from "react";
 import ConsultRoom from "@/components/vet/ConsultRoom";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
-import { STATUS_COLORS } from "@/lib/vet-types";
+import { STATUS_COLORS, type VetBooking } from "@/lib/vet-types";
 
 export default function DoctorBookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -90,18 +90,14 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
-        {(booking.status === "Confirmed" || booking.status === "In Progress") && (
+        {booking.status === "Confirmed" && (
           <div className="mb-4">
-            {booking.status === "In Progress" ? (
-              <ConsultRoom booking={booking} viewer="doctor" />
-            ) : (
-              <button
-                onClick={() => startCall(booking.id)}
-                className="bg-[#1F7A4D] text-white text-center py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer px-6"
-              >
-                📹 Start Call
-              </button>
-            )}
+            <ChatPanel booking={booking} onCall={() => startCall(booking.id)} />
+          </div>
+        )}
+        {booking.status === "In Progress" && (
+          <div className="mb-4">
+            <ConsultRoom booking={booking} viewer="doctor" />
           </div>
         )}
 
@@ -174,6 +170,84 @@ function DetailField({ label, value }: { label: string; value: string }) {
     <div>
       <div className="text-[#8A96A3] mb-0.5">{label}</div>
       <div className="font-semibold text-[#1A2027]">{value}</div>
+    </div>
+  );
+}
+
+/** Chat available as soon as the consult is confirmed -- the call icons launch the actual
+ * video call (transitions the booking to "In Progress", which mounts ConsultRoom). */
+function ChatPanel({ booking, onCall }: { booking: VetBooking; onCall: () => void }) {
+  const { sendMessage } = useVet();
+  const [chatInput, setChatInput] = useState("");
+
+  const send = () => {
+    if (!chatInput.trim()) return;
+    sendMessage(booking.id, "doctor", chatInput);
+    setChatInput("");
+  };
+
+  return (
+    <div className="border border-[#E4E9EC] rounded-xl p-4">
+      <div className="flex justify-between items-center mb-3">
+        <div className="text-[15px] font-bold text-[#1A2027] flex items-center gap-2">
+          Chat with {booking.ownerName}
+          <span className="text-xs font-semibold text-[#1F7A4D] flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#1F7A4D] inline-block" />
+            Online
+          </span>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={onCall}
+            title="Audio call"
+            className="w-9 h-9 rounded-full bg-[#EAF4F9] text-primary flex items-center justify-center cursor-pointer text-lg leading-none"
+          >
+            📞
+          </button>
+          <button
+            onClick={onCall}
+            title="Video call"
+            className="w-9 h-9 rounded-full bg-[#EAF4F9] text-primary flex items-center justify-center cursor-pointer text-lg leading-none"
+          >
+            🎥
+          </button>
+        </div>
+      </div>
+      <div className="h-[260px] overflow-y-auto flex flex-col gap-2 mb-3">
+        {booking.chatMessages.length === 0 ? (
+          <div className="text-xs text-[#8A96A3] text-center mt-16">No messages yet</div>
+        ) : (
+          booking.chatMessages.map((msg, i) => {
+            const mine = msg.from === "doctor";
+            return (
+              <div
+                key={i}
+                className="max-w-[75%] px-3 py-2 text-xs leading-relaxed"
+                style={{
+                  alignSelf: mine ? "flex-end" : "flex-start",
+                  background: mine ? "#1996C8" : "#F0F2F4",
+                  color: mine ? "#fff" : "#1A2027",
+                  borderRadius: mine ? "11px 11px 2px 11px" : "11px 11px 11px 2px",
+                }}
+              >
+                {msg.text}
+              </div>
+            );
+          })
+        )}
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && send()}
+          placeholder="Reply to client…"
+          className="flex-1 h-10 rounded-md border border-[#E4E9EC] px-3 text-xs box-border"
+        />
+        <button onClick={send} className="bg-primary text-white px-4 rounded-md text-xs font-semibold cursor-pointer">
+          Send
+        </button>
+      </div>
     </div>
   );
 }
