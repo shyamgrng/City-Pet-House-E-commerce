@@ -32,7 +32,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
-      <div className="px-8 py-7 max-w-[760px]">
+      <div className="px-8 py-7 max-w-[760px] mx-auto">
         <Link href="/doctor" className="text-[13px] text-primary font-semibold mb-4 inline-block">
           ← Back to Bookings
         </Link>

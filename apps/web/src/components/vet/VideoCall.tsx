@@ -69,12 +69,30 @@ export default function VideoCall({
           parentNode: containerRef.current,
           width: "100%",
           height: "100%",
-          userInfo: { displayName },
-          configOverwrite: { prejoinPageEnabled: false, disableDeepLinking: true, startWithAudioMuted: false, startWithVideoMuted: false },
+          // "&" in a display name corrupts the URL Jitsi builds internally and comes back
+          // rendered as a literal "&amp;" -- strip it rather than fight Jitsi's own escaping.
+          userInfo: { displayName: displayName.replace(/&/g, "and") },
+          configOverwrite: {
+            // The old flag is ignored by current Jitsi versions (hence the raw "Join meeting"
+            // lobby with the ugly room-name heading); prejoinConfig.enabled is what actually
+            // skips straight into the call.
+            prejoinPageEnabled: false,
+            prejoinConfig: { enabled: false },
+            disableDeepLinking: true,
+            doNotStoreRoom: true,
+            startWithAudioMuted: false,
+            startWithVideoMuted: false,
+          },
           interfaceConfigOverwrite: {
             TOOLBAR_BUTTONS: ["microphone", "camera", "desktop", "chat", "tileview", "hangup", "fullscreen"],
             SHOW_JITSI_WATERMARK: false,
             SHOW_WATERMARK_FOR_GUESTS: false,
+            SHOW_BRAND_WATERMARK: false,
+            HIDE_INVITE_MORE_HEADER: true,
+            MOBILE_APP_PROMO: false,
+            SHOW_CHROME_EXTENSION_BANNER: false,
+            DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+            DEFAULT_BACKGROUND: "#111823",
           },
         });
         apiRef.current = api;
@@ -97,7 +115,7 @@ export default function VideoCall({
     );
   }
 
-  return <div ref={containerRef} className="w-full h-[420px] rounded-[10px] overflow-hidden bg-[#111823]" />;
+  return <div ref={containerRef} className="w-full h-[460px] rounded-[10px] overflow-hidden bg-[#111823] border border-[#1A2027]" />;
 }
 
 export function vetCallRoomName(bookingId: string) {
