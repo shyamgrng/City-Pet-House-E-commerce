@@ -34,7 +34,7 @@ export const vetBookingSeed: VetBooking[] = [
     petName: "Bruno", petSpecies: "Dog — Labrador", petAge: "2 yrs", reason: "Annual checkup",
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: true, scheduledDate: "", scheduledTime: "",
     amount: 800, status: "Completed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: true,
-    chatMessages: [], clientDocuments: [], doctorDocuments: [], doctorNote: "Healthy — recommended routine deworming.", noteHistory: [],
+    chatMessages: [], clientDocuments: [], doctorDocuments: [],
     invoiceNumber: "INV-VET-1001", invoiceSent: true, createdAt: Date.now() - 12 * 86400000,
   },
   {
@@ -42,7 +42,7 @@ export const vetBookingSeed: VetBooking[] = [
     petName: "Bruno", petSpecies: "Dog — Labrador", petAge: "2 yrs", reason: "Skin irritation",
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: true, scheduledDate: "", scheduledTime: "",
     amount: 800, status: "Completed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: true,
-    chatMessages: [], clientDocuments: [], doctorDocuments: [], doctorNote: "Prescribed antihistamine cream.", noteHistory: [],
+    chatMessages: [], clientDocuments: [], doctorDocuments: [],
     invoiceNumber: "INV-VET-1002", invoiceSent: true, createdAt: Date.now() - 9 * 86400000,
   },
   {
@@ -50,7 +50,7 @@ export const vetBookingSeed: VetBooking[] = [
     petName: "Bruno", petSpecies: "Dog — Labrador", petAge: "2 yrs", reason: "Vaccination follow-up",
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: true, scheduledDate: "", scheduledTime: "",
     amount: 800, status: "Completed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: true,
-    chatMessages: [], clientDocuments: [], doctorDocuments: [], doctorNote: "DHPPiL booster given.", noteHistory: [],
+    chatMessages: [], clientDocuments: [], doctorDocuments: [],
     invoiceNumber: "INV-VET-1003", invoiceSent: true, createdAt: Date.now() - 6 * 86400000,
   },
   {
@@ -58,7 +58,7 @@ export const vetBookingSeed: VetBooking[] = [
     petName: "Milo", petSpecies: "Dog — Labrador Mix", petAge: "3 yrs", reason: "Limping on hind leg",
     doctorId: "DR-0876", doctorName: "Dr. Bikash Shrestha, DVM", instant: false, scheduledDate: "Jul 18, 2026", scheduledTime: "11:30 AM",
     amount: 800, status: "Confirmed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: false,
-    chatMessages: [], clientDocuments: [], doctorDocuments: [], doctorNote: "", noteHistory: [],
+    chatMessages: [], clientDocuments: [], doctorDocuments: [],
     invoiceNumber: "INV-VET-1004", invoiceSent: false, createdAt: Date.now() - 2 * 86400000,
   },
   {
@@ -66,7 +66,7 @@ export const vetBookingSeed: VetBooking[] = [
     petName: "Coco", petSpecies: "Cat — Persian", petAge: "1 yr", reason: "Not eating well",
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: true, scheduledDate: "", scheduledTime: "",
     amount: 800, status: "Confirmed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: false,
-    chatMessages: [], clientDocuments: [], doctorDocuments: [], doctorNote: "", noteHistory: [],
+    chatMessages: [], clientDocuments: [], doctorDocuments: [],
     invoiceNumber: "INV-VET-1005", invoiceSent: false, createdAt: Date.now() - 1 * 86400000,
   },
   {
@@ -74,7 +74,7 @@ export const vetBookingSeed: VetBooking[] = [
     petName: "Tiger", petSpecies: "Cat — Mixed Breed", petAge: "4 yrs", reason: "Vomiting since yesterday",
     doctorId: "DR-1213", doctorName: "Dr. Anjali Gurung, BVSc & AH", instant: false, scheduledDate: "Jul 19, 2026", scheduledTime: "3:00 PM",
     amount: 750, status: "Payment Review", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: false,
-    chatMessages: [], clientDocuments: [], doctorDocuments: [], doctorNote: "", noteHistory: [],
+    chatMessages: [], clientDocuments: [], doctorDocuments: [],
     invoiceNumber: "INV-VET-1006", invoiceSent: false, createdAt: Date.now() - 3 * 3600000,
   },
   {
@@ -82,7 +82,7 @@ export const vetBookingSeed: VetBooking[] = [
     petName: "Rocky", petSpecies: "Dog — German Shepherd", petAge: "5 yrs", reason: "Ear infection",
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: false, scheduledDate: "Jul 20, 2026", scheduledTime: "9:00 AM",
     amount: 800, status: "Awaiting Doctor Reconfirm", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: false,
-    chatMessages: [], clientDocuments: [], doctorDocuments: [], doctorNote: "", noteHistory: [],
+    chatMessages: [], clientDocuments: [], doctorDocuments: [],
     invoiceNumber: "INV-VET-1007", invoiceSent: false, createdAt: Date.now() - 5 * 3600000,
   },
 ];

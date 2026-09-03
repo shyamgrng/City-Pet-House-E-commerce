@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { notifyEvent } from "@/lib/notify-client";
+import { supabase } from "@/lib/supabase";
 import { availabilitySeed, doctorSeed, vetBookingSeed } from "@/lib/vet-seed";
 import {
-  nowTime,
   type ActivityEntry,
   type ActivityType,
   type AvailabilityMap,
@@ -21,6 +21,33 @@ const AVAILABILITY_KEY = "cph_vet_availability";
 const ACTIVITY_KEY = "cph_vet_activity";
 const ACTIVE_KEY = "cph_vet_page_active";
 
+const STORAGE_FULL_MESSAGE = "Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.";
+const CLOUD_ERROR_MESSAGE = "Couldn't save — check your internet connection and try again.";
+
+type BookingCore = Omit<VetBooking, "chatMessages" | "clientDocuments" | "doctorDocuments">;
+type BookingRow = { id: string; data: BookingCore };
+type ChatRow = { id: number; booking_id: string; from: "client" | "doctor"; text: string; ts: number };
+type DocRow = { id: number; booking_id: string; from: "client" | "doctor"; name: string; kind: SharedDoc["kind"]; url: string; ts: number };
+
+function chatTime(ts: number) {
+  return new Date(ts).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+function assembleBookings(bookingRows: BookingRow[], chatRows: ChatRow[], docRows: DocRow[]): VetBooking[] {
+  return bookingRows.map((row) => {
+    const chatMessages: ChatMessage[] = chatRows
+      .filter((m) => m.booking_id === row.id)
+      .sort((a, b) => a.ts - b.ts)
+      .map((m) => ({ id: m.id, from: m.from, text: m.text, ts: m.ts, time: chatTime(m.ts) }));
+    const docsFor = (from: "client" | "doctor"): SharedDoc[] =>
+      docRows
+        .filter((d) => d.booking_id === row.id && d.from === from)
+        .sort((a, b) => a.ts - b.ts)
+        .map((d) => ({ id: d.id, from: d.from, name: d.name, kind: d.kind, url: d.url, ts: d.ts }));
+    return { ...row.data, id: row.id, chatMessages, clientDocuments: docsFor("client"), doctorDocuments: docsFor("doctor") };
+  });
+}
+
 type NewBookingInput = Omit<
   VetBooking,
   | "id"
@@ -31,8 +58,6 @@ type NewBookingInput = Omit<
   | "chatMessages"
   | "clientDocuments"
   | "doctorDocuments"
-  | "doctorNote"
-  | "noteHistory"
   | "invoiceNumber"
   | "invoiceSent"
   | "createdAt"
@@ -63,7 +88,6 @@ type VetValue = {
   sendMessage: (bookingId: string, from: ChatMessage["from"], text: string) => boolean;
   addClientDocument: (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }) => boolean;
   addDoctorDocument: (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }) => boolean;
-  setDoctorNote: (bookingId: string, text: string) => void;
   cancelBooking: (bookingId: string) => void;
 };
 
@@ -133,25 +157,158 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     saveError: null,
   });
 
+  // Cloud mode (Supabase configured): bookings, chat, shared files, doctors, availability, and
+  // the on/off setting all live in a shared database so every device sees the same data, and a
+  // realtime subscription pushes other people's changes straight into local state. Local mode
+  // (no Supabase env vars yet) falls back to the original per-browser localStorage behavior.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({
-      doctors: loadDoctors(),
-      bookings: loadBookings(),
-      availability: loadAvailability(),
-      activityLog: loadActivityLog(),
-      webVetActive: loadWebVetActive(),
-      ready: true,
-      saveError: null,
-    });
-  }, []);
+    let cancelled = false;
 
-  const STORAGE_FULL_MESSAGE = "Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.";
+    if (!supabase) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState({
+        doctors: loadDoctors(),
+        bookings: loadBookings(),
+        availability: loadAvailability(),
+        activityLog: loadActivityLog(),
+        webVetActive: loadWebVetActive(),
+        ready: true,
+        saveError: null,
+      });
+      return;
+    }
+
+    const db = supabase;
+
+    (async () => {
+      const [doctorsRes, bookingsRes, availRes, activityRes, chatRes, docsRes, settingsRes] = await Promise.all([
+        db.from("vet_doctors").select("id, data"),
+        db.from("vet_bookings").select("id, data"),
+        db.from("vet_availability").select("data").eq("id", "default").maybeSingle(),
+        db.from("vet_activity").select("id, type, text, ts").order("ts", { ascending: false }).limit(500),
+        db.from("vet_chat_messages").select("*"),
+        db.from("vet_shared_docs").select("*"),
+        db.from("vet_settings").select("value").eq("id", "webVetActive").maybeSingle(),
+      ]);
+
+      if (cancelled) return;
+
+      if (doctorsRes.error || bookingsRes.error) {
+        setState((s) => ({ ...s, ready: true, saveError: CLOUD_ERROR_MESSAGE }));
+        return;
+      }
+
+      let doctors = (doctorsRes.data ?? []).map((r) => r.data as Doctor);
+      if (doctors.length === 0) {
+        doctors = doctorSeed;
+        void db.from("vet_doctors").upsert(doctorSeed.map((d) => ({ id: d.id, data: d })));
+      }
+
+      let bookingRows = (bookingsRes.data ?? []) as BookingRow[];
+      if (bookingRows.length === 0) {
+        bookingRows = vetBookingSeed.map((b) => {
+          const { chatMessages: _chatMessages, clientDocuments: _clientDocuments, doctorDocuments: _doctorDocuments, ...core } = b;
+          return { id: b.id, data: core };
+        });
+        void db.from("vet_bookings").upsert(bookingRows);
+      }
+      const bookings = assembleBookings(bookingRows, (chatRes.data ?? []) as ChatRow[], (docsRes.data ?? []) as DocRow[]);
+
+      let availability = availRes.data?.data as AvailabilityMap | undefined;
+      if (!availability) {
+        availability = availabilitySeed;
+        void db.from("vet_availability").upsert({ id: "default", data: availabilitySeed });
+      }
+
+      let webVetActive = settingsRes.data?.value as boolean | undefined;
+      if (webVetActive === undefined) {
+        webVetActive = true;
+        void db.from("vet_settings").upsert({ id: "webVetActive", value: true });
+      }
+
+      const activityLog = (activityRes.data ?? []) as ActivityEntry[];
+
+      if (!cancelled) setState({ doctors, bookings, availability, activityLog, webVetActive, ready: true, saveError: null });
+    })();
+
+    const channel = db
+      .channel("vet-sync")
+      .on("postgres_changes", { event: "*", schema: "public", table: "vet_bookings" }, (payload) => {
+        if (payload.eventType === "DELETE") return;
+        const row = payload.new as unknown as BookingRow;
+        setState((s) => {
+          const existing = s.bookings.find((b) => b.id === row.id);
+          const merged: VetBooking = {
+            ...row.data,
+            id: row.id,
+            chatMessages: existing?.chatMessages ?? [],
+            clientDocuments: existing?.clientDocuments ?? [],
+            doctorDocuments: existing?.doctorDocuments ?? [],
+          };
+          return { ...s, bookings: existing ? s.bookings.map((b) => (b.id === row.id ? merged : b)) : [merged, ...s.bookings] };
+        });
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "vet_chat_messages" }, (payload) => {
+        const row = payload.new as unknown as ChatRow;
+        setState((s) => ({
+          ...s,
+          bookings: s.bookings.map((b) => {
+            if (b.id !== row.booking_id) return b;
+            if (b.chatMessages.some((m) => m.ts === row.ts && m.from === row.from && m.text === row.text)) return b;
+            const msg: ChatMessage = { id: row.id, from: row.from, text: row.text, ts: row.ts, time: chatTime(row.ts) };
+            return { ...b, chatMessages: [...b.chatMessages, msg] };
+          }),
+        }));
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "vet_shared_docs" }, (payload) => {
+        const row = payload.new as unknown as DocRow;
+        const field = row.from === "client" ? "clientDocuments" : "doctorDocuments";
+        setState((s) => ({
+          ...s,
+          bookings: s.bookings.map((b) => {
+            if (b.id !== row.booking_id) return b;
+            if (b[field].some((d) => d.ts === row.ts && d.name === row.name)) return b;
+            const doc: SharedDoc = { id: row.id, from: row.from, name: row.name, kind: row.kind, url: row.url, ts: row.ts };
+            return { ...b, [field]: [...b[field], doc] };
+          }),
+        }));
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "vet_doctors" }, (payload) => {
+        if (payload.eventType === "DELETE") return;
+        const row = payload.new as unknown as { id: string; data: Doctor };
+        setState((s) => ({
+          ...s,
+          doctors: s.doctors.some((d) => d.id === row.id) ? s.doctors.map((d) => (d.id === row.id ? row.data : d)) : [...s.doctors, row.data],
+        }));
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "vet_availability" }, (payload) => {
+        if (payload.eventType === "DELETE") return;
+        const row = payload.new as unknown as { id: string; data: AvailabilityMap };
+        if (row.id !== "default") return;
+        setState((s) => ({ ...s, availability: row.data }));
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "vet_activity" }, (payload) => {
+        const row = payload.new as unknown as ActivityEntry;
+        setState((s) => (s.activityLog.some((e) => e.id === row.id) ? s : { ...s, activityLog: [row, ...s.activityLog].slice(0, 500) }));
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "vet_settings" }, (payload) => {
+        if (payload.eventType === "DELETE") return;
+        const row = payload.new as unknown as { id: string; value: boolean };
+        if (row.id !== "webVetActive") return;
+        setState((s) => ({ ...s, webVetActive: row.value }));
+      })
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      void db.removeChannel(channel);
+    };
+  }, []);
 
   // Each persist* helper does its own single setState call (success or failure) rather than
   // being nested inside a caller's setState updater -- a quota-exceeded error thrown from inside
   // a setState updater is treated by React as a render-time error and crashes to the error page,
-  // instead of just failing the one save.
+  // instead of just failing the one save. (Local/no-Supabase mode only.)
   const persistDoctors = (doctors: Doctor[]): boolean => {
     try {
       window.localStorage.setItem(DOCTORS_KEY, JSON.stringify(doctors));
@@ -196,28 +353,102 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateBooking = (bookingId: string, patch: Partial<VetBooking> | ((b: VetBooking) => Partial<VetBooking>)): boolean => {
-    const bookings = state.bookings.map((b) => (b.id === bookingId ? { ...b, ...(typeof patch === "function" ? patch(b) : patch) } : b));
+    const current = state.bookings.find((b) => b.id === bookingId);
+    if (!current) return false;
+    const patched: VetBooking = { ...current, ...(typeof patch === "function" ? patch(current) : patch) };
+
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({ ...s, bookings: s.bookings.map((b) => (b.id === bookingId ? patched : b)), saveError: null }));
+      const { chatMessages: _chatMessages, clientDocuments: _clientDocuments, doctorDocuments: _doctorDocuments, ...core } = patched;
+      void db
+        .from("vet_bookings")
+        .upsert({ id: bookingId, data: core, updated_at: new Date().toISOString() })
+        .then(({ error }) => {
+          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+        });
+      return true;
+    }
+
+    const bookings = state.bookings.map((b) => (b.id === bookingId ? patched : b));
     return persistBookings(bookings);
+  };
+
+  const addDocument = (bookingId: string, from: SharedDoc["from"], doc: { name: string; url: string; kind: SharedDoc["kind"] }): boolean => {
+    const field: "clientDocuments" | "doctorDocuments" = from === "client" ? "clientDocuments" : "doctorDocuments";
+    const ts = Date.now();
+
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({
+        ...s,
+        bookings: s.bookings.map((b) => (b.id === bookingId ? { ...b, [field]: [...b[field], { ...doc, ts, from }] } : b)),
+        saveError: null,
+      }));
+      void db
+        .from("vet_shared_docs")
+        .insert({ booking_id: bookingId, from, name: doc.name, kind: doc.kind, url: doc.url, ts })
+        .then(({ error }) => {
+          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+        });
+      return true;
+    }
+
+    return updateBooking(bookingId, (b) => ({ [field]: [...b[field], { ...doc, ts, from }] }) as Partial<VetBooking>);
   };
 
   const logActivity = (type: ActivityType, text: string) => {
     const entry: ActivityEntry = { id: Math.random().toString(36).slice(2, 9), type, text, ts: Date.now() };
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({ ...s, activityLog: [entry, ...s.activityLog].slice(0, 500) }));
+      void db.from("vet_activity").insert(entry);
+      return;
+    }
     const activityLog = [entry, ...state.activityLog].slice(0, 500);
     persistActivityLog(activityLog);
   };
 
   const addDoctor = (doctor: Doctor): boolean => {
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({ ...s, doctors: [...s.doctors, doctor], saveError: null }));
+      void db
+        .from("vet_doctors")
+        .insert({ id: doctor.id, data: doctor })
+        .then(({ error }) => {
+          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+        });
+      return true;
+    }
     return persistDoctors([...state.doctors, doctor]);
   };
 
+  const updateDoctor = (doctorId: string, patch: Partial<Doctor>) => {
+    const current = state.doctors.find((d) => d.id === doctorId);
+    if (!current) return;
+    const changed = { ...current, ...patch };
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({ ...s, doctors: s.doctors.map((d) => (d.id === doctorId ? changed : d)), saveError: null }));
+      void db
+        .from("vet_doctors")
+        .upsert({ id: doctorId, data: changed, updated_at: new Date().toISOString() })
+        .then(({ error }) => {
+          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+        });
+      return;
+    }
+    persistDoctors(state.doctors.map((d) => (d.id === doctorId ? changed : d)));
+  };
+
   const toggleDoctorOnline = (doctorId: string) => {
-    const doctors = state.doctors.map((d) => (d.id === doctorId ? { ...d, online: !d.online } : d));
-    persistDoctors(doctors);
+    const current = state.doctors.find((d) => d.id === doctorId);
+    if (current) updateDoctor(doctorId, { online: !current.online });
   };
 
   const setDoctorFee = (doctorId: string, feeRs: number) => {
-    const doctors = state.doctors.map((d) => (d.id === doctorId ? { ...d, feeRs } : d));
-    persistDoctors(doctors);
+    updateDoctor(doctorId, { feeRs });
   };
 
   const toggleAvailabilitySlot = (doctorId: string, date: string, time: string) => {
@@ -225,11 +456,29 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     const openTimes = forDoctor[date] ?? [];
     const nextTimes = openTimes.includes(time) ? openTimes.filter((t) => t !== time) : [...openTimes, time];
     const availability: AvailabilityMap = { ...state.availability, [doctorId]: { ...forDoctor, [date]: nextTimes } };
+
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({ ...s, availability, saveError: null }));
+      void db
+        .from("vet_availability")
+        .upsert({ id: "default", data: availability, updated_at: new Date().toISOString() })
+        .then(({ error }) => {
+          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+        });
+      return;
+    }
     persistAvailability(availability);
   };
 
   const toggleWebVetActive = () => {
     const webVetActive = !state.webVetActive;
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({ ...s, webVetActive }));
+      void db.from("vet_settings").upsert({ id: "webVetActive", value: webVetActive });
+      return;
+    }
     try {
       window.localStorage.setItem(ACTIVE_KEY, webVetActive ? "1" : "0");
     } catch {
@@ -250,14 +499,26 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       chatMessages: [],
       clientDocuments: [],
       doctorDocuments: [],
-      doctorNote: "",
-      noteHistory: [],
       invoiceNumber: "INV-" + id,
       invoiceSent: false,
       createdAt: Date.now(),
     };
-    const ok = persistBookings([booking, ...state.bookings]);
-    if (!ok) return null;
+
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({ ...s, bookings: [booking, ...s.bookings], saveError: null }));
+      const { chatMessages: _chatMessages, clientDocuments: _clientDocuments, doctorDocuments: _doctorDocuments, ...core } = booking;
+      void db
+        .from("vet_bookings")
+        .insert({ id, data: core, updated_at: new Date().toISOString() })
+        .then(({ error }) => {
+          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+        });
+    } else {
+      const ok = persistBookings([booking, ...state.bookings]);
+      if (!ok) return null;
+    }
+
     logActivity("Booking", `${booking.ownerName} requested a consult with ${booking.doctorName}`);
     notifyEvent("vet_booked", booking.ownerEmail, booking.ownerName, {
       bookingId: booking.id,
@@ -357,34 +618,40 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
 
   const saveRecording = (bookingId: string) => {
     const booking = state.bookings.find((b) => b.id === bookingId);
-    updateBooking(bookingId, (b) => ({
-      doctorDocuments: [...b.doctorDocuments, { name: `Consult_Recording_${bookingId}.mp4`, ts: Date.now(), from: "doctor", url: "", kind: "video" }],
-    }));
+    addDocument(bookingId, "doctor", { name: `Consult_Recording_${bookingId}.mp4`, url: "", kind: "video" });
     if (booking) logActivity("Call", `Recording saved for the consult with ${booking.ownerName}`);
   };
 
   const sendMessage = (bookingId: string, from: ChatMessage["from"], text: string): boolean => {
     if (!text.trim()) return false;
-    return updateBooking(bookingId, (b) => ({ chatMessages: [...b.chatMessages, { from, text, time: nowTime(), ts: Date.now() }] }));
+    const ts = Date.now();
+    const time = chatTime(ts);
+
+    if (supabase) {
+      const db = supabase;
+      setState((s) => ({
+        ...s,
+        bookings: s.bookings.map((b) => (b.id === bookingId ? { ...b, chatMessages: [...b.chatMessages, { from, text, time, ts }] } : b)),
+        saveError: null,
+      }));
+      void db
+        .from("vet_chat_messages")
+        .insert({ booking_id: bookingId, from, text, ts })
+        .then(({ error }) => {
+          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+        });
+      return true;
+    }
+
+    return updateBooking(bookingId, (b) => ({ chatMessages: [...b.chatMessages, { from, text, time, ts }] }));
   };
 
   const addClientDocument = (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }): boolean => {
-    return updateBooking(bookingId, (b) => ({
-      clientDocuments: [...b.clientDocuments, { ...doc, ts: Date.now(), from: "client" }],
-    }));
+    return addDocument(bookingId, "client", doc);
   };
 
   const addDoctorDocument = (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }): boolean => {
-    return updateBooking(bookingId, (b) => ({
-      doctorDocuments: [...b.doctorDocuments, { ...doc, ts: Date.now(), from: "doctor" }],
-    }));
-  };
-
-  const setDoctorNote = (bookingId: string, text: string) => {
-    updateBooking(bookingId, (b) => ({
-      doctorNote: text,
-      noteHistory: [{ date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), doctor: b.doctorName, text }, ...b.noteHistory],
-    }));
+    return addDocument(bookingId, "doctor", doc);
   };
 
   const cancelBooking = (bookingId: string) => {
@@ -418,7 +685,6 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
         sendMessage,
         addClientDocument,
         addDoctorDocument,
-        setDoctorNote,
         cancelBooking,
       }}
     >
