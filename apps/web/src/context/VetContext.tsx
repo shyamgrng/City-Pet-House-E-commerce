@@ -10,6 +10,7 @@ import {
   type AvailabilityMap,
   type ChatMessage,
   type Doctor,
+  type SharedDoc,
   type VetBooking,
   type VetStatus,
 } from "@/lib/vet-types";
@@ -59,9 +60,9 @@ type VetValue = {
   startCall: (bookingId: string) => void;
   endCall: (bookingId: string) => void;
   saveRecording: (bookingId: string) => void;
-  sendMessage: (bookingId: string, from: ChatMessage["from"], text: string) => void;
-  addClientDocument: (bookingId: string, name: string) => void;
-  addDoctorDocument: (bookingId: string, name: string) => void;
+  sendMessage: (bookingId: string, from: ChatMessage["from"], text: string) => boolean;
+  addClientDocument: (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }) => boolean;
+  addDoctorDocument: (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }) => boolean;
   setDoctorNote: (bookingId: string, text: string) => void;
   cancelBooking: (bookingId: string) => void;
 };
@@ -357,22 +358,26 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
   const saveRecording = (bookingId: string) => {
     const booking = state.bookings.find((b) => b.id === bookingId);
     updateBooking(bookingId, (b) => ({
-      doctorDocuments: [...b.doctorDocuments, { name: `Consult_Recording_${bookingId}.mp4`, ts: Date.now() }],
+      doctorDocuments: [...b.doctorDocuments, { name: `Consult_Recording_${bookingId}.mp4`, ts: Date.now(), from: "doctor", url: "", kind: "video" }],
     }));
     if (booking) logActivity("Call", `Recording saved for the consult with ${booking.ownerName}`);
   };
 
-  const sendMessage = (bookingId: string, from: ChatMessage["from"], text: string) => {
-    if (!text.trim()) return;
-    updateBooking(bookingId, (b) => ({ chatMessages: [...b.chatMessages, { from, text, time: nowTime() }] }));
+  const sendMessage = (bookingId: string, from: ChatMessage["from"], text: string): boolean => {
+    if (!text.trim()) return false;
+    return updateBooking(bookingId, (b) => ({ chatMessages: [...b.chatMessages, { from, text, time: nowTime(), ts: Date.now() }] }));
   };
 
-  const addClientDocument = (bookingId: string, name: string) => {
-    updateBooking(bookingId, (b) => ({ clientDocuments: [...b.clientDocuments, { name, ts: Date.now() }] }));
+  const addClientDocument = (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }): boolean => {
+    return updateBooking(bookingId, (b) => ({
+      clientDocuments: [...b.clientDocuments, { ...doc, ts: Date.now(), from: "client" }],
+    }));
   };
 
-  const addDoctorDocument = (bookingId: string, name: string) => {
-    updateBooking(bookingId, (b) => ({ doctorDocuments: [...b.doctorDocuments, { name, ts: Date.now() }] }));
+  const addDoctorDocument = (bookingId: string, doc: { name: string; url: string; kind: SharedDoc["kind"] }): boolean => {
+    return updateBooking(bookingId, (b) => ({
+      doctorDocuments: [...b.doctorDocuments, { ...doc, ts: Date.now(), from: "doctor" }],
+    }));
   };
 
   const setDoctorNote = (bookingId: string, text: string) => {

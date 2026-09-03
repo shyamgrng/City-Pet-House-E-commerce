@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useVet } from "@/context/VetContext";
-import type { VetBooking } from "@/lib/vet-types";
+import type { ChatMessage, SharedDoc, VetBooking } from "@/lib/vet-types";
+import { isAllowedDocumentFile, isAllowedImageFile, isAllowedVideoFile, readVideoFile, resizeImageFile } from "@/lib/image-upload";
 import VideoCall, { vetCallRoomName } from "./VideoCall";
+
+const ATTACH_ACCEPT = "image/*,video/*,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+type FeedItem = ({ type: "message" } & ChatMessage) | ({ type: "doc" } & SharedDoc);
 
 export default function ConsultRoom({
   booking,
@@ -14,10 +19,12 @@ export default function ConsultRoom({
   viewer: "client" | "doctor";
   onLeave?: () => void;
 }) {
-  const { sendMessage, addClientDocument, addDoctorDocument, saveRecording } = useVet();
+  const { sendMessage, addClientDocument, addDoctorDocument, saveRecording, saveError } = useVet();
   const [chatInput, setChatInput] = useState("");
-  const [justShared, setJustShared] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [attachError, setAttachError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const toggleRecording = () => {
     if (recording) saveRecording(booking.id);
@@ -30,15 +37,38 @@ export default function ConsultRoom({
     setChatInput("");
   };
 
-  const share = () => {
-    const name = viewer === "client" ? "pet-photo.jpg" : "prescription.pdf";
-    if (viewer === "client") addClientDocument(booking.id, name);
-    else addDoctorDocument(booking.id, name);
-    setJustShared(true);
-    setTimeout(() => setJustShared(false), 3000);
+  const addDoc = viewer === "client" ? addClientDocument : addDoctorDocument;
+  const otherName = viewer === "client" ? booking.doctorName : booking.ownerName;
+
+  const handleAttach = async (file: File | undefined) => {
+    if (!file) return;
+    setAttachError("");
+    setUploading(true);
+    try {
+      if (isAllowedImageFile(file)) {
+        const url = await resizeImageFile(file, 1200, 1600);
+        addDoc(booking.id, { name: file.name, url, kind: "image" });
+      } else if (isAllowedVideoFile(file)) {
+        const url = await readVideoFile(file);
+        addDoc(booking.id, { name: file.name, url, kind: "video" });
+      } else if (isAllowedDocumentFile(file)) {
+        addDoc(booking.id, { name: file.name, url: "", kind: "file" });
+      } else {
+        setAttachError("Please choose an image, video, PDF, or Word document.");
+      }
+    } catch (err) {
+      setAttachError(err instanceof Error ? err.message : "Could not attach that file — try a different one.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
-  const sharedList = viewer === "client" ? booking.doctorDocuments : booking.clientDocuments;
+  const feed: FeedItem[] = [
+    ...booking.chatMessages.map((m): FeedItem => ({ type: "message", ...m })),
+    ...booking.clientDocuments.map((d): FeedItem => ({ type: "doc", ...d })),
+    ...booking.doctorDocuments.map((d): FeedItem => ({ type: "doc", ...d })),
+  ].sort((a, b) => a.ts - b.ts);
 
   return (
     <div className="border border-[#E4E9EC] rounded-2xl p-4 mb-4">
@@ -70,73 +100,79 @@ export default function ConsultRoom({
         />
       </div>
 
-      <div className="flex gap-4 flex-wrap items-start">
-        <div className="flex-1 min-w-[260px] border border-[#E4E9EC] rounded-xl p-4 flex flex-col h-[280px]">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Chat with {viewer === "client" ? booking.doctorName : booking.ownerName}</div>
-          <div className="flex-1 overflow-y-auto flex flex-col gap-2 mb-2.5">
-            {booking.chatMessages.length === 0 ? (
-              <div className="text-xs text-[#8A96A3] text-center mt-4">No messages yet</div>
-            ) : (
-              booking.chatMessages.map((msg, i) => {
-                const mine = msg.from === viewer;
-                return (
-                  <div
-                    key={i}
-                    className="max-w-[80%] px-3 py-2 text-xs leading-relaxed"
-                    style={{
-                      alignSelf: mine ? "flex-end" : "flex-start",
-                      background: mine ? "#1996C8" : "#F0F2F4",
-                      color: mine ? "#fff" : "#1A2027",
-                      borderRadius: mine ? "11px 11px 2px 11px" : "11px 11px 11px 2px",
-                    }}
-                  >
-                    {msg.text}
-                  </div>
-                );
-              })
-            )}
-          </div>
-          <div className="flex gap-2">
-            <input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder="Type a message…"
-              className="flex-1 h-9 rounded-md border border-[#E4E9EC] px-3 text-xs box-border"
-            />
-            <button onClick={send} className="bg-primary text-white px-4 rounded-md text-xs font-semibold cursor-pointer">
-              Send
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 min-w-[260px] border border-[#E4E9EC] rounded-xl p-4">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2">
-            {viewer === "client" ? "Send a Photo to Doctor" : "Send a Document to Client"}
-          </div>
-          <button
-            onClick={share}
-            className="w-full h-[70px] mb-2.5 rounded-lg border-2 border-dashed border-[#E4E9EC] flex items-center justify-center text-xs text-[#8A96A3] cursor-pointer"
-          >
-            Upload &amp; Send
-          </button>
-          {justShared && <div className="text-[11px] text-[#1F7A4D] mb-2">✓ Sent</div>}
-          <div className="text-xs font-semibold text-[#1A2027] mb-1.5">
-            {viewer === "client" ? "Doctor's Shared Files" : "Client's Shared Files"}
-          </div>
-          {sharedList.length === 0 ? (
-            <div className="text-xs text-[#8A96A3]">No files shared yet</div>
+      <div className="border border-[#E4E9EC] rounded-xl p-4 flex flex-col h-[420px]">
+        <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Chat with {otherName}</div>
+        <div className="flex-1 overflow-y-auto flex flex-col gap-2 mb-2.5">
+          {feed.length === 0 ? (
+            <div className="text-xs text-[#8A96A3] text-center mt-6">No messages yet</div>
           ) : (
-            <div className="flex flex-col gap-1">
-              {sharedList.map((d, i) => (
-                <div key={i} className="text-xs text-[#3A4652]">
-                  📎 {d.name}
+            feed.map((item, i) => {
+              const mine = item.from === viewer;
+              return (
+                <div key={i} className="max-w-[75%]" style={{ alignSelf: mine ? "flex-end" : "flex-start" }}>
+                  {item.type === "message" ? (
+                    <div
+                      className="px-3 py-2 text-xs leading-relaxed"
+                      style={{
+                        background: mine ? "#1996C8" : "#F0F2F4",
+                        color: mine ? "#fff" : "#1A2027",
+                        borderRadius: mine ? "11px 11px 2px 11px" : "11px 11px 11px 2px",
+                      }}
+                    >
+                      {item.text}
+                    </div>
+                  ) : (
+                    <FeedAttachment item={item} mine={mine} />
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })
           )}
         </div>
+        {(attachError || saveError) && <div className="text-[11px] text-[#D64545] mb-2">{attachError || saveError}</div>}
+        <div className="flex gap-2 items-center">
+          <input ref={fileInputRef} type="file" accept={ATTACH_ACCEPT} className="hidden" onChange={(e) => handleAttach(e.target.files?.[0])} />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            title="Attach a photo, video, or file"
+            className="w-9 h-9 shrink-0 rounded-md border border-[#E4E9EC] text-[#5B6773] flex items-center justify-center cursor-pointer disabled:opacity-50"
+          >
+            📎
+          </button>
+          <input
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && send()}
+            placeholder={uploading ? "Uploading…" : "Type a message…"}
+            className="flex-1 h-9 rounded-md border border-[#E4E9EC] px-3 text-xs box-border"
+          />
+          <button onClick={send} className="bg-primary text-white px-4 h-9 rounded-md text-xs font-semibold cursor-pointer shrink-0">
+            Send
+          </button>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function FeedAttachment({ item, mine }: { item: SharedDoc; mine: boolean }) {
+  if (item.kind === "image" && item.url) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={item.url} alt={item.name} className="w-[200px] h-[200px] rounded-[11px] border border-[#E4E9EC] object-cover" />
+    );
+  }
+  if (item.kind === "video" && item.url) {
+    return <video src={item.url} controls className="w-[220px] h-[200px] rounded-[11px] border border-[#E4E9EC] bg-black" />;
+  }
+  return (
+    <div
+      className="flex items-center gap-2 px-3 py-2.5 rounded-[11px] text-xs"
+      style={{ background: mine ? "#1996C8" : "#F0F2F4", color: mine ? "#fff" : "#1A2027" }}
+    >
+      <span>{item.kind === "video" ? "🎬" : "📎"}</span>
+      <span className="truncate max-w-[160px]">{item.name}</span>
     </div>
   );
 }

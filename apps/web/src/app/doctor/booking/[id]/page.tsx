@@ -11,11 +11,8 @@ import { STATUS_COLORS, type VetBooking } from "@/lib/vet-types";
 export default function DoctorBookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { doctor, ready } = useDoctorAuth();
-  const { bookings, startCall, endCall, setDoctorNote, addDoctorDocument } = useVet();
+  const { bookings, startCall, endCall } = useVet();
   const router = useRouter();
-  const [note, setNote] = useState("");
-  const [noteSaved, setNoteSaved] = useState(false);
-  const [docSaved, setDocSaved] = useState(false);
 
   useEffect(() => {
     if (ready && !doctor) router.replace("/doctor/login");
@@ -32,20 +29,6 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
       </div>
     );
   }
-
-  const saveNote = () => {
-    if (!note.trim()) return;
-    setDoctorNote(booking.id, note);
-    setNote("");
-    setNoteSaved(true);
-    setTimeout(() => setNoteSaved(false), 3000);
-  };
-
-  const uploadPrescription = () => {
-    addDoctorDocument(booking.id, "prescription.pdf");
-    setDocSaved(true);
-    setTimeout(() => setDocSaved(false), 3000);
-  };
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
@@ -100,47 +83,6 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
             <ConsultRoom booking={booking} viewer="doctor" />
           </div>
         )}
-
-        <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Doctor&apos;s Note</div>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Diagnosis, advice, follow-up..."
-            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5 box-border"
-          />
-          <button onClick={saveNote} className="bg-primary text-white text-center py-2.5 px-[18px] rounded-lg text-xs font-semibold cursor-pointer">
-            Update
-          </button>
-          {noteSaved && <div className="text-[11px] text-[#1F7A4D] mt-2">✓ Saved to client&apos;s account — emailed to {booking.ownerName}</div>}
-          {booking.noteHistory.length > 0 && (
-            <>
-              <div className="text-xs font-bold text-[#1A2027] mt-3.5 mb-1.5">Note History</div>
-              {booking.noteHistory.map((n, i) => (
-                <div key={i} className="text-xs text-[#3A4652] py-1.5 border-t border-[#F0F2F4]">
-                  <span className="text-[#8A96A3]">{n.date} — {n.doctor}:</span> {n.text}
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-
-        <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2">Upload Prescription / Document for Client</div>
-          <div className="text-[11px] text-[#8A96A3] mb-2.5">
-            Prescriptions, lab reports, or photos — visible to the client in their Vet Consults detail.
-          </div>
-          <button
-            onClick={uploadPrescription}
-            className="w-full h-[100px] mb-2.5 rounded-lg border-2 border-dashed border-[#E4E9EC] flex items-center justify-center text-xs text-[#8A96A3] cursor-pointer"
-          >
-            Drop a document or photo
-          </button>
-          <button onClick={uploadPrescription} className="bg-primary text-white px-[18px] py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
-            Update
-          </button>
-          {docSaved && <div className="text-[11px] text-[#1F7A4D] mt-2">✓ Saved to client&apos;s account — emailed to {booking.ownerName}</div>}
-        </div>
 
         {booking.status === "In Progress" && (
           <button

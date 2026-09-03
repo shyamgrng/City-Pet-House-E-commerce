@@ -38,8 +38,8 @@ export type VetStatus =
   | "Completed"
   | "Cancelled";
 
-export type ChatMessage = { from: "client" | "doctor"; text: string; time: string };
-export type SharedDoc = { name: string; ts: number };
+export type ChatMessage = { from: "client" | "doctor"; text: string; time: string; ts: number };
+export type SharedDoc = { name: string; ts: number; from: "client" | "doctor"; url: string; kind: "image" | "video" | "file" };
 export type NoteEntry = { date: string; doctor: string; text: string };
 
 export type VetBooking = {
