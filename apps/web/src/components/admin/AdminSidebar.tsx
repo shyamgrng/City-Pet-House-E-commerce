@@ -36,8 +36,12 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const newApplicationsCount = applications.filter((a) => a.status === "New").length;
+  // Sums every stage of the Deliveries pipeline that still needs admin action: Payment Queue,
+  // Orders ready to forward, and Dispatch awaiting a courier -- matches the Deliveries page's own
+  // tab badges, so the count "moves" from tab to tab as each order progresses instead of vanishing.
+  const readyToForwardCount = orders.filter((o) => o.status === "Payment Approved" && !deliveries.some((d) => d.id === o.id)).length;
   const pendingDeliveriesCount =
-    orders.filter((o) => o.status === "Receipt Uploaded").length + deliveries.filter((d) => d.status === "Awaiting Courier").length;
+    orders.filter((o) => o.status === "Receipt Uploaded").length + readyToForwardCount + deliveries.filter((d) => d.status === "Awaiting Courier").length;
   // Matches the admin Vet Consults page's own "Payment Queue" tab, which includes both statuses.
   const pendingVetConsultsCount = bookings.filter((b) => b.status === "Payment Review" || b.status === "Awaiting Doctor Reconfirm").length;
   const reservedPetsCount = pets.filter((p) => p.status === "Reserved").length;

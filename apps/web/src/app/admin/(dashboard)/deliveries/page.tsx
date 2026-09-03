@@ -65,13 +65,19 @@ export default function DeliveriesPage() {
   const paymentQueue = orders.filter((o) => o.status === "Receipt Uploaded").sort((a, b) => a.createdAt - b.createdAt);
   const rejectedOrders = orders.filter((o) => o.status === "Payment Rejected").sort((a, b) => b.createdAt - a.createdAt);
   const allOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
+  // Approved but not yet forwarded to Dispatch -- these are the orders currently needing packing
+  // action on the Orders tab. Once forwarded (a Delivery record exists for them), the alert moves
+  // on to the Dispatch tab automatically, since that count comes from the Delivery records instead.
+  const readyToForward = orders.filter((o) => o.status === "Payment Approved" && !deliveries.some((d) => d.id === o.id));
 
   const liveBadges: Record<string, number> = {
     payments: paymentQueue.length,
+    orders: readyToForward.length,
     dispatch: awaitingCourier.length,
     delivery: inProgress.length,
     cancelled: cancelledLive.length,
     rejected: rejectedOrders.length,
+    refunds: refunds.length,
   };
 
   const activityLog = buildActivityLog(orders, deliveries, refunds);
