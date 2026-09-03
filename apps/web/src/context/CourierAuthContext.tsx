@@ -65,7 +65,7 @@ type CourierAuthValue = {
   requestPasswordReset: (courierId: string) => Result;
   resetPassword: (courierId: string, code: string, newPassword: string) => Result;
   addCourier: (
-    input: Omit<CourierAccount, "courierId" | "password" | "email">
+    input: Omit<CourierAccount, "courierId" | "password" | "email"> & { email?: string }
   ) => { courierId: string; password: string };
   removeCourier: (courierId: string) => void;
   setActiveCourier: (courierId: string) => void;
@@ -159,14 +159,14 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
     window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
   };
 
-  const addCourier = (input: Omit<CourierAccount, "courierId" | "password" | "email">) => {
+  const addCourier = (input: Omit<CourierAccount, "courierId" | "password" | "email"> & { email?: string }) => {
     const courierId = "CR-" + Math.floor(2000 + Math.random() * 8000);
     const password = "cph" + Math.floor(1000 + Math.random() * 9000);
     const account: CourierAccount = {
       ...input,
       courierId,
       password,
-      email: "",
+      email: input.email ?? "",
     };
     const added = [...loadAdded(), account];
     persistAdded(added);

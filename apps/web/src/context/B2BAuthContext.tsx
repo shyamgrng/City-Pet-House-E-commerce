@@ -7,6 +7,7 @@ import { b2bAccountSeed, type B2BAccount } from "@/lib/b2b-auth-types";
 const SESSION_KEY = "cph_b2b_session_id";
 const OVERRIDES_KEY = "cph_b2b_account_overrides";
 const RESETS_KEY = "cph_b2b_password_resets";
+const ADDED_KEY = "cph_b2b_added_accounts";
 const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -23,9 +24,24 @@ type B2BAuthValue = {
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (b2bId: string) => Result;
   resetPassword: (b2bId: string, code: string, newPassword: string) => Result;
+  addSupplier: (input: Omit<B2BAccount, "b2bId" | "password">) => { b2bId: string; password: string };
 };
 
 const B2BAuthContext = createContext<B2BAuthValue | null>(null);
+
+function loadAdded(): B2BAccount[] {
+  try {
+    const raw = window.localStorage.getItem(ADDED_KEY);
+    const parsed = raw ? (JSON.parse(raw) as B2BAccount[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistAdded(accounts: B2BAccount[]) {
+  window.localStorage.setItem(ADDED_KEY, JSON.stringify(accounts));
+}
 
 function loadResets(): Record<string, ResetRecord> {
   try {
@@ -67,7 +83,7 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    const accounts = applyOverrides(b2bAccountSeed, loadOverrides());
+    const accounts = applyOverrides([...b2bAccountSeed, ...loadAdded()], loadOverrides());
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ accounts, supplier: loadSession(accounts), ready: true });
   }, []);
@@ -76,6 +92,16 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
     const overrides = loadOverrides();
     overrides[b2bId] = { ...overrides[b2bId], ...patch };
     window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+  };
+
+  const addSupplier = (input: Omit<B2BAccount, "b2bId" | "password">) => {
+    const b2bId = "B2B-" + Math.floor(2000 + Math.random() * 8000);
+    const password = "cph" + Math.floor(1000 + Math.random() * 9000);
+    const account: B2BAccount = { ...input, b2bId, password };
+    const added = [...loadAdded(), account];
+    persistAdded(added);
+    setState((s) => ({ ...s, accounts: [...s.accounts, account] }));
+    return { b2bId, password };
   };
 
   const requestPasswordReset = (b2bId: string): Result => {
@@ -152,6 +178,7 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
         changePassword,
         requestPasswordReset,
         resetPassword,
+        addSupplier,
       }}
     >
       {children}

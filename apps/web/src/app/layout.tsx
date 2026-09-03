@@ -6,6 +6,7 @@ import { AdoptionProvider } from "@/context/AdoptionContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { B2BAuthProvider } from "@/context/B2BAuthContext";
 import { B2BProvider } from "@/context/B2BContext";
+import { B2BRegistrationProvider } from "@/context/B2BRegistrationContext";
 import { BlogProvider } from "@/context/BlogContext";
 import { BrandProvider } from "@/context/BrandContext";
 import { CareerProvider } from "@/context/CareerContext";
@@ -14,6 +15,7 @@ import { CatalogProvider } from "@/context/CatalogContext";
 import { CategoryProvider } from "@/context/CategoryContext";
 import { ContactProvider } from "@/context/ContactContext";
 import { CourierAuthProvider } from "@/context/CourierAuthContext";
+import { CourierRegistrationProvider } from "@/context/CourierRegistrationContext";
 import { DeliveryProvider } from "@/context/DeliveryContext";
 import { DeliverySettingsProvider } from "@/context/DeliverySettingsContext";
 import { DogBreedProvider } from "@/context/DogBreedContext";
@@ -66,8 +68,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <DoctorAuthProvider>
           <DoctorRegistrationProvider>
             <B2BAuthProvider>
+            <B2BRegistrationProvider>
               <B2BProvider>
                 <CourierAuthProvider>
+                <CourierRegistrationProvider>
                   <DeliveryProvider>
                     <VetProvider>
                       <ServiceProvider>
@@ -111,8 +115,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                       </ServiceProvider>
                     </VetProvider>
                   </DeliveryProvider>
+                </CourierRegistrationProvider>
                 </CourierAuthProvider>
               </B2BProvider>
+            </B2BRegistrationProvider>
             </B2BAuthProvider>
           </DoctorRegistrationProvider>
           </DoctorAuthProvider>

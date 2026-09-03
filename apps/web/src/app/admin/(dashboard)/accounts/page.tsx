@@ -4,12 +4,16 @@ import { useState } from "react";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { useAuth } from "@/context/AuthContext";
+import { useB2BAuth } from "@/context/B2BAuthContext";
+import { useB2BRegistration } from "@/context/B2BRegistrationContext";
 import { useCourierAuth } from "@/context/CourierAuthContext";
+import { useCourierRegistration } from "@/context/CourierRegistrationContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { useVet } from "@/context/VetContext";
-import { b2bAccountSeed } from "@/lib/b2b-auth-types";
+import type { B2BRegistration } from "@/lib/b2b-registration-types";
 import type { CourierAccount } from "@/lib/courier-auth-types";
+import type { CourierRegistration } from "@/lib/courier-registration-types";
 import type { DoctorAccount } from "@/lib/doctor-auth-types";
 import { generateDoctorId, generateTempPassword, type DoctorRegistration } from "@/lib/doctor-registration-types";
 import { notifyEvent } from "@/lib/notify-client";
@@ -18,21 +22,33 @@ import type { Account } from "@/lib/auth-types";
 
 const subTabs = ["Overview", "Client Account", "Doctor Account", "Courier Account", "B2B Account", "Staff Account"];
 
-const accountB2b = b2bAccountSeed.map((a) => ({ name: a.companyName, status: "Active" }));
+type PendingRow = {
+  id: string;
+  kind: "Doctor" | "Courier" | "B2B";
+  title: string;
+  subtitle: string;
+  contact: string;
+  submittedAt: number;
+  onApprove: () => void;
+  onReject: () => void;
+};
 
 export default function AccountsPage() {
   const [tab, setTab] = useState("Overview");
   const { accounts } = useAuth();
   const { users: adminUsers } = useAdminAuth();
-  const { accounts: courierAccounts } = useCourierAuth();
+  const { accounts: courierAccounts, addCourier } = useCourierAuth();
+  const { accounts: b2bAccounts, addSupplier } = useB2BAuth();
   const { accounts: doctorAccounts, addAccount: addDoctorAccount, saveError: doctorSaveError } = useDoctorAuth();
   const { addDoctor } = useVet();
-  const { registrations, setRegistrationStatus, saveError: registrationSaveError } = useDoctorRegistration();
+  const { registrations: doctorRegs, setRegistrationStatus: setDoctorRegStatus, saveError: doctorRegSaveError } = useDoctorRegistration();
+  const { registrations: courierRegs, setRegistrationStatus: setCourierRegStatus, saveError: courierRegSaveError } = useCourierRegistration();
+  const { registrations: b2bRegs, setRegistrationStatus: setB2bRegStatus, saveError: b2bRegSaveError } = useB2BRegistration();
   const accountCouriers = courierAccounts.map((a) => ({ name: a.companyName, status: "Active" }));
   const accountDoctors = doctorAccounts.map((d) => ({ name: d.name, status: "Active" }));
-  const pendingRegistrations = registrations.filter((r) => r.status === "Pending");
+  const accountB2b = b2bAccounts.map((a) => ({ name: a.companyName, status: "Active" }));
 
-  const approveRegistration = (reg: DoctorRegistration) => {
+  const approveDoctor = (reg: DoctorRegistration) => {
     const doctorId = generateDoctorId(doctorAccounts);
     const password = generateTempPassword();
     const account: DoctorAccount = {
@@ -58,13 +74,94 @@ export default function AccountsPage() {
       feeRs: 800,
     };
     addDoctor(doctor);
-    setRegistrationStatus(reg.id, "Approved");
+    setDoctorRegStatus(reg.id, "Approved");
     notifyEvent("doctor_registration_approved", reg.email, reg.fullName, { name: reg.fullName, doctorId, password });
   };
 
-  const rejectRegistration = (reg: DoctorRegistration) => {
-    setRegistrationStatus(reg.id, "Rejected");
+  const approveCourier = (reg: CourierRegistration) => {
+    const { courierId, password } = addCourier({
+      companyName: reg.companyName,
+      email: reg.email,
+      phone: reg.phone,
+      altPhone: reg.altPhone,
+      address: reg.address,
+      priceSmall: 0,
+      priceMedium: 0,
+      priceLarge: 0,
+      priceVeryLarge: 0,
+      usesDistancePricing: false,
+      ratePerKg: 0,
+      ratePerKm: 0,
+      defaultFlatPrice: 0,
+      isActive: courierAccounts.length === 0,
+    });
+    setCourierRegStatus(reg.id, "Approved");
+    notifyEvent("partner_registration_approved", reg.email, reg.contactPerson || reg.companyName, {
+      name: reg.contactPerson || reg.companyName,
+      role: "Courier",
+      loginId: courierId,
+      password,
+    });
   };
+
+  const approveB2B = (reg: B2BRegistration) => {
+    const { b2bId, password } = addSupplier({
+      companyName: reg.companyName,
+      contactPerson: reg.contactPerson,
+      email: reg.email,
+      phone: reg.phone,
+      altPhone: reg.altPhone,
+      address: reg.address,
+    });
+    setB2bRegStatus(reg.id, "Approved");
+    notifyEvent("partner_registration_approved", reg.email, reg.contactPerson || reg.companyName, {
+      name: reg.contactPerson || reg.companyName,
+      role: "B2B Supplier",
+      loginId: b2bId,
+      password,
+    });
+  };
+
+  const pendingRows: PendingRow[] = [
+    ...doctorRegs
+      .filter((r) => r.status === "Pending")
+      .map((r): PendingRow => ({
+        id: r.id,
+        kind: "Doctor",
+        title: r.fullName,
+        subtitle: `${r.qualification} · ${r.nvcNumber}`,
+        contact: `${r.email} · ${r.phone}`,
+        submittedAt: r.submittedAt,
+        onApprove: () => approveDoctor(r),
+        onReject: () => setDoctorRegStatus(r.id, "Rejected"),
+      })),
+    ...courierRegs
+      .filter((r) => r.status === "Pending")
+      .map((r): PendingRow => ({
+        id: r.id,
+        kind: "Courier",
+        title: r.companyName,
+        subtitle: r.contactPerson,
+        contact: `${r.email} · ${r.phone}`,
+        submittedAt: r.submittedAt,
+        onApprove: () => approveCourier(r),
+        onReject: () => setCourierRegStatus(r.id, "Rejected"),
+      })),
+    ...b2bRegs
+      .filter((r) => r.status === "Pending")
+      .map((r): PendingRow => ({
+        id: r.id,
+        kind: "B2B",
+        title: r.companyName,
+        subtitle: r.contactPerson,
+        contact: `${r.email} · ${r.phone}`,
+        submittedAt: r.submittedAt,
+        onApprove: () => approveB2B(r),
+        onReject: () => setB2bRegStatus(r.id, "Rejected"),
+      })),
+  ].sort((a, b) => a.submittedAt - b.submittedAt);
+
+  const registrationSaveError = doctorRegSaveError || courierRegSaveError || b2bRegSaveError;
 
   return (
     <div>
@@ -103,34 +200,30 @@ export default function AccountsPage() {
           {(doctorSaveError || registrationSaveError) && (
             <div className="text-xs text-[#D64545] mb-2">{doctorSaveError || registrationSaveError}</div>
           )}
-          {pendingRegistrations.length === 0 ? (
+          {pendingRows.length === 0 ? (
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">
               No pending registrations
             </div>
           ) : (
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-              {pendingRegistrations.map((r) => (
+              {pendingRows.map((r) => (
                 <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3.5 border-b border-[#F0F2F4] last:border-0 text-xs">
                   <div>
                     <div className="font-semibold text-[#1A2027]">
-                      {r.fullName} <span className="text-[10px] font-bold text-[#8A96A3]">· Doctor</span>
+                      {r.title} <span className="text-[10px] font-bold text-[#8A96A3]">· {r.kind}</span>
                     </div>
-                    <div className="text-[#8A96A3] mt-0.5">
-                      {r.qualification} · {r.nvcNumber}
-                    </div>
-                    <div className="text-[#8A96A3]">
-                      {r.email} · {r.phone}
-                    </div>
+                    <div className="text-[#8A96A3] mt-0.5">{r.subtitle}</div>
+                    <div className="text-[#8A96A3]">{r.contact}</div>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button
-                      onClick={() => rejectRegistration(r)}
+                      onClick={r.onReject}
                       className="px-3 py-1.5 rounded-md text-[11px] font-semibold border border-[#E4E9EC] text-[#5B6773] cursor-pointer"
                     >
                       Reject
                     </button>
                     <button
-                      onClick={() => approveRegistration(r)}
+                      onClick={r.onApprove}
                       className="px-3 py-1.5 rounded-md text-[11px] font-semibold bg-primary text-white cursor-pointer"
                     >
                       Approve

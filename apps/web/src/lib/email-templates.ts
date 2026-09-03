@@ -11,7 +11,9 @@ export type EmailEvent =
   | "account_created"
   | "forgot_password"
   | "doctor_registration_received"
-  | "doctor_registration_approved";
+  | "doctor_registration_approved"
+  | "partner_registration_received"
+  | "partner_registration_approved";
 
 type Rendered = { subject: string; html: string };
 
@@ -196,6 +198,29 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
           "Welcome to the team ✓",
           `Hi ${name}, your doctor application has been verified. Sign in to the Doctor Portal with:<br /><br />
           <div style="font-size:14px;"><strong>Doctor ID:</strong> ${doctorId}</div>
+          <div style="font-size:14px;margin-bottom:10px;"><strong>Password:</strong> ${password}</div>
+          Please sign in and change your password from your profile.`
+        ),
+      };
+    }
+    case "partner_registration_received": {
+      const { name, role } = data as { name: string; role: string };
+      return {
+        subject: `We've received your ${role} application — ${siteSettings.shortName}`,
+        html: shell(
+          "Application received",
+          `Hi ${name}, thanks for applying to join ${siteSettings.shortName} as a ${role}. Our admin team is reviewing your details and documents — we'll email you your sign-in ID and password once you're approved.`
+        ),
+      };
+    }
+    case "partner_registration_approved": {
+      const { name, role, loginId, password } = data as { name: string; role: string; loginId: string; password: string };
+      return {
+        subject: `You're approved — ${role} Sign In details — ${siteSettings.shortName}`,
+        html: shell(
+          "Welcome to the team ✓",
+          `Hi ${name}, your ${role} application has been approved. Sign in to the ${role} Portal with:<br /><br />
+          <div style="font-size:14px;"><strong>ID:</strong> ${loginId}</div>
           <div style="font-size:14px;margin-bottom:10px;"><strong>Password:</strong> ${password}</div>
           Please sign in and change your password from your profile.`
         ),

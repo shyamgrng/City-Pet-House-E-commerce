@@ -55,11 +55,10 @@ export default function B2BLoginPage() {
           Sign In
         </button>
         <div className="text-center text-[11px] text-[#8A96A3] mt-3.5">
-          New B2B supplier? Contact us at{" "}
-          <a href="mailto:citypethouse@gmail.com" className="text-primary font-semibold">
-            citypethouse@gmail.com
-          </a>{" "}
-          to get set up.
+          New B2B supplier?{" "}
+          <Link href="/b2b/register" className="text-primary font-semibold">
+            Register here
+          </Link>
         </div>
         <div className="text-[10px] text-[#8A96A3] mt-3.5 leading-relaxed">Demo: B2B-1001 / supplier123</div>
       </div>

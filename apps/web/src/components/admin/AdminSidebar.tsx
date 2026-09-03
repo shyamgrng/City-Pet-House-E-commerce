@@ -4,8 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAdminAuth } from "@/context/AdminAuthContext";
+import { useB2B } from "@/context/B2BContext";
+import { useB2BRegistration } from "@/context/B2BRegistrationContext";
 import { useCareer } from "@/context/CareerContext";
 import { useCatalog } from "@/context/CatalogContext";
+import { useCourierRegistration } from "@/context/CourierRegistrationContext";
 import { useDelivery } from "@/context/DeliveryContext";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { useOrder } from "@/context/OrderContext";
@@ -32,7 +35,10 @@ export default function AdminSidebar() {
   const { bookings } = useVet();
   const { pets } = usePets();
   const { products } = useCatalog();
-  const { registrations } = useDoctorRegistration();
+  const { submissions } = useB2B();
+  const { registrations: doctorRegistrations } = useDoctorRegistration();
+  const { registrations: courierRegistrations } = useCourierRegistration();
+  const { registrations: b2bRegistrations } = useB2BRegistration();
   const pathname = usePathname();
   const router = useRouter();
   const newApplicationsCount = applications.filter((a) => a.status === "New").length;
@@ -47,7 +53,14 @@ export default function AdminSidebar() {
   const reservedPetsCount = pets.filter((p) => p.status === "Reserved").length;
   // Matches the admin Shop page's own "Low Stock & Out of Stock" list.
   const stockAlertCount = products.filter((p) => p.outOfStock || p.qty === 0 || p.qty <= p.lowStockAlert).length;
-  const pendingRegistrationsCount = registrations.filter((r) => r.status === "Pending").length;
+  // Combines pending Doctor, Courier, and B2B applications -- matches the Accounts page's own
+  // "Pending Registrations" list, which lists all three together.
+  const pendingRegistrationsCount =
+    doctorRegistrations.filter((r) => r.status === "Pending").length +
+    courierRegistrations.filter((r) => r.status === "Pending").length +
+    b2bRegistrations.filter((r) => r.status === "Pending").length;
+  // Matches the B2B Supply page's own "Pending Review" list of product submissions.
+  const pendingSubmissionsCount = submissions.filter((s) => s.status === "Pending").length;
 
   return (
     <div className="w-[200px] shrink-0 bg-[#1A2027] text-white p-5 px-3.5 flex flex-col min-h-screen">
@@ -64,6 +77,7 @@ export default function AdminSidebar() {
             petavailable: { count: reservedPetsCount, color: "#C9962B" },
             shop: { count: stockAlertCount, color: "#D64545" },
             accounts: { count: pendingRegistrationsCount, color: "#7A56C8" },
+            b2bsupply: { count: pendingSubmissionsCount, color: "#C9962B" },
           };
           return sidebarDefs.map((s) => {
             const slug = slugFor(s.key);
