@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useVet } from "@/context/VetContext";
 import type { VetBooking } from "@/lib/vet-types";
+import VideoCall, { vetCallRoomName } from "./VideoCall";
 
 export default function ConsultRoom({
   booking,
@@ -41,28 +42,32 @@ export default function ConsultRoom({
 
   return (
     <div className="border border-[#E4E9EC] rounded-2xl p-4 mb-4">
-      <div className="flex justify-between items-center mb-2.5">
+      <div className="flex justify-between items-center mb-2.5 flex-wrap gap-2">
         <div className="text-xs font-bold text-[#8A96A3] tracking-wide">🎥 LIVE CONSULT</div>
-        {onLeave && (
-          <button onClick={onLeave} className="bg-[#FDEDEC] text-[#D64545] px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer">
-            Leave Call
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {recording && <div className="text-[11px] font-semibold text-[#C9962B]">● Recording…</div>}
+          {viewer === "doctor" && (
+            <button
+              onClick={toggleRecording}
+              className="px-3 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer text-white"
+              style={{ background: recording ? "#C9962B" : "#3A4652" }}
+            >
+              {recording ? "⏹ Stop Recording" : "⏺ Start Recording"}
+            </button>
+          )}
+          {onLeave && (
+            <button onClick={onLeave} className="bg-[#FDEDEC] text-[#D64545] px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer">
+              Leave Call
+            </button>
+          )}
+        </div>
       </div>
-      <div className="w-full h-[340px] rounded-[10px] overflow-hidden bg-gradient-to-br from-[#111823] to-[#1A2432] flex flex-col items-center justify-center text-[#5B7A94] relative mb-4">
-        <div className="text-[11px] font-bold tracking-widest absolute top-3 left-3.5 text-[#3E5C74]">AGORA</div>
-        <div className="text-3xl">📹</div>
-        <div className="text-xs mt-2.5">Remote video stream</div>
-        {viewer === "doctor" && (
-          <button
-            onClick={toggleRecording}
-            className="absolute top-3 right-3.5 px-3 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer text-white"
-            style={{ background: recording ? "#C9962B" : "#3A4652" }}
-          >
-            {recording ? "⏹ Stop Recording" : "⏺ Start Recording"}
-          </button>
-        )}
-        {recording && <div className="absolute bottom-3 left-3.5 text-[11px] font-semibold text-[#E4A03A]">● Recording…</div>}
+      <div className="mb-4">
+        <VideoCall
+          roomName={vetCallRoomName(booking.id)}
+          displayName={viewer === "client" ? booking.ownerName : booking.doctorName}
+          onLeave={onLeave}
+        />
       </div>
 
       <div className="flex gap-4 flex-wrap items-start">

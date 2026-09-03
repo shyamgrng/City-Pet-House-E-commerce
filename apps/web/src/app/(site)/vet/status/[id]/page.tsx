@@ -1,9 +1,29 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useVet } from "@/context/VetContext";
 import ConsultRoom from "@/components/vet/ConsultRoom";
+
+/** Ticks up from when this page first saw the booking as Confirmed -- there's no reliable,
+ * cross-device "confirmed at" timestamp to count down from (scheduled times are stored as
+ * display strings like "Tomorrow" / "3:00 PM", not parseable dates), so this shows how long
+ * they've been waiting rather than a countdown to an exact moment. */
+function WaitingTimer() {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const start = Date.now();
+    const interval = setInterval(() => setSeconds(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(interval);
+  }, []);
+  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const ss = String(seconds % 60).padStart(2, "0");
+  return (
+    <span className="font-mono tabular-nums">
+      {mm}:{ss}
+    </span>
+  );
+}
 
 export default function VetStatusPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -96,24 +116,21 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
               <div className="text-base text-[#3A6B4C] leading-relaxed mb-6">
                 Your consult with {booking.doctorName} is ready. Invoice {booking.invoiceNumber} has been emailed to you.
               </div>
-              {booking.callStartedByDoctor ? (
-                !callJoined ? (
-                  <div className="flex gap-3.5 justify-center">
-                    <button
-                      onClick={() => setCallJoined(true)}
-                      className="bg-[#1F7A4D] text-white px-[26px] py-3.5 rounded-[9px] text-[15px] font-semibold cursor-pointer"
-                    >
-                      📹 Join Call
-                    </button>
+              {!callJoined ? (
+                <div className="flex flex-col items-center gap-2.5">
+                  <button
+                    onClick={() => setCallJoined(true)}
+                    className="bg-[#1F7A4D] text-white px-[26px] py-3.5 rounded-[9px] text-[15px] font-semibold cursor-pointer"
+                  >
+                    📹 Join Call
+                  </button>
+                  <div className="text-xs text-[#3A6B4C]">
+                    Waiting <WaitingTimer /> — join any time, your doctor may already be in the room.
                   </div>
-                ) : (
-                  <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-4 py-2.5 text-xs text-[#1F7A4D] font-semibold inline-block">
-                    🎥 Call in progress below
-                  </div>
-                )
+                </div>
               ) : (
-                <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#3A6B4C] font-semibold">
-                  Waiting for {booking.doctorName} to start the call…
+                <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-4 py-2.5 text-xs text-[#1F7A4D] font-semibold inline-block">
+                  🎥 Call in progress below
                 </div>
               )}
             </>
