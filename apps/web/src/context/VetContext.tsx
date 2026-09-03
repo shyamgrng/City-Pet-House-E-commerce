@@ -53,7 +53,7 @@ type VetValue = {
   bookConsult: (input: NewBookingInput) => VetBooking | null;
   submitPayment: (bookingId: string, receiptPhoto: string) => boolean;
   approvePayment: (bookingId: string) => void;
-  rejectPayment: (bookingId: string) => void;
+  rejectPayment: (bookingId: string, reason: string) => void;
   finalizeBooking: (bookingId: string) => void;
   sendInvoice: (bookingId: string) => void;
   startCall: (bookingId: string) => void;
@@ -297,11 +297,19 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const rejectPayment = (bookingId: string) => {
+  const rejectPayment = (bookingId: string, reason: string) => {
     const booking = state.bookings.find((b) => b.id === bookingId);
     if (!booking) return;
-    persistBookings(state.bookings.filter((b) => b.id !== bookingId));
-    logActivity("Payment", `Admin rejected payment receipt from ${booking.ownerName}`);
+    const ok = updateBooking(bookingId, { status: "Payment Rejected" as VetStatus, rejectReason: reason });
+    if (!ok) return;
+    logActivity("Payment", `Admin rejected payment receipt from ${booking.ownerName} — ${reason}`);
+    notifyEvent("vet_payment_rejected", booking.ownerEmail, booking.ownerName, {
+      bookingId: booking.id,
+      ownerName: booking.ownerName,
+      petName: booking.petName,
+      doctorName: booking.doctorName,
+      reason,
+    });
   };
 
   const finalizeBooking = (bookingId: string) => {

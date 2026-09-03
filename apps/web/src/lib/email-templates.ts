@@ -8,6 +8,7 @@ export type EmailEvent =
   | "vet_booked"
   | "vet_confirmed"
   | "vet_completed"
+  | "vet_payment_rejected"
   | "account_created"
   | "forgot_password"
   | "doctor_registration_received"
@@ -155,6 +156,24 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
         html: shell(
           "Consult completed",
           `Hi ${ownerName}, your consult <strong>${bookingId}</strong> for ${petName} with ${doctorName} has ended. Any notes from the doctor are visible in your account.`
+        ),
+      };
+    }
+    case "vet_payment_rejected": {
+      const { bookingId, ownerName, petName, doctorName, reason } = data as {
+        bookingId: string;
+        ownerName: string;
+        petName: string;
+        doctorName: string;
+        reason: string;
+      };
+      return {
+        subject: `Payment receipt rejected — ${bookingId} — ${siteSettings.shortName}`,
+        html: shell(
+          "Payment receipt rejected",
+          `Hi ${ownerName}, we couldn't verify the payment receipt for your consult <strong>${bookingId}</strong> (${petName} with ${doctorName}).<br /><br />
+          <strong>Reason:</strong> ${reason}<br /><br />
+          Please book again and upload a clear payment receipt. If you believe this is a mistake, contact us at ${siteSettings.email}.`
         ),
       };
     }

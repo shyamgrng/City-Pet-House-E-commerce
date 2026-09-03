@@ -32,6 +32,7 @@ export type VetStatus =
   | "Pending Payment"
   | "Payment Review"
   | "Awaiting Doctor Reconfirm"
+  | "Payment Rejected"
   | "Confirmed"
   | "In Progress"
   | "Completed"
@@ -69,12 +70,14 @@ export type VetBooking = {
   invoiceNumber: string;
   invoiceSent: boolean;
   createdAt: number;
+  rejectReason?: string;
 };
 
 export const STATUS_COLORS: Record<VetStatus, string> = {
   "Pending Payment": "#C9962B",
   "Payment Review": "#C9962B",
   "Awaiting Doctor Reconfirm": "#1996C8",
+  "Payment Rejected": "#D64545",
   Confirmed: "#1F7A4D",
   "In Progress": "#1F7A4D",
   Completed: "#8A96A3",
@@ -113,6 +116,7 @@ function timelineStepIndex(status: VetStatus): number {
     case "Completed":
       return 4;
     case "Cancelled":
+    case "Payment Rejected":
       return -1;
   }
 }

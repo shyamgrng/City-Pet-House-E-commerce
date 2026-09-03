@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useVet } from "@/context/VetContext";
 import { ACTIVITY_TYPE_COLORS, STATUS_COLORS, type ActivityType, type VetBooking } from "@/lib/vet-types";
 
-const subTabs = ["Overview", "Payment Queue", "Receipts", "Consult Records", "Recordings", "Reports"] as const;
+const subTabs = ["Overview", "Payment Queue", "Receipts", "Rejected", "Consult Records", "Recordings", "Reports"] as const;
 type SubTab = (typeof subTabs)[number];
 
 const ACTIVITY_TYPES: (ActivityType | "All")[] = ["All", "Booking", "Approval", "Call", "Payment", "Reminder"];
@@ -40,6 +40,7 @@ export default function VetConsultsPage() {
   const [activityRange, setActivityRange] = useState<(typeof DATE_RANGES)[number]>("All time");
 
   const paymentQueue = bookings.filter((b) => b.status === "Payment Review" || b.status === "Awaiting Doctor Reconfirm");
+  const rejectedList = bookings.filter((b) => b.status === "Payment Rejected").sort((a, b) => b.createdAt - a.createdAt);
   const detailBooking = bookings.find((b) => b.id === detailBookingId) ?? null;
   const receiptBooking = bookings.find((b) => b.id === receiptBookingId) ?? null;
   const openRecord = bookings.find((b) => b.id === openRecordId) ?? null;
@@ -114,6 +115,11 @@ export default function VetConsultsPage() {
             {t === "Payment Queue" && paymentQueue.length > 0 && (
               <span className="min-w-[17px] h-[17px] px-1 rounded-full bg-[#C9962B] text-white text-[10px] font-bold flex items-center justify-center">
                 {paymentQueue.length}
+              </span>
+            )}
+            {t === "Rejected" && rejectedList.length > 0 && (
+              <span className="min-w-[17px] h-[17px] px-1 rounded-full bg-[#D64545] text-white text-[10px] font-bold flex items-center justify-center">
+                {rejectedList.length}
               </span>
             )}
           </button>
@@ -330,6 +336,34 @@ export default function VetConsultsPage() {
         </div>
       )}
 
+      {tab === "Rejected" && (
+        <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+          <div className="grid grid-cols-[1.3fr_1fr_1fr_1.8fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+            <div>Booking</div>
+            <div>Owner</div>
+            <div>Amount</div>
+            <div>Reason</div>
+          </div>
+          {rejectedList.length === 0 ? (
+            <div className="px-4 py-6 text-xs text-[#8A96A3] text-center">No rejected payments</div>
+          ) : (
+            rejectedList.map((b) => (
+              <div key={b.id} className="grid grid-cols-[1.3fr_1fr_1fr_1.8fr] px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                <div>
+                  <div className="font-semibold text-[#1A2027]">
+                    {b.ownerName} — {b.petName}
+                  </div>
+                  <div className="text-[11px] text-[#8A96A3] mt-0.5">{b.id} · {b.doctorName}</div>
+                </div>
+                <div className="text-[#5B6773]">{b.ownerName}</div>
+                <div className="font-semibold">Rs. {b.amount}</div>
+                <div className="text-[#D64545]">{b.rejectReason || "—"}</div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       {tab === "Consult Records" && !openRecord && (
         <>
           <input
@@ -493,8 +527,8 @@ export default function VetConsultsPage() {
           booking={detailBooking}
           onClose={() => setDetailBookingId(null)}
           onApprove={() => approvePayment(detailBooking.id)}
-          onReject={() => {
-            rejectPayment(detailBooking.id);
+          onReject={(reason) => {
+            rejectPayment(detailBooking.id, reason);
             setDetailBookingId(null);
           }}
           onFinalize={() => finalizeBooking(detailBooking.id)}
@@ -536,11 +570,13 @@ function PaymentDetailModal({
   booking: VetBooking;
   onClose: () => void;
   onApprove: () => void;
-  onReject: () => void;
+  onReject: (reason: string) => void;
   onFinalize: () => void;
 }) {
   const isPendingApproval = booking.status === "Payment Review";
   const isAwaitingDoctorConfirm = booking.status === "Awaiting Doctor Reconfirm";
+  const [rejecting, setRejecting] = useState(false);
+  const [reason, setReason] = useState("");
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
@@ -578,14 +614,45 @@ function PaymentDetailModal({
           )}
         </div>
 
-        {isPendingApproval && (
+        {isPendingApproval && !rejecting && (
           <div className="flex gap-2.5">
             <button onClick={onApprove} className="flex-1 text-center bg-[#1F7A4D] text-white py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer">
               Approve Payment
             </button>
-            <button onClick={onReject} className="bg-[#F0F2F4] text-[#D64545] px-[18px] py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer">
+            <button
+              onClick={() => setRejecting(true)}
+              className="bg-[#F0F2F4] text-[#D64545] px-[18px] py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer"
+            >
               Reject
             </button>
+          </div>
+        )}
+        {isPendingApproval && rejecting && (
+          <div>
+            <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-1.5">Reason for Rejection</div>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Receipt doesn't match the consult amount"
+              rows={3}
+              className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-xs box-border mb-3 resize-none"
+            />
+            <div className="text-[11px] text-[#8A96A3] mb-3">This reason will be emailed to {booking.ownerName}.</div>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setRejecting(false)}
+                className="flex-1 text-center bg-[#F0F2F4] text-[#5B6773] py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => reason.trim() && onReject(reason.trim())}
+                disabled={!reason.trim()}
+                className="flex-1 text-center bg-[#D64545] text-white py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Confirm Reject
+              </button>
+            </div>
           </div>
         )}
         {isAwaitingDoctorConfirm && (

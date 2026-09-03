@@ -33,6 +33,30 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
     );
   }
 
+  if (booking.status === "Payment Rejected") {
+    return (
+      <div className="px-8 py-16 flex justify-center">
+        <div className="max-w-[720px] w-full text-center bg-[#FDEDEC] border border-[#F3C7C3] rounded-2xl px-12 py-14">
+          <div className="text-5xl mb-4">✕</div>
+          <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Payment Receipt Rejected</div>
+          <div className="text-base text-[#8A3A34] leading-relaxed mb-4">
+            We couldn&apos;t verify the payment receipt for your consult with {booking.doctorName}.
+          </div>
+          {booking.rejectReason && (
+            <div className="bg-white border border-[#F3C7C3] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#8A3A34] font-semibold inline-block mb-4">
+              Reason: {booking.rejectReason}
+            </div>
+          )}
+          <div>
+            <Link href="/vet" className="text-primary font-semibold text-sm">
+              Book a new consult →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (booking.status === "Pending Payment" || booking.status === "Payment Review") {
     return (
       <div className="px-8 py-16 flex justify-center">
