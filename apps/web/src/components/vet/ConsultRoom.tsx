@@ -188,8 +188,10 @@ export default function ConsultRoom({
 function FeedAttachment({ item, mine }: { item: SharedDoc; mine: boolean }) {
   if (item.kind === "image" && item.url) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={item.url} alt={item.name} className="w-[200px] h-[200px] rounded-[11px] border border-[#E4E9EC] object-cover" />
+      <button type="button" onClick={() => previewDataUrl(item.url)} className="block p-0 border-0 bg-transparent cursor-pointer" title="Tap to view full size">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={item.url} alt={item.name} className="w-[200px] h-[200px] rounded-[11px] border border-[#E4E9EC] object-cover" />
+      </button>
     );
   }
   if (item.kind === "video" && item.url) {
