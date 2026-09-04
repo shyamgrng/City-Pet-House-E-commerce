@@ -90,16 +90,36 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  if (booking.status === "Pending Payment" || booking.status === "Payment Review") {
+  if (booking.status === "Pending Payment") {
     return (
       <div className="px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#FFF8EA] border border-[#F0DFAE] rounded-2xl px-12 py-14">
           <div className="text-5xl mb-4">⏳</div>
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Request Sent</div>
-          <div className="text-base text-[#6B5D2E] leading-relaxed">
+          <div className="text-base text-[#6B5D2E] leading-relaxed mb-4">
             Thanks {booking.ownerName} — your request for <strong>Vet Consult</strong> with <strong>{booking.doctorName}</strong> has been
-            emailed to our team and to you for confirmation. We will get in touch prior to your booking time. If you need any support please
-            contact us.
+            received. Please complete your payment to confirm your booking.
+          </div>
+          <Link
+            href={`/vet/payment/${booking.id}`}
+            className="bg-[#1F7A4D] text-white px-[26px] py-3.5 rounded-[9px] text-[15px] font-semibold inline-block"
+          >
+            Upload Payment Receipt →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (booking.status === "Payment Review") {
+    return (
+      <div className="px-8 py-16 flex justify-center">
+        <div className="max-w-[720px] w-full text-center bg-[#FFF8EA] border border-[#F0DFAE] rounded-2xl px-12 py-14">
+          <div className="text-5xl mb-4">⏳</div>
+          <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Payment Submitted</div>
+          <div className="text-base text-[#6B5D2E] leading-relaxed">
+            Thanks {booking.ownerName} — we&apos;ve received your payment receipt for your <strong>Vet Consult</strong> with{" "}
+            <strong>{booking.doctorName}</strong>. Our team is verifying it now and you&apos;ll be notified the moment it&apos;s approved.
           </div>
         </div>
       </div>
