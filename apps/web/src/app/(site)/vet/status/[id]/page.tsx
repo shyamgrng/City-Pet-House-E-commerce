@@ -27,9 +27,19 @@ function WaitingTimer() {
 
 export default function VetStatusPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { bookings } = useVet();
+  const { bookings, refreshBooking } = useVet();
   const [callJoined, setCallJoined] = useState(false);
   const booking = bookings.find((b) => b.id === id);
+
+  // Backstop for the realtime push -- polls while waiting so this page notices the doctor
+  // starting the call (status flipping to "In Progress") without a manual refresh.
+  const waiting = booking?.status === "Confirmed" || booking?.status === "Awaiting Doctor Reconfirm";
+  useEffect(() => {
+    if (!waiting) return;
+    const interval = setInterval(() => refreshBooking(id), 3000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, waiting]);
 
   if (!booking) {
     return (
@@ -93,7 +103,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  const readyForCall = booking.status === "In Progress" || booking.status === "Confirmed";
+  const readyForCall = booking.status === "In Progress";
 
   return (
     <div className="px-8 py-14 flex justify-center">
@@ -116,7 +126,14 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
               <div className="text-base text-[#3A6B4C] leading-relaxed mb-6">
                 Your consult with {booking.doctorName} is ready. Invoice {booking.invoiceNumber} has been emailed to you.
               </div>
-              {!callJoined ? (
+              {booking.status === "Confirmed" && (
+                <div className="flex flex-col items-center gap-2.5">
+                  <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#3A6B4C] font-semibold inline-block">
+                    Waiting <WaitingTimer /> — your call will appear here as soon as {booking.doctorName} starts it.
+                  </div>
+                </div>
+              )}
+              {booking.status === "In Progress" && !callJoined && (
                 <div className="flex flex-col items-center gap-2.5">
                   <button
                     onClick={() => setCallJoined(true)}
@@ -124,11 +141,10 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
                   >
                     📹 Join Call
                   </button>
-                  <div className="text-xs text-[#3A6B4C]">
-                    Waiting <WaitingTimer /> — join any time, your doctor may already be in the room.
-                  </div>
+                  <div className="text-xs text-[#3A6B4C]">{booking.doctorName} has started the call — join whenever you&apos;re ready.</div>
                 </div>
-              ) : (
+              )}
+              {booking.status === "In Progress" && callJoined && (
                 <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-4 py-2.5 text-xs text-[#1F7A4D] font-semibold inline-block">
                   🎥 Call in progress below
                 </div>
