@@ -60,15 +60,37 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
           {booking.instant ? "Online now" : `${booking.scheduledDate} ${booking.scheduledTime}`} · {booking.reason}
         </div>
 
-        <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Pet Owner Details</div>
-          <div className="grid grid-cols-2 gap-2.5 text-xs">
-            <DetailField label="Owner Name" value={booking.ownerName} />
-            <DetailField label="Pet Name" value={booking.petName} />
-            <DetailField label="Phone" value={booking.ownerPhone} />
-            <DetailField label="Species" value={booking.petSpecies} />
-            <DetailField label="Pet Age" value={booking.petAge} />
-            <DetailField label="Reason" value={booking.reason} />
+        <div className="border border-[#E4E9EC] rounded-2xl p-5 mb-4 bg-white shadow-[0_1px_2px_rgba(16,24,32,0.04)]">
+          <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#F0F2F4]">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-[#EAF4F9] text-primary font-bold text-base flex items-center justify-center shrink-0">
+                {initials(booking.ownerName)}
+              </div>
+              <div>
+                <div className="text-sm font-bold text-[#1A2027]">{booking.ownerName}</div>
+                <div className="text-[11px] text-[#8A96A3]">Pet Owner</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 bg-[#F7F9FA] border border-[#E4E9EC] rounded-full pl-2 pr-3 py-1">
+              <span className="text-base">{petEmoji(booking.petSpecies)}</span>
+              <span className="text-xs font-semibold text-[#1A2027]">{booking.petName}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <IconDetail icon="📞" label="Phone">
+              <a href={`tel:${booking.ownerPhone}`} className="font-semibold text-primary hover:underline">
+                {booking.ownerPhone}
+              </a>
+            </IconDetail>
+            <IconDetail icon={petEmoji(booking.petSpecies)} label="Species">
+              {booking.petSpecies}
+            </IconDetail>
+            <IconDetail icon="🎂" label="Pet Age">
+              {booking.petAge}
+            </IconDetail>
+            <IconDetail icon="📝" label="Reason for Visit">
+              {booking.reason}
+            </IconDetail>
           </div>
         </div>
 
@@ -119,11 +141,28 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
   );
 }
 
-function DetailField({ label, value }: { label: string; value: string }) {
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
+}
+
+function petEmoji(species: string): string {
+  const s = species.toLowerCase();
+  if (s.includes("dog")) return "🐶";
+  if (s.includes("cat")) return "🐱";
+  if (s.includes("bird")) return "🐦";
+  if (s.includes("rabbit")) return "🐰";
+  return "🐾";
+}
+
+function IconDetail({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="text-[#8A96A3] mb-0.5">{label}</div>
-      <div className="font-semibold text-[#1A2027]">{value}</div>
+    <div className="flex items-start gap-2.5">
+      <div className="w-8 h-8 rounded-full bg-[#F7F9FA] flex items-center justify-center text-sm shrink-0">{icon}</div>
+      <div>
+        <div className="text-[#8A96A3] mb-0.5">{label}</div>
+        <div className="font-semibold text-[#1A2027]">{children}</div>
+      </div>
     </div>
   );
 }
