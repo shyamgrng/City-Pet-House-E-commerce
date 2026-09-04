@@ -175,20 +175,26 @@ function FeedAttachment({ item, mine }: { item: SharedDoc; mine: boolean }) {
   if (item.kind === "video" && item.url) {
     return <video src={item.url} controls className="w-[220px] h-[200px] rounded-[11px] border border-[#E4E9EC] bg-black" />;
   }
-  const chip = (
+  const color = mine ? "#fff" : "#1A2027";
+  return (
     <div
       className="flex items-center gap-2 px-3 py-2.5 rounded-[11px] text-xs"
-      style={{ background: mine ? "#1996C8" : "#F0F2F4", color: mine ? "#fff" : "#1A2027" }}
+      style={{ background: mine ? "#1996C8" : "#F0F2F4", color }}
     >
       <span>{item.kind === "video" ? "🎬" : "📎"}</span>
-      <span className="truncate max-w-[160px]">{item.name}</span>
-      {item.url && <span className="underline shrink-0">Open</span>}
+      <span className="truncate max-w-[110px]">{item.name}</span>
+      {item.url && (
+        <span className="flex items-center gap-2 shrink-0">
+          {/* No download attribute here -- opening in a new tab lets the browser/OS show its own
+           * native preview (PDF viewer, image viewer, etc.) instead of forcing a save-to-disk. */}
+          <a href={item.url} target="_blank" rel="noreferrer" className="underline" style={{ color }}>
+            Preview
+          </a>
+          <a href={item.url} download={item.name} className="underline" style={{ color }}>
+            Download
+          </a>
+        </span>
+      )}
     </div>
-  );
-  if (!item.url) return chip;
-  return (
-    <a href={item.url} download={item.name} target="_blank" rel="noreferrer" className="block cursor-pointer">
-      {chip}
-    </a>
   );
 }
