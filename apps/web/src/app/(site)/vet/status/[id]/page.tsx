@@ -31,15 +31,17 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
   const [callJoined, setCallJoined] = useState(false);
   const booking = bookings.find((b) => b.id === id);
 
-  // Backstop for the realtime push -- polls while waiting so this page notices the doctor
-  // starting the call (status flipping to "In Progress") without a manual refresh.
-  const waiting = booking?.status === "Confirmed" || booking?.status === "Awaiting Doctor Reconfirm";
+  // Backstop for the realtime push -- polls on every screen of this page (not just the
+  // "Confirmed" one) so admin approving payment, the doctor reconfirming, and the doctor
+  // starting the call all show up here without a manual refresh. Stops once the booking reaches
+  // a final state (nothing more can change after that).
+  const isFinal = booking?.status === "Completed" || booking?.status === "Payment Rejected" || booking?.status === "Cancelled";
   useEffect(() => {
-    if (!waiting) return;
+    if (!booking || isFinal) return;
     const interval = setInterval(() => refreshBooking(id), 3000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, waiting]);
+  }, [id, isFinal, !!booking]);
 
   if (!booking) {
     return (
