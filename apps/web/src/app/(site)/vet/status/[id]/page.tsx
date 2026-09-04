@@ -56,9 +56,10 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
       <div className="px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#F7F9FA] border border-[#E4E9EC] rounded-2xl px-12 py-14">
           <div className="text-5xl mb-4">✓</div>
-          <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Session Ended</div>
+          <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Thank You!</div>
           <div className="text-base text-[#5B6773] leading-relaxed">
-            Your consult with {booking.doctorName} has ended. A summary email has been sent to you.
+            Your consult with {booking.doctorName} has ended. Thank you for choosing City Pet House &amp; Animal Clinic — a summary of your
+            consult has been emailed to you.
           </div>
         </div>
       </div>
@@ -106,58 +107,54 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
   }
 
   const readyForCall = booking.status === "In Progress";
+  const inCall = readyForCall && callJoined;
 
   return (
     <div className="px-8 py-14 flex justify-center">
       <div className="max-w-[720px] w-full">
-        <div className="bg-[#EAF6EE] border border-[#CFE9D8] rounded-2xl px-10 py-8 text-center mb-5">
-          <div className="text-5xl mb-4">✓</div>
-          <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3.5">Payment Approved</div>
-          {booking.status === "Awaiting Doctor Reconfirm" ? (
-            <>
-              <div className="text-base text-[#3A6B4C] leading-relaxed mb-2">
-                Your payment has been verified — we&apos;re confirming your appointment time with {booking.doctorName}. You&apos;ll be
-                notified the moment it&apos;s confirmed.
-              </div>
-              <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#3A6B4C] font-semibold inline-block">
-                Waiting for {booking.doctorName} to reconfirm…
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-base text-[#3A6B4C] leading-relaxed mb-6">
-                Your consult with {booking.doctorName} is ready. Invoice {booking.invoiceNumber} has been emailed to you.
-              </div>
-              {booking.status === "Confirmed" && (
-                <div className="flex flex-col items-center gap-2.5">
-                  <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#3A6B4C] font-semibold inline-block">
-                    Waiting <WaitingTimer /> — your call will appear here as soon as {booking.doctorName} starts it.
+        {!inCall && (
+          <div className="bg-[#EAF6EE] border border-[#CFE9D8] rounded-2xl px-10 py-8 text-center mb-5">
+            <div className="text-5xl mb-4">✓</div>
+            <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3.5">Payment Approved</div>
+            {booking.status === "Awaiting Doctor Reconfirm" ? (
+              <>
+                <div className="text-base text-[#3A6B4C] leading-relaxed mb-2">
+                  Your payment has been verified — we&apos;re confirming your appointment time with {booking.doctorName}. You&apos;ll be
+                  notified the moment it&apos;s confirmed.
+                </div>
+                <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#3A6B4C] font-semibold inline-block">
+                  Waiting for {booking.doctorName} to reconfirm…
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-base text-[#3A6B4C] leading-relaxed mb-6">
+                  Your consult with {booking.doctorName} is ready. Invoice {booking.invoiceNumber} has been emailed to you.
+                </div>
+                {booking.status === "Confirmed" && (
+                  <div className="flex flex-col items-center gap-2.5">
+                    <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#3A6B4C] font-semibold inline-block">
+                      Waiting <WaitingTimer /> — your call will appear here as soon as {booking.doctorName} starts it.
+                    </div>
                   </div>
-                </div>
-              )}
-              {booking.status === "In Progress" && !callJoined && (
-                <div className="flex flex-col items-center gap-2.5">
-                  <button
-                    onClick={() => setCallJoined(true)}
-                    className="bg-[#1F7A4D] text-white px-[26px] py-3.5 rounded-[9px] text-[15px] font-semibold cursor-pointer"
-                  >
-                    📹 Join Call
-                  </button>
-                  <div className="text-xs text-[#3A6B4C]">{booking.doctorName} has started the call — join whenever you&apos;re ready.</div>
-                </div>
-              )}
-              {booking.status === "In Progress" && callJoined && (
-                <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-4 py-2.5 text-xs text-[#1F7A4D] font-semibold inline-block">
-                  🎥 Call in progress below
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {readyForCall && callJoined && (
-          <ConsultRoom booking={booking} viewer="client" onLeave={() => setCallJoined(false)} />
+                )}
+                {booking.status === "In Progress" && !callJoined && (
+                  <div className="flex flex-col items-center gap-2.5">
+                    <button
+                      onClick={() => setCallJoined(true)}
+                      className="bg-[#1F7A4D] text-white px-[26px] py-3.5 rounded-[9px] text-[15px] font-semibold cursor-pointer"
+                    >
+                      📹 Join Call
+                    </button>
+                    <div className="text-xs text-[#3A6B4C]">{booking.doctorName} has started the call — join whenever you&apos;re ready.</div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         )}
+
+        {inCall && <ConsultRoom booking={booking} viewer="client" onLeave={() => setCallJoined(false)} />}
       </div>
     </div>
   );
