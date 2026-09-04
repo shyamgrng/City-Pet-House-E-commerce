@@ -100,7 +100,7 @@ export default function ConsultRoom({
   ].sort((a, b) => a.ts - b.ts);
 
   return (
-    <div className="border border-[#E4E9EC] rounded-2xl p-4 mb-4">
+    <div className="border border-[#E4E9EC] rounded-2xl p-4 mb-4 bg-white">
       <div className="flex justify-between items-center mb-2.5 flex-wrap gap-2">
         <div className="text-xs font-bold text-[#8A96A3] tracking-wide">🎥 LIVE CONSULT</div>
         <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export default function ConsultRoom({
         />
       </div>
 
-      <div className="border border-[#E4E9EC] rounded-xl p-4 flex flex-col h-[420px]">
+      <div className="border border-[#E4E9EC] rounded-xl p-4 flex flex-col h-[420px] bg-white">
         <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Chat with {otherName}</div>
         <div className="flex-1 overflow-y-auto flex flex-col gap-2 mb-2.5">
           {feed.length === 0 ? (

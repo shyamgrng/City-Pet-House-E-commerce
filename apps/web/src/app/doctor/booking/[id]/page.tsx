@@ -36,14 +36,14 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-[#F7F9FA] px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="min-h-screen bg-white px-8 py-10 text-center text-sm text-[#8A96A3]">
         Booking not found. <Link href="/doctor" className="text-primary font-semibold">Back to Portal</Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F9FA]">
+    <div className="min-h-screen bg-white">
       <div className="px-8 py-7 max-w-[760px] mx-auto">
         <Link href="/doctor" className="text-[13px] text-primary font-semibold mb-4 inline-block">
           ← Back to Bookings
@@ -94,7 +94,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
 
-        <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4">
+        <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4 bg-white">
           <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Client Shared Files</div>
           {booking.clientDocuments.length === 0 ? (
             <div className="text-xs text-[#8A96A3]">No files shared by the client yet</div>
@@ -130,7 +130,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
           <div className="bg-[#EAF6EE] border border-[#CFE9D8] rounded-[10px] px-3.5 py-3 text-xs text-[#1F7A4D] mb-4">✓ Session ended</div>
         )}
 
-        <div className="border border-[#E4E9EC] rounded-xl p-4">
+        <div className="border border-[#E4E9EC] rounded-xl p-4 bg-white">
           <div className="text-[13px] font-semibold text-[#1A2027] mb-1.5">Consult Fee</div>
           <div className="text-[13px] text-[#5B6773]">
             Rs. {booking.amount} · Invoice {booking.invoiceNumber}
@@ -180,7 +180,7 @@ function ChatPanel({ booking, onCall }: { booking: VetBooking; onCall: () => voi
   };
 
   return (
-    <div className="border border-[#E4E9EC] rounded-xl p-4">
+    <div className="border border-[#E4E9EC] rounded-xl p-4 bg-white">
       <div className="flex justify-between items-center mb-3">
         <div className="text-[15px] font-bold text-[#1A2027] flex items-center gap-2">
           Chat with {booking.ownerName}
