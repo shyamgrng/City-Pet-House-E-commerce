@@ -10,6 +10,26 @@ const ATTACH_ACCEPT = "image/*,video/*,application/pdf,.doc,.docx,application/ms
 
 type FeedItem = ({ type: "message" } & ChatMessage) | ({ type: "doc" } & SharedDoc);
 
+/**
+ * Browsers block navigating a new tab straight to a data: URL (a phishing-prevention measure),
+ * so a plain `<a href={dataUrl} target="_blank">` silently does nothing -- only the `download`
+ * attribute's separate code path is exempt from that block. Converting to a blob: URL first
+ * sidesteps the restriction and actually opens the file in the browser's native viewer.
+ */
+function previewDataUrl(dataUrl: string) {
+  try {
+    const [meta, base64] = dataUrl.split(",");
+    const mime = /data:(.*?);base64/.exec(meta)?.[1] ?? "application/octet-stream";
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    window.open(blobUrl, "_blank", "noopener,noreferrer");
+  } catch {
+    window.open(dataUrl, "_blank", "noopener,noreferrer");
+  }
+}
+
 export default function ConsultRoom({
   booking,
   viewer,
@@ -185,11 +205,9 @@ function FeedAttachment({ item, mine }: { item: SharedDoc; mine: boolean }) {
       <span className="truncate max-w-[110px]">{item.name}</span>
       {item.url && (
         <span className="flex items-center gap-2 shrink-0">
-          {/* No download attribute here -- opening in a new tab lets the browser/OS show its own
-           * native preview (PDF viewer, image viewer, etc.) instead of forcing a save-to-disk. */}
-          <a href={item.url} target="_blank" rel="noreferrer" className="underline" style={{ color }}>
+          <button type="button" onClick={() => previewDataUrl(item.url)} className="underline cursor-pointer bg-transparent border-0 p-0" style={{ color }}>
             Preview
-          </a>
+          </button>
           <a href={item.url} download={item.name} className="underline" style={{ color }}>
             Download
           </a>
