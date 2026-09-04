@@ -11,7 +11,7 @@ import { STATUS_COLORS, type VetBooking } from "@/lib/vet-types";
 export default function DoctorBookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { doctor, ready } = useDoctorAuth();
-  const { bookings, startCall, endCall } = useVet();
+  const { bookings, startCall, endCall, refreshBooking } = useVet();
   const router = useRouter();
 
   useEffect(() => {
@@ -19,6 +19,18 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
   }, [ready, doctor, router]);
 
   const booking = bookings.find((b) => b.id === id);
+
+  // Backstop for the realtime push -- polls on every non-final status so this page notices
+  // admin approving payment (which is what makes the chat/call UI appear below) without a
+  // manual refresh. Without this, the doctor would never see a booking flip out of
+  // "Payment Review" until they happened to reload the page.
+  const isFinal = booking?.status === "Completed" || booking?.status === "Payment Rejected" || booking?.status === "Cancelled";
+  useEffect(() => {
+    if (!booking || isFinal) return;
+    const interval = setInterval(() => refreshBooking(id), 3000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isFinal, !!booking]);
 
   if (!ready || !doctor) return null;
 
@@ -119,16 +131,8 @@ function DetailField({ label, value }: { label: string; value: string }) {
 /** Chat available as soon as the consult is confirmed -- the call icons launch the actual
  * video call (transitions the booking to "In Progress", which mounts ConsultRoom). */
 function ChatPanel({ booking, onCall }: { booking: VetBooking; onCall: () => void }) {
-  const { sendMessage, refreshBooking } = useVet();
+  const { sendMessage } = useVet();
   const [chatInput, setChatInput] = useState("");
-
-  // Backstop for the realtime push -- polls for the client's messages every few seconds so
-  // chat still arrives promptly even if a network drops the live subscription.
-  useEffect(() => {
-    const interval = setInterval(() => refreshBooking(booking.id), 3000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking.id]);
 
   const send = () => {
     if (!chatInput.trim()) return;
