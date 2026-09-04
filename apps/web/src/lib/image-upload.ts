@@ -113,3 +113,17 @@ export function readVideoFile(file: File, maxBytes = 5 * 1024 * 1024): Promise<s
     reader.readAsDataURL(file);
   });
 }
+
+/** Reads a PDF/Word file as a data URL so it can actually be opened/downloaded later. */
+export function readDocumentFile(file: File, maxBytes = 10 * 1024 * 1024): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (file.size > maxBytes) {
+      reject(new Error(`File is too large — please choose one under ${Math.round(maxBytes / (1024 * 1024))}MB.`));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read file."));
+    reader.onload = () => resolve(reader.result as string);
+    reader.readAsDataURL(file);
+  });
+}

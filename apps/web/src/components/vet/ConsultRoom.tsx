@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useVet } from "@/context/VetContext";
 import type { ChatMessage, SharedDoc, VetBooking } from "@/lib/vet-types";
-import { isAllowedDocumentFile, isAllowedImageFile, isAllowedVideoFile, readVideoFile, resizeImageFile } from "@/lib/image-upload";
+import { isAllowedDocumentFile, isAllowedImageFile, isAllowedVideoFile, readDocumentFile, readVideoFile, resizeImageFile } from "@/lib/image-upload";
 import VideoCall, { vetCallRoomName } from "./VideoCall";
 
 const ATTACH_ACCEPT = "image/*,video/*,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -60,7 +60,8 @@ export default function ConsultRoom({
         const url = await readVideoFile(file);
         addDoc(booking.id, { name: file.name, url, kind: "video" });
       } else if (isAllowedDocumentFile(file)) {
-        addDoc(booking.id, { name: file.name, url: "", kind: "file" });
+        const url = await readDocumentFile(file);
+        addDoc(booking.id, { name: file.name, url, kind: "file" });
       } else {
         setAttachError("Please choose an image, video, PDF, or Word document.");
       }
@@ -174,13 +175,20 @@ function FeedAttachment({ item, mine }: { item: SharedDoc; mine: boolean }) {
   if (item.kind === "video" && item.url) {
     return <video src={item.url} controls className="w-[220px] h-[200px] rounded-[11px] border border-[#E4E9EC] bg-black" />;
   }
-  return (
+  const chip = (
     <div
       className="flex items-center gap-2 px-3 py-2.5 rounded-[11px] text-xs"
       style={{ background: mine ? "#1996C8" : "#F0F2F4", color: mine ? "#fff" : "#1A2027" }}
     >
       <span>{item.kind === "video" ? "🎬" : "📎"}</span>
       <span className="truncate max-w-[160px]">{item.name}</span>
+      {item.url && <span className="underline shrink-0">Open</span>}
     </div>
+  );
+  if (!item.url) return chip;
+  return (
+    <a href={item.url} download={item.name} target="_blank" rel="noreferrer" className="block cursor-pointer">
+      {chip}
+    </a>
   );
 }
