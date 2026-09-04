@@ -67,18 +67,18 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
                 {initials(booking.ownerName)}
               </div>
               <div>
-                <div className="text-sm font-bold text-[#1A2027]">{booking.ownerName}</div>
-                <div className="text-[11px] text-[#8A96A3]">Pet Owner</div>
+                <div className="text-base font-bold text-[#1A2027]">{booking.ownerName}</div>
+                <div className="text-xs text-[#8A96A3]">Pet Owner</div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 bg-[#F7F9FA] border border-[#E4E9EC] rounded-full pl-2 pr-3 py-1">
-              <span className="text-base">{petEmoji(booking.petSpecies)}</span>
-              <span className="text-xs font-semibold text-[#1A2027]">{booking.petName}</span>
+            <div className="flex items-center gap-1.5 bg-[#F7F9FA] border border-[#E4E9EC] rounded-full pl-2.5 pr-3.5 py-1.5">
+              <span className="text-lg">{petEmoji(booking.petSpecies)}</span>
+              <span className="text-sm font-bold text-[#1A2027]">{booking.petName}</span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <IconDetail icon="📞" label="Phone">
-              <a href={`tel:${booking.ownerPhone}`} className="font-semibold text-primary hover:underline">
+              <a href={`tel:${booking.ownerPhone}`} className="font-bold text-primary hover:underline">
                 {booking.ownerPhone}
               </a>
             </IconDetail>
@@ -158,10 +158,10 @@ function petEmoji(species: string): string {
 function IconDetail({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2.5">
-      <div className="w-8 h-8 rounded-full bg-[#F7F9FA] flex items-center justify-center text-sm shrink-0">{icon}</div>
+      <div className="w-9 h-9 rounded-full bg-[#F7F9FA] flex items-center justify-center text-base shrink-0">{icon}</div>
       <div>
-        <div className="text-[#8A96A3] mb-0.5">{label}</div>
-        <div className="font-semibold text-[#1A2027]">{children}</div>
+        <div className="text-xs text-[#8A96A3] mb-0.5">{label}</div>
+        <div className="font-bold text-[15px] text-[#1A2027]">{children}</div>
       </div>
     </div>
   );
