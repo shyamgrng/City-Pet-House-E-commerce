@@ -58,13 +58,13 @@ export default function VideoCall({
 
   if (error) {
     return (
-      <div className="w-full h-[340px] rounded-[10px] bg-[#111823] flex items-center justify-center text-center px-6">
-        <div className="text-sm text-[#F0A0A0]">{error}</div>
+      <div className="w-full h-[340px] rounded-[10px] bg-[#FDEDEC] border border-[#F3C7C3] flex items-center justify-center text-center px-6">
+        <div className="text-sm text-[#8A3A34]">{error}</div>
       </div>
     );
   }
 
-  return <div ref={containerRef} className="w-full h-[460px] rounded-[10px] overflow-hidden bg-[#111823] border border-[#1A2027]" />;
+  return <div ref={containerRef} className="w-full h-[460px] rounded-[10px] overflow-hidden bg-white border border-[#E4E9EC]" />;
 }
 
 export function vetCallRoomName(bookingId: string) {
