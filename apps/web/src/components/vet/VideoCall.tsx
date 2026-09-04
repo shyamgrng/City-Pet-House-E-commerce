@@ -1,50 +1,17 @@
 "use client";
 
+import DailyIframe, { type DailyCall } from "@daily-co/daily-js";
 import { useEffect, useRef, useState } from "react";
 
-// Public, free Jitsi server -- real WebRTC audio/video between two different devices, with no
-// API keys, account, or backend of our own required. Jitsi's own server handles room presence
-// and signaling, which is why this works across two separate browsers even though the rest of
-// this app has no shared backend (everything else is per-browser localStorage).
-const JITSI_DOMAIN = "meet.jit.si";
-
-type JitsiApi = {
-  addEventListener: (event: string, cb: (...args: unknown[]) => void) => void;
-  dispose: () => void;
-};
-
-declare global {
-  interface Window {
-    JitsiMeetExternalAPI?: new (domain: string, options: Record<string, unknown>) => JitsiApi;
-  }
-}
-
-let scriptPromise: Promise<void> | null = null;
-function loadJitsiScript(): Promise<void> {
-  if (window.JitsiMeetExternalAPI) return Promise.resolve();
-  if (!scriptPromise) {
-    scriptPromise = new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src = `https://${JITSI_DOMAIN}/external_api.js`;
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => {
-        scriptPromise = null;
-        reject(new Error("load failed"));
-      };
-      document.body.appendChild(script);
-    });
-  }
-  return scriptPromise;
-}
-
 /**
- * Real video call embed. roomName must be the same deterministic value on both the doctor's
- * and client's pages for a given booking so they land in the same Jitsi room.
+ * Real video call embed via Daily.co. roomName must be the same deterministic value on both
+ * the doctor's and client's pages for a given booking so they land in the same room.
  *
- * Caveat worth knowing: meet.jit.si is a public server -- anyone who guesses the room name
- * could join. Fine for a demo/prototype; a real deployment handling patient consults should
- * move to a private/self-hosted Jitsi (or a paid provider) with authenticated rooms.
+ * We switched here from the free public Jitsi server (meet.jit.si) because since August 2024
+ * it requires the first person in any room to authenticate with a personal Google/GitHub/
+ * Facebook account to become moderator -- a step that can't be done through an embedded call
+ * window, so anonymous doctor/client calls got stuck on "please wait for a moderator" forever.
+ * Daily has no such requirement.
  */
 export default function VideoCall({
   roomName,
@@ -56,53 +23,35 @@ export default function VideoCall({
   onLeave?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const apiRef = useRef<JitsiApi | null>(null);
+  const callRef = useRef<DailyCall | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
-    loadJitsiScript()
-      .then(() => {
-        if (cancelled || !containerRef.current || !window.JitsiMeetExternalAPI) return;
-        const api = new window.JitsiMeetExternalAPI(JITSI_DOMAIN, {
-          roomName,
-          parentNode: containerRef.current,
-          width: "100%",
-          height: "100%",
-          // "&" in a display name corrupts the URL Jitsi builds internally and comes back
-          // rendered as a literal "&amp;" -- strip it rather than fight Jitsi's own escaping.
-          userInfo: { displayName: displayName.replace(/&/g, "and") },
-          configOverwrite: {
-            // The old flag is ignored by current Jitsi versions (hence the raw "Join meeting"
-            // lobby with the ugly room-name heading); prejoinConfig.enabled is what actually
-            // skips straight into the call.
-            prejoinPageEnabled: false,
-            prejoinConfig: { enabled: false },
-            disableDeepLinking: true,
-            doNotStoreRoom: true,
-            startWithAudioMuted: false,
-            startWithVideoMuted: false,
-          },
-          interfaceConfigOverwrite: {
-            TOOLBAR_BUTTONS: ["microphone", "camera", "desktop", "chat", "tileview", "hangup", "fullscreen"],
-            SHOW_JITSI_WATERMARK: false,
-            SHOW_WATERMARK_FOR_GUESTS: false,
-            SHOW_BRAND_WATERMARK: false,
-            HIDE_INVITE_MORE_HEADER: true,
-            MOBILE_APP_PROMO: false,
-            SHOW_CHROME_EXTENSION_BANNER: false,
-            DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-            DEFAULT_BACKGROUND: "#111823",
-          },
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/daily-room?room=${encodeURIComponent(roomName)}`);
+        const data = (await res.json()) as { ok: boolean; url?: string; error?: string };
+        if (!res.ok || !data.ok || !data.url) throw new Error(data.error || "Could not set up the video call room.");
+        if (cancelled || !containerRef.current) return;
+
+        const call = DailyIframe.createFrame(containerRef.current, {
+          iframeStyle: { width: "100%", height: "100%", border: "0" },
+          showLeaveButton: true,
         });
-        apiRef.current = api;
-        api.addEventListener("readyToClose", () => onLeave?.());
-      })
-      .catch(() => setError("Could not load the video call service — check your internet connection and try again."));
+        callRef.current = call;
+        call.on("left-meeting", () => onLeave?.());
+        await call.join({ url: data.url, userName: displayName });
+      } catch {
+        if (!cancelled) setError("Could not load the video call service — check your internet connection and try again.");
+      }
+    })();
+
     return () => {
       cancelled = true;
-      apiRef.current?.dispose();
-      apiRef.current = null;
+      callRef.current?.destroy();
+      callRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomName]);
@@ -119,5 +68,5 @@ export default function VideoCall({
 }
 
 export function vetCallRoomName(bookingId: string) {
-  return `cph-vet-${bookingId}`.replace(/[^a-zA-Z0-9-]/g, "");
+  return `cph-vet-${bookingId}`.replace(/[^a-zA-Z0-9-]/g, "").toLowerCase();
 }
