@@ -82,6 +82,7 @@ export async function buildPrescriptionPdf(data: PrescriptionPdfData): Promise<U
 
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   page.drawText(`Date: ${today}`, { x: PAGE_WIDTH - MARGIN - font.widthOfTextAtSize(`Date: ${today}`, 9), y, size: 9, font, color: label });
+  y -= 22;
 
   // Owner's Details / Pet's Details bordered table, two columns.
   const rowH = 16;
