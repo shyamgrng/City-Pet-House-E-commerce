@@ -53,19 +53,34 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/assets/vet-letterhead-header.png" alt="" className="w-full h-auto block" />
 
-      <div className="px-6 py-4 flex flex-col gap-4">
-        <div className="flex justify-between items-start border-b border-[#F0F2F4] pb-3">
-          <div className="text-xs text-[#3A4652]">
-            <strong>{booking.petName}</strong> ({booking.petSpecies}, {booking.petAge}) · Owner: {booking.ownerName}
+      <div className="px-6 py-4 flex flex-col gap-6">
+        <div className="text-right">
+          <span className="text-[10px] text-[#8A96A3]">Date: </span>
+          <span className="text-xs font-semibold text-[#1A2027]">{today}</span>
+        </div>
+
+        <div className="border border-[#E4E9EC] rounded-md overflow-hidden text-xs">
+          <div className="grid grid-cols-2 border-b border-[#E4E9EC]">
+            <div className="px-3 py-1.5 font-bold text-[#1A2027] border-r border-[#E4E9EC]">Owner&apos;s Details</div>
+            <div className="px-3 py-1.5 font-bold text-[#1A2027]">Pet&apos;s Details</div>
           </div>
-          <div className="text-right shrink-0">
-            <div className="text-[10px] text-[#8A96A3]">Date</div>
-            <div className="text-xs font-semibold text-[#1A2027]">{today}</div>
+          <div className="grid grid-cols-2">
+            <div className="px-3 py-2 border-r border-[#E4E9EC] flex flex-col gap-1">
+              <div><span className="text-[#8A96A3]">Name </span><span className="font-semibold text-[#1A2027]">{booking.ownerName}</span></div>
+              <div><span className="text-[#8A96A3]">Phone </span><span className="font-semibold text-[#1A2027]">{booking.ownerPhone}</span></div>
+              <div><span className="text-[#8A96A3]">Email </span><span className="font-semibold text-[#1A2027]">{booking.ownerEmail || "—"}</span></div>
+            </div>
+            <div className="px-3 py-2 flex flex-col gap-1">
+              <div><span className="text-[#8A96A3]">Name </span><span className="font-semibold text-[#1A2027]">{booking.petName}</span></div>
+              <div><span className="text-[#8A96A3]">Species </span><span className="font-semibold text-[#1A2027]">{booking.petSpecies}</span></div>
+              <div><span className="text-[#8A96A3]">Age </span><span className="font-semibold text-[#1A2027]">{booking.petAge}</span></div>
+              <div><span className="text-[#8A96A3]">Reason </span><span className="font-semibold text-[#1A2027]">{booking.reason}</span></div>
+            </div>
           </div>
         </div>
 
         <div>
-          <label className="text-[11px] font-semibold text-[#8A96A3] uppercase tracking-wide mb-1.5 block">Pet History</label>
+          <label className="text-[11px] font-semibold text-[#8A96A3] uppercase tracking-wide mb-1.5 block">Hx</label>
           <textarea
             value={draft.history}
             onChange={(e) => setDraft((d) => ({ ...d, history: e.target.value }))}
@@ -75,7 +90,7 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
         </div>
 
         <div>
-          <label className="text-[11px] font-semibold text-[#8A96A3] uppercase tracking-wide mb-1.5 block">Diagnosis / Clinical Notes</label>
+          <label className="text-[11px] font-semibold text-[#8A96A3] uppercase tracking-wide mb-1.5 block">Diagnosis</label>
           <textarea
             value={draft.diagnosis}
             onChange={(e) => setDraft((d) => ({ ...d, diagnosis: e.target.value }))}
@@ -86,7 +101,7 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
 
         <div>
           <div className="flex justify-between items-center mb-1.5">
-            <label className="text-[11px] font-semibold text-[#8A96A3] uppercase tracking-wide">Prescribed Medicines</label>
+            <label className="text-[11px] font-semibold text-[#8A96A3] uppercase tracking-wide">Rx</label>
             <button type="button" onClick={addMedicine} className="text-[11px] text-primary font-semibold cursor-pointer">
               + Add Medicine
             </button>
@@ -170,9 +185,9 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
       </div>
 
       {/* Signature block: doctor's name/qualification/NVC number with the clinic's official
-       * stamp beside it, matching how a printed prescription is signed off. */}
-      <div className="px-6 pt-2 pb-5 flex justify-end items-center gap-3">
-        <div className="text-right">
+       * stamp placed right up against the name, matching the emailed letterhead PDF. */}
+      <div className="px-6 pt-2 pb-5 flex items-start gap-2">
+        <div>
           <div className="text-[13px] font-bold text-[#1A2027]">{booking.doctorName}</div>
           {doctor && <div className="text-[10px] text-[#8A96A3]">{doctor.qualification}</div>}
           {doctor && <div className="text-[10px] text-[#8A96A3]">NVC No: {doctor.nvcNumber}</div>}
@@ -183,7 +198,7 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
           )}
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/vet-clinic-stamp.png" alt="Clinic stamp" className="w-16 h-16 object-contain shrink-0 opacity-90" />
+        <img src="/assets/vet-clinic-stamp.png" alt="Clinic stamp" className="w-16 h-16 object-contain shrink-0 opacity-90 -mt-1" />
       </div>
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
