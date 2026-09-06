@@ -43,6 +43,16 @@ export type SharedDoc = { name: string; ts: number; from: "client" | "doctor"; u
 
 export type PrescriptionMedicine = { name: string; dosage: string; frequency: string; duration: string };
 export type Prescription = {
+  // Owner/pet details as they should appear on the letterhead -- seeded from the booking but
+  // editable by the doctor (e.g. to fix a typo the client made at booking time) without
+  // touching the underlying booking record.
+  ownerName: string;
+  ownerPhone: string;
+  ownerEmail: string;
+  petName: string;
+  petSpecies: string;
+  petAge: string;
+  reason: string;
   history: string;
   diagnosis: string;
   medicines: PrescriptionMedicine[];

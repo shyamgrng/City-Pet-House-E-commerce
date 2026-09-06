@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import ConsultRoom from "@/components/vet/ConsultRoom";
 import PrescriptionPad from "@/components/vet/PrescriptionPad";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
@@ -14,6 +14,8 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
   const { doctor, ready } = useDoctorAuth();
   const { bookings, startCall, endCall, refreshBooking } = useVet();
   const router = useRouter();
+  const consultRef = useRef<HTMLDivElement>(null);
+  const [consultHeight, setConsultHeight] = useState<number | null>(null);
 
   useEffect(() => {
     if (ready && !doctor) router.replace("/doctor/login");
@@ -32,6 +34,27 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isFinal, !!booking]);
+
+  // Keeps the prescription card's height locked to the live consult card's rendered height (on
+  // desktop, where they sit side by side) so the letterhead's bottom edge lines up with the
+  // chat box's bottom edge instead of trailing further down the page -- the form fields inside
+  // scroll internally instead of pushing the card taller.
+  useEffect(() => {
+    if (booking?.status !== "In Progress" || !consultRef.current) {
+      setConsultHeight(null);
+      return;
+    }
+    const el = consultRef.current;
+    const update = () => setConsultHeight(window.innerWidth >= 1024 ? el.offsetHeight : null);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [booking?.status]);
 
   if (!ready || !doctor) return null;
 
@@ -118,11 +141,14 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
 
         {booking.status === "In Progress" && (
           <div className="flex flex-col lg:flex-row gap-4 items-start mb-4">
-            <div className="flex-1 min-w-0 w-full">
+            <div className="flex-1 min-w-0 w-full" ref={consultRef}>
               <ConsultRoom booking={booking} viewer="doctor" />
             </div>
-            <div className="w-full lg:w-[560px] shrink-0">
-              <PrescriptionPad booking={booking} />
+            <div
+              className={`w-full lg:w-[560px] shrink-0 ${consultHeight ? "lg:overflow-hidden" : ""}`}
+              style={consultHeight ? { height: consultHeight } : undefined}
+            >
+              <PrescriptionPad booking={booking} fillHeight={!!consultHeight} />
             </div>
           </div>
         )}

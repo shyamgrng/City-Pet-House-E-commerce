@@ -6,8 +6,25 @@ import type { Prescription, PrescriptionMedicine, VetBooking } from "@/lib/vet-t
 
 const EMPTY_MEDICINE: PrescriptionMedicine = { name: "", dosage: "", frequency: "", duration: "" };
 
-function emptyDraft(): Prescription {
-  return { history: "", diagnosis: "", medicines: [{ ...EMPTY_MEDICINE }], advice: "", updatedAt: 0, sentAt: null };
+/** Seeds the editable owner/pet detail fields from the booking on first load, but leaves an
+ * existing draft's own values alone -- so a doctor's correction survives the 3s polling refresh
+ * without being stomped back to the original booking data. */
+function makeDraft(existing: Prescription | null, booking: VetBooking): Prescription {
+  return {
+    ownerName: existing?.ownerName ?? booking.ownerName,
+    ownerPhone: existing?.ownerPhone ?? booking.ownerPhone,
+    ownerEmail: existing?.ownerEmail ?? booking.ownerEmail,
+    petName: existing?.petName ?? booking.petName,
+    petSpecies: existing?.petSpecies ?? booking.petSpecies,
+    petAge: existing?.petAge ?? booking.petAge,
+    reason: existing?.reason ?? booking.reason,
+    history: existing?.history ?? "",
+    diagnosis: existing?.diagnosis ?? "",
+    medicines: existing?.medicines ?? [{ ...EMPTY_MEDICINE }],
+    advice: existing?.advice ?? "",
+    updatedAt: existing?.updatedAt ?? 0,
+    sentAt: existing?.sentAt ?? null,
+  };
 }
 
 /**
@@ -17,15 +34,21 @@ function emptyDraft(): Prescription {
  * Local draft state is only ever seeded from booking.prescription once (lazy initializer),
  * never re-synced from it on every render -- otherwise the polling refresh every few seconds
  * would stomp on whatever the doctor is mid-typing.
+ *
+ * When rendered next to the live consult (fillHeight), the card matches the ConsultRoom's
+ * height exactly -- only the form fields scroll internally -- so its bottom edge lines up with
+ * the chat box's bottom edge instead of trailing off further down the page.
  */
-export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
+export default function PrescriptionPad({ booking, fillHeight = false }: { booking: VetBooking; fillHeight?: boolean }) {
   const { doctors, savePrescriptionDraft, sendPrescription, saveError } = useVet();
-  const [draft, setDraft] = useState<Prescription>(() => booking.prescription ?? emptyDraft());
+  const [draft, setDraft] = useState<Prescription>(() => makeDraft(booking.prescription, booking));
   const [savedNotice, setSavedNotice] = useState(false);
   const [sending, setSending] = useState(false);
 
   const doctor = doctors.find((d) => d.id === booking.doctorId);
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+
+  const updateField = (field: keyof Prescription, value: string) => setDraft((d) => ({ ...d, [field]: value }));
 
   const updateMedicine = (index: number, field: keyof PrescriptionMedicine, value: string) => {
     setDraft((d) => ({ ...d, medicines: d.medicines.map((m, i) => (i === index ? { ...m, [field]: value } : m)) }));
@@ -49,32 +72,32 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
   };
 
   return (
-    <div className="border border-[#E4E9EC] rounded-2xl overflow-hidden bg-white">
+    <div className={`border border-[#E4E9EC] rounded-2xl overflow-hidden bg-white ${fillHeight ? "h-full flex flex-col" : ""}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/assets/vet-letterhead-header.png" alt="" className="w-full h-auto block" />
+      <img src="/assets/vet-letterhead-header.png" alt="" className={`w-full h-auto block ${fillHeight ? "shrink-0" : ""}`} />
 
-      <div className="px-6 py-4 flex flex-col gap-6">
+      <div className={`px-6 py-4 flex flex-col gap-6 ${fillHeight ? "flex-1 min-h-0 overflow-y-auto [&>*]:shrink-0" : ""}`}>
         <div className="text-right">
           <span className="text-[10px] text-[#8A96A3]">Date: </span>
           <span className="text-xs font-semibold text-[#1A2027]">{today}</span>
         </div>
 
         <div className="border border-[#E4E9EC] rounded-md overflow-hidden text-xs">
-          <div className="grid grid-cols-2 border-b border-[#E4E9EC]">
-            <div className="px-3 py-1.5 font-bold text-[#1A2027] border-r border-[#E4E9EC]">Owner&apos;s Details</div>
-            <div className="px-3 py-1.5 font-bold text-[#1A2027]">Pet&apos;s Details</div>
+          <div className="flex border-b border-[#E4E9EC]">
+            <div className="flex-1 min-w-0 px-3 py-1.5 font-bold text-[#1A2027] border-r border-[#E4E9EC]">Owner&apos;s Details</div>
+            <div className="flex-1 min-w-0 px-3 py-1.5 font-bold text-[#1A2027]">Pet&apos;s Details</div>
           </div>
-          <div className="grid grid-cols-2">
-            <div className="px-3 py-2 border-r border-[#E4E9EC] flex flex-col gap-1">
-              <div><span className="text-[#8A96A3]">Name </span><span className="font-semibold text-[#1A2027]">{booking.ownerName}</span></div>
-              <div><span className="text-[#8A96A3]">Phone </span><span className="font-semibold text-[#1A2027]">{booking.ownerPhone}</span></div>
-              <div><span className="text-[#8A96A3]">Email </span><span className="font-semibold text-[#1A2027]">{booking.ownerEmail || "—"}</span></div>
+          <div className="flex">
+            <div className="flex-1 min-w-0 px-3 py-2 border-r border-[#E4E9EC] flex flex-col gap-1">
+              <DetailField label="Name" value={draft.ownerName} onChange={(v) => updateField("ownerName", v)} />
+              <DetailField label="Phone" value={draft.ownerPhone} onChange={(v) => updateField("ownerPhone", v)} />
+              <DetailField label="Email" value={draft.ownerEmail} onChange={(v) => updateField("ownerEmail", v)} />
             </div>
-            <div className="px-3 py-2 flex flex-col gap-1">
-              <div><span className="text-[#8A96A3]">Name </span><span className="font-semibold text-[#1A2027]">{booking.petName}</span></div>
-              <div><span className="text-[#8A96A3]">Species </span><span className="font-semibold text-[#1A2027]">{booking.petSpecies}</span></div>
-              <div><span className="text-[#8A96A3]">Age </span><span className="font-semibold text-[#1A2027]">{booking.petAge}</span></div>
-              <div><span className="text-[#8A96A3]">Reason </span><span className="font-semibold text-[#1A2027]">{booking.reason}</span></div>
+            <div className="flex-1 min-w-0 px-3 py-2 flex flex-col gap-1">
+              <DetailField label="Name" value={draft.petName} onChange={(v) => updateField("petName", v)} />
+              <DetailField label="Species" value={draft.petSpecies} onChange={(v) => updateField("petSpecies", v)} />
+              <DetailField label="Age" value={draft.petAge} onChange={(v) => updateField("petAge", v)} />
+              <DetailField label="Reason" value={draft.reason} onChange={(v) => updateField("reason", v)} />
             </div>
           </div>
         </div>
@@ -182,14 +205,14 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
           </button>
         </div>
         <div className="text-[11px] text-[#8A96A3]">
-          Will be sent to <span className="font-semibold text-[#3A4652]">{booking.ownerEmail || "—"}</span> — please confirm this is correct before sending.
+          Will be sent to <span className="font-semibold text-[#3A4652]">{draft.ownerEmail || "—"}</span> — please confirm this is correct before sending.
         </div>
         {savedNotice && <div className="text-[11px] text-[#1F7A4D]">Draft saved.</div>}
       </div>
 
       {/* Signature block: doctor's name/qualification/NVC number with the clinic's official
        * stamp placed right up against the name, matching the emailed letterhead PDF. */}
-      <div className="px-6 pt-2 pb-5 flex items-start gap-2">
+      <div className={`px-6 pt-2 pb-5 flex items-start gap-2 ${fillHeight ? "shrink-0" : ""}`}>
         <div>
           <div className="text-[13px] font-bold text-[#1A2027]">{booking.doctorName}</div>
           {doctor && <div className="text-[10px] text-[#8A96A3]">{doctor.qualification}</div>}
@@ -205,7 +228,22 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
       </div>
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/assets/vet-letterhead-footer.png" alt="" className="w-full h-auto block" />
+      <img src="/assets/vet-letterhead-footer.png" alt="" className={`w-full h-auto block ${fillHeight ? "shrink-0" : ""}`} />
+    </div>
+  );
+}
+
+/** One editable row in the Owner's/Pet's Details table: a label plus an inline, borderless
+ * input so it still reads like a printed letterhead field until the doctor clicks into it. */
+function DetailField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-[#8A96A3] shrink-0">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 min-w-0 font-semibold text-[#1A2027] border-0 border-b border-transparent hover:border-[#E4E9EC] focus:border-[#1996C8] outline-none bg-transparent px-0.5 py-0.5"
+      />
     </div>
   );
 }

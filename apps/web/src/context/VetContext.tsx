@@ -686,13 +686,13 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     const doctor = state.doctors.find((d) => d.id === booking.doctorId);
     const emailData = {
       bookingId: booking.id,
-      ownerName: booking.ownerName,
-      ownerPhone: booking.ownerPhone,
-      ownerEmail: booking.ownerEmail,
-      petName: booking.petName,
-      petSpecies: booking.petSpecies,
-      petAge: booking.petAge,
-      reason: booking.reason,
+      ownerName: sentPrescription.ownerName,
+      ownerPhone: sentPrescription.ownerPhone,
+      ownerEmail: sentPrescription.ownerEmail,
+      petName: sentPrescription.petName,
+      petSpecies: sentPrescription.petSpecies,
+      petAge: sentPrescription.petAge,
+      reason: sentPrescription.reason,
       doctorName: booking.doctorName,
       doctorQualification: doctor?.qualification ?? "",
       doctorNvc: doctor?.nvcNumber ?? "",
@@ -701,7 +701,9 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       medicines: sentPrescription.medicines,
       advice: sentPrescription.advice,
     };
-    notifyEvent("vet_prescription", booking.ownerEmail, booking.ownerName, emailData);
+    // Send to the (possibly doctor-corrected) email on the prescription itself, not the
+    // original booking record -- the doctor may have just fixed a typo the client made.
+    notifyEvent("vet_prescription", sentPrescription.ownerEmail, sentPrescription.ownerName, emailData);
     notifyEvent("vet_prescription", siteSettings.email, `${siteSettings.shortName} Admin`, emailData);
     logActivity("Approval", `Prescription for ${booking.petName} emailed to ${booking.ownerName} and admin`);
     return true;
