@@ -178,8 +178,11 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
             disabled={sending}
             className="flex-1 bg-[#1F7A4D] text-white py-2 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-60"
           >
-            {draft.sentAt ? "Update & Resend to Patient" : "Send to Patient & Admin"}
+            {draft.sentAt ? "Update & Resend to Patient" : "Send to Patient"}
           </button>
+        </div>
+        <div className="text-[11px] text-[#8A96A3]">
+          Will be sent to <span className="font-semibold text-[#3A4652]">{booking.ownerEmail || "—"}</span> — please confirm this is correct before sending.
         </div>
         {savedNotice && <div className="text-[11px] text-[#1F7A4D]">Draft saved.</div>}
       </div>
