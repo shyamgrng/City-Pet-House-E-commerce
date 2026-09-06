@@ -29,6 +29,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
   const { id } = use(params);
   const { bookings, refreshBooking } = useVet();
   const [callJoined, setCallJoined] = useState(false);
+  const [leftCall, setLeftCall] = useState(false);
   const booking = bookings.find((b) => b.id === id);
 
   // Backstop for the realtime push -- polls on every screen of this page (not just the
@@ -51,7 +52,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  if (booking.status === "Completed") {
+  if (booking.status === "Completed" || leftCall) {
     return (
       <div className="px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#F7F9FA] border border-[#E4E9EC] rounded-2xl px-12 py-14">
@@ -174,7 +175,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
           </div>
         )}
 
-        {inCall && <ConsultRoom booking={booking} viewer="client" onLeave={() => setCallJoined(false)} />}
+        {inCall && <ConsultRoom booking={booking} viewer="client" onLeave={() => setLeftCall(true)} />}
       </div>
     </div>
   );
