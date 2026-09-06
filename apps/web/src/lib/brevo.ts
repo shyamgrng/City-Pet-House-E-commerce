@@ -1,13 +1,16 @@
 // Server-only: reads BREVO_API_KEY from process.env, so only ever import this
 // from a Route Handler (app/api/**/route.ts) — never from a client component.
+type EmailAttachment = { name: string; content: string /* base64 */ };
+
 type SendEmailInput = {
   to: string;
   toName?: string;
   subject: string;
   html: string;
+  attachments?: EmailAttachment[];
 };
 
-export async function sendBrevoEmail({ to, toName, subject, html }: SendEmailInput): Promise<{ skipped: boolean }> {
+export async function sendBrevoEmail({ to, toName, subject, html, attachments }: SendEmailInput): Promise<{ skipped: boolean }> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) {
     console.warn(`[brevo] BREVO_API_KEY not set — skipping email "${subject}" to ${to}`);
@@ -29,6 +32,7 @@ export async function sendBrevoEmail({ to, toName, subject, html }: SendEmailInp
       to: [{ email: to, name: toName || to }],
       subject,
       htmlContent: html,
+      ...(attachments && attachments.length > 0 ? { attachment: attachments } : {}),
     }),
   });
 
