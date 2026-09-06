@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { notifyEvent } from "@/lib/notify-client";
+import { siteSettings } from "@/lib/site-settings";
 import { supabase } from "@/lib/supabase";
 import { availabilitySeed, doctorSeed, vetBookingSeed } from "@/lib/vet-seed";
 import {
@@ -10,6 +11,7 @@ import {
   type AvailabilityMap,
   type ChatMessage,
   type Doctor,
+  type Prescription,
   type SharedDoc,
   type VetBooking,
   type VetStatus,
@@ -61,6 +63,7 @@ type NewBookingInput = Omit<
   | "invoiceNumber"
   | "invoiceSent"
   | "createdAt"
+  | "prescription"
 >;
 
 type VetValue = {
@@ -93,6 +96,12 @@ type VetValue = {
    * mode. Used as a polling backstop so chat feels live even if the realtime push isn't
    * reaching a particular browser/network. */
   refreshBooking: (bookingId: string) => void;
+  savePrescriptionDraft: (bookingId: string, prescription: Prescription) => boolean;
+  /** Saves the given prescription, marks it sent, and emails it to the client and to the
+   * clinic's own inbox for record-keeping. Takes the prescription directly (rather than
+   * reading whatever was last saved) so a caller can save-and-send in one step without a
+   * race between two separate state reads in the same tick. */
+  sendPrescription: (bookingId: string, prescription: Prescription) => boolean;
 };
 
 const VetContext = createContext<VetValue | null>(null);
@@ -505,6 +514,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       doctorDocuments: [],
       invoiceNumber: "INV-" + id,
       invoiceSent: false,
+      prescription: null,
       createdAt: Date.now(),
     };
 
@@ -662,6 +672,34 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     updateBooking(bookingId, { status: "Cancelled" as VetStatus });
   };
 
+  const savePrescriptionDraft = (bookingId: string, prescription: Prescription): boolean => {
+    return updateBooking(bookingId, { prescription });
+  };
+
+  const sendPrescription = (bookingId: string, prescription: Prescription): boolean => {
+    const booking = state.bookings.find((b) => b.id === bookingId);
+    if (!booking) return false;
+    const sentPrescription: Prescription = { ...prescription, sentAt: Date.now() };
+    const ok = updateBooking(bookingId, { prescription: sentPrescription });
+    if (!ok) return false;
+
+    const doctor = state.doctors.find((d) => d.id === booking.doctorId);
+    const emailData = {
+      bookingId: booking.id,
+      ownerName: booking.ownerName,
+      petName: booking.petName,
+      doctorName: booking.doctorName,
+      doctorQualification: doctor?.qualification ?? "",
+      diagnosis: sentPrescription.diagnosis,
+      medicines: sentPrescription.medicines,
+      advice: sentPrescription.advice,
+    };
+    notifyEvent("vet_prescription", booking.ownerEmail, booking.ownerName, emailData);
+    notifyEvent("vet_prescription", siteSettings.email, `${siteSettings.shortName} Admin`, emailData);
+    logActivity("Approval", `Prescription for ${booking.petName} emailed to ${booking.ownerName} and admin`);
+    return true;
+  };
+
   const refreshBooking = (bookingId: string) => {
     if (!supabase) return;
     const db = supabase;
@@ -712,6 +750,8 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
         addDoctorDocument,
         refreshBooking,
         cancelBooking,
+        savePrescriptionDraft,
+        sendPrescription,
       }}
     >
       {children}

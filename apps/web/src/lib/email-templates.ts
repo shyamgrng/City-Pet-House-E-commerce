@@ -9,6 +9,7 @@ export type EmailEvent =
   | "vet_confirmed"
   | "vet_completed"
   | "vet_payment_rejected"
+  | "vet_prescription"
   | "account_created"
   | "forgot_password"
   | "doctor_registration_received"
@@ -174,6 +175,43 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
           `Hi ${ownerName}, we couldn't verify the payment receipt for your consult <strong>${bookingId}</strong> (${petName} with ${doctorName}).<br /><br />
           <strong>Reason:</strong> ${reason}<br /><br />
           Please book again and upload a clear payment receipt. If you believe this is a mistake, contact us at ${siteSettings.email}.`
+        ),
+      };
+    }
+    case "vet_prescription": {
+      const { bookingId, ownerName, petName, doctorName, doctorQualification, diagnosis, medicines, advice } = data as {
+        bookingId: string;
+        ownerName: string;
+        petName: string;
+        doctorName: string;
+        doctorQualification: string;
+        diagnosis: string;
+        medicines: { name: string; dosage: string; frequency: string; duration: string }[];
+        advice: string;
+      };
+      const medRows = medicines.length
+        ? medicines
+            .map(
+              (m) =>
+                `<div style="padding:8px 0;border-bottom:1px solid #F0F2F4;"><strong>${m.name}</strong>${
+                  m.dosage || m.frequency || m.duration ? ` — ${[m.dosage, m.frequency, m.duration].filter(Boolean).join(", ")}` : ""
+                }</div>`
+            )
+            .join("")
+        : `<div style="color:#8A96A3;">No medicines prescribed.</div>`;
+      return {
+        subject: `Prescription for ${petName} — ${bookingId} — ${siteSettings.shortName}`,
+        html: shell(
+          "Consult Summary & Prescription 📋",
+          `Hi ${ownerName}, here is the prescription from <strong>${doctorName}</strong>${
+            doctorQualification ? ` (${doctorQualification})` : ""
+          } for ${petName}'s consult <strong>${bookingId}</strong>.<br /><br />
+          <div style="font-weight:700;color:#1A2027;margin-bottom:6px;">Diagnosis / Notes</div>
+          <div style="margin-bottom:16px;">${diagnosis || "—"}</div>
+          <div style="font-weight:700;color:#1A2027;margin-bottom:6px;">Prescribed Medicines</div>
+          ${medRows}
+          <div style="font-weight:700;color:#1A2027;margin:16px 0 6px;">Advice</div>
+          <div>${advice || "—"}</div>`
         ),
       };
     }

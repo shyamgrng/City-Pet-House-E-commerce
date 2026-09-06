@@ -41,6 +41,15 @@ export type VetStatus =
 export type ChatMessage = { from: "client" | "doctor"; text: string; time: string; ts: number; id?: number };
 export type SharedDoc = { name: string; ts: number; from: "client" | "doctor"; url: string; kind: "image" | "video" | "file"; id?: number };
 
+export type PrescriptionMedicine = { name: string; dosage: string; frequency: string; duration: string };
+export type Prescription = {
+  diagnosis: string;
+  medicines: PrescriptionMedicine[];
+  advice: string;
+  updatedAt: number;
+  sentAt: number | null;
+};
+
 export type VetBooking = {
   id: string;
   ownerId: string;
@@ -68,6 +77,7 @@ export type VetBooking = {
   invoiceSent: boolean;
   createdAt: number;
   rejectReason?: string;
+  prescription: Prescription | null;
 };
 
 export const STATUS_COLORS: Record<VetStatus, string> = {

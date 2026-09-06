@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import ConsultRoom from "@/components/vet/ConsultRoom";
+import PrescriptionPad from "@/components/vet/PrescriptionPad";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
 import { STATUS_COLORS, type VetBooking } from "@/lib/vet-types";
@@ -44,96 +45,111 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="px-8 py-7 max-w-[760px] mx-auto">
-        <Link href="/doctor" className="text-[13px] text-primary font-semibold mb-4 inline-block">
-          ← Back to Bookings
-        </Link>
-        <div className="flex justify-between items-center mb-1">
-          <div className="text-[15px] font-bold text-[#1A2027]">
-            {booking.ownerName} — {booking.petName}
-          </div>
-          <div className="text-[11px] font-semibold" style={{ color: STATUS_COLORS[booking.status] }}>
-            {booking.status}
-          </div>
-        </div>
-        <div className="text-xs text-[#8A96A3] mb-5">
-          {booking.instant ? "Online now" : `${booking.scheduledDate} ${booking.scheduledTime}`} · {booking.reason}
-        </div>
-
-        <div className="border border-[#E4E9EC] rounded-2xl p-5 mb-4 bg-white shadow-[0_1px_2px_rgba(16,24,32,0.04)]">
-          <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#F0F2F4]">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-[#EAF4F9] text-primary font-bold text-base flex items-center justify-center shrink-0">
-                {initials(booking.ownerName)}
-              </div>
-              <div>
-                <div className="text-base font-bold text-[#1A2027]">{booking.ownerName}</div>
-                <div className="text-xs text-[#8A96A3]">Pet Owner</div>
-              </div>
+      <div className="px-8 py-7 max-w-[1180px] mx-auto">
+        <div className="max-w-[760px] mx-auto">
+          <Link href="/doctor" className="text-[13px] text-primary font-semibold mb-4 inline-block">
+            ← Back to Bookings
+          </Link>
+          <div className="flex justify-between items-center mb-1">
+            <div className="text-[15px] font-bold text-[#1A2027]">
+              {booking.ownerName} — {booking.petName}
             </div>
-            <div className="flex items-center gap-1.5 bg-[#F7F9FA] border border-[#E4E9EC] rounded-full pl-2.5 pr-3.5 py-1.5">
-              <span className="text-lg">{petEmoji(booking.petSpecies)}</span>
-              <span className="text-sm font-bold text-[#1A2027]">{booking.petName}</span>
+            <div className="text-[11px] font-semibold" style={{ color: STATUS_COLORS[booking.status] }}>
+              {booking.status}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <IconDetail icon="📞" label="Phone">
-              <a href={`tel:${booking.ownerPhone}`} className="font-bold text-primary hover:underline">
-                {booking.ownerPhone}
-              </a>
-            </IconDetail>
-            <IconDetail icon={petEmoji(booking.petSpecies)} label="Species">
-              {booking.petSpecies}
-            </IconDetail>
-            <IconDetail icon="🎂" label="Pet Age">
-              {booking.petAge}
-            </IconDetail>
-            <IconDetail icon="📝" label="Reason for Visit">
-              {booking.reason}
-            </IconDetail>
+          <div className="text-xs text-[#8A96A3] mb-5">
+            {booking.instant ? "Online now" : `${booking.scheduledDate} ${booking.scheduledTime}`} · {booking.reason}
           </div>
-        </div>
 
-        <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4 bg-white">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Client Shared Files</div>
-          {booking.clientDocuments.length === 0 ? (
-            <div className="text-xs text-[#8A96A3]">No files shared by the client yet</div>
-          ) : (
-            booking.clientDocuments.map((d, i) => (
-              <div key={i} className="text-xs text-[#3A4652] py-1.5 border-b border-[#F0F2F4] last:border-0">
-                📎 {d.name}
+          <div className="border border-[#E4E9EC] rounded-2xl p-5 mb-4 bg-white shadow-[0_1px_2px_rgba(16,24,32,0.04)]">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#F0F2F4]">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-[#EAF4F9] text-primary font-bold text-base flex items-center justify-center shrink-0">
+                  {initials(booking.ownerName)}
+                </div>
+                <div>
+                  <div className="text-base font-bold text-[#1A2027]">{booking.ownerName}</div>
+                  <div className="text-xs text-[#8A96A3]">Pet Owner</div>
+                </div>
               </div>
-            ))
+              <div className="flex items-center gap-1.5 bg-[#F7F9FA] border border-[#E4E9EC] rounded-full pl-2.5 pr-3.5 py-1.5">
+                <span className="text-lg">{petEmoji(booking.petSpecies)}</span>
+                <span className="text-sm font-bold text-[#1A2027]">{booking.petName}</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <IconDetail icon="📞" label="Phone">
+                <a href={`tel:${booking.ownerPhone}`} className="font-bold text-primary hover:underline">
+                  {booking.ownerPhone}
+                </a>
+              </IconDetail>
+              <IconDetail icon={petEmoji(booking.petSpecies)} label="Species">
+                {booking.petSpecies}
+              </IconDetail>
+              <IconDetail icon="🎂" label="Pet Age">
+                {booking.petAge}
+              </IconDetail>
+              <IconDetail icon="📝" label="Reason for Visit">
+                {booking.reason}
+              </IconDetail>
+            </div>
+          </div>
+
+          <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4 bg-white">
+            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Client Shared Files</div>
+            {booking.clientDocuments.length === 0 ? (
+              <div className="text-xs text-[#8A96A3]">No files shared by the client yet</div>
+            ) : (
+              booking.clientDocuments.map((d, i) => (
+                <div key={i} className="text-xs text-[#3A4652] py-1.5 border-b border-[#F0F2F4] last:border-0">
+                  📎 {d.name}
+                </div>
+              ))
+            )}
+          </div>
+
+          {booking.status === "Confirmed" && (
+            <div className="mb-4">
+              <ChatPanel booking={booking} onCall={() => startCall(booking.id)} />
+            </div>
           )}
         </div>
 
-        {booking.status === "Confirmed" && (
-          <div className="mb-4">
-            <ChatPanel booking={booking} onCall={() => startCall(booking.id)} />
-          </div>
-        )}
         {booking.status === "In Progress" && (
-          <div className="mb-4">
-            <ConsultRoom booking={booking} viewer="doctor" />
+          <div className="flex flex-col lg:flex-row gap-4 items-start mb-4">
+            <div className="flex-1 min-w-0 w-full">
+              <ConsultRoom booking={booking} viewer="doctor" />
+            </div>
+            <div className="w-full lg:w-[400px] shrink-0">
+              <PrescriptionPad booking={booking} />
+            </div>
           </div>
         )}
 
-        {booking.status === "In Progress" && (
-          <button
-            onClick={() => endCall(booking.id)}
-            className="w-full bg-[#D64545] text-white text-center py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer mb-4"
-          >
-            End Session
-          </button>
-        )}
-        {booking.status === "Completed" && (
-          <div className="bg-[#EAF6EE] border border-[#CFE9D8] rounded-[10px] px-3.5 py-3 text-xs text-[#1F7A4D] mb-4">✓ Session ended</div>
-        )}
+        <div className="max-w-[760px] mx-auto">
+          {booking.status === "In Progress" && (
+            <button
+              onClick={() => endCall(booking.id)}
+              className="w-full bg-[#D64545] text-white text-center py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer mb-4"
+            >
+              End Session
+            </button>
+          )}
+          {booking.status === "Completed" && (
+            <>
+              <div className="bg-[#EAF6EE] border border-[#CFE9D8] rounded-[10px] px-3.5 py-3 text-xs text-[#1F7A4D] mb-4">✓ Session ended</div>
+              <div className="mb-4">
+                <PrescriptionPad booking={booking} />
+              </div>
+            </>
+          )}
 
-        <div className="border border-[#E4E9EC] rounded-xl p-4 bg-white">
-          <div className="text-[13px] font-semibold text-[#1A2027] mb-1.5">Consult Fee</div>
-          <div className="text-[13px] text-[#5B6773]">
-            Rs. {booking.amount} · Invoice {booking.invoiceNumber}
+          <div className="border border-[#E4E9EC] rounded-xl p-4 bg-white">
+            <div className="text-[13px] font-semibold text-[#1A2027] mb-1.5">Consult Fee</div>
+            <div className="text-[13px] text-[#5B6773]">
+              Rs. {booking.amount} · Invoice {booking.invoiceNumber}
+            </div>
           </div>
         </div>
       </div>
