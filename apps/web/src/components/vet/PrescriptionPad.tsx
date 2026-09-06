@@ -2,19 +2,17 @@
 
 import { useState } from "react";
 import { useVet } from "@/context/VetContext";
-import { siteSettings } from "@/lib/site-settings";
 import type { Prescription, PrescriptionMedicine, VetBooking } from "@/lib/vet-types";
 
 const EMPTY_MEDICINE: PrescriptionMedicine = { name: "", dosage: "", frequency: "", duration: "" };
 
 function emptyDraft(): Prescription {
-  return { diagnosis: "", medicines: [{ ...EMPTY_MEDICINE }], advice: "", updatedAt: 0, sentAt: null };
+  return { history: "", diagnosis: "", medicines: [{ ...EMPTY_MEDICINE }], advice: "", updatedAt: 0, sentAt: null };
 }
 
 /**
- * A letterhead-style prescription pad for the doctor to fill in during/after a consult.
- * Sending emails the finished prescription to both the client and the clinic's own inbox
- * (for record-keeping) -- see sendPrescription in VetContext.
+ * The clinic's actual letterhead (header/footer images, supplied by the clinic) with the
+ * consult record filled in between and the official stamp placed by the doctor's signature.
  *
  * Local draft state is only ever seeded from booking.prescription once (lazy initializer),
  * never re-synced from it on every render -- otherwise the polling refresh every few seconds
@@ -51,35 +49,38 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
   };
 
   return (
-    <div className="border border-[#E4E9EC] rounded-2xl overflow-hidden bg-white flex flex-col">
-      <div className="bg-primary px-5 py-4 text-white">
-        <div className="text-[15px] font-bold">{siteSettings.businessName}</div>
-        <div className="text-[11px] opacity-90 mt-0.5">
-          {siteSettings.address} · {siteSettings.phone}
-        </div>
-      </div>
-      <div className="px-5 py-4 border-b border-[#F0F2F4] flex justify-between items-start gap-3">
-        <div>
-          <div className="text-[13px] font-bold text-[#1A2027]">{booking.doctorName}</div>
-          {doctor && <div className="text-[11px] text-[#8A96A3]">{doctor.qualification} · NVC {doctor.nvcNumber}</div>}
-        </div>
-        <div className="text-right shrink-0">
-          <div className="text-[11px] text-[#8A96A3]">Date</div>
-          <div className="text-[13px] font-semibold text-[#1A2027]">{today}</div>
-        </div>
-      </div>
-      <div className="px-5 py-3 border-b border-[#F0F2F4] text-xs text-[#3A4652]">
-        <strong>{booking.petName}</strong> ({booking.petSpecies}, {booking.petAge}) · Owner: {booking.ownerName}
-      </div>
+    <div className="border border-[#E4E9EC] rounded-2xl overflow-hidden bg-white">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/assets/vet-letterhead-header.png" alt="" className="w-full h-auto block" />
 
-      <div className="p-5 flex flex-col gap-4">
+      <div className="px-6 py-4 flex flex-col gap-4">
+        <div className="flex justify-between items-start border-b border-[#F0F2F4] pb-3">
+          <div className="text-xs text-[#3A4652]">
+            <strong>{booking.petName}</strong> ({booking.petSpecies}, {booking.petAge}) · Owner: {booking.ownerName}
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-[10px] text-[#8A96A3]">Date</div>
+            <div className="text-xs font-semibold text-[#1A2027]">{today}</div>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-[11px] font-semibold text-[#8A96A3] uppercase tracking-wide mb-1.5 block">Pet History</label>
+          <textarea
+            value={draft.history}
+            onChange={(e) => setDraft((d) => ({ ...d, history: e.target.value }))}
+            placeholder="Past conditions, previous treatments, vaccination history…"
+            className="w-full min-h-[60px] rounded-md border border-[#E4E9EC] px-3 py-2 text-xs resize-y box-border"
+          />
+        </div>
+
         <div>
           <label className="text-[11px] font-semibold text-[#8A96A3] uppercase tracking-wide mb-1.5 block">Diagnosis / Clinical Notes</label>
           <textarea
             value={draft.diagnosis}
             onChange={(e) => setDraft((d) => ({ ...d, diagnosis: e.target.value }))}
             placeholder="Findings, diagnosis, observations…"
-            className="w-full min-h-[80px] rounded-md border border-[#E4E9EC] px-3 py-2 text-xs resize-y box-border"
+            className="w-full min-h-[70px] rounded-md border border-[#E4E9EC] px-3 py-2 text-xs resize-y box-border"
           />
         </div>
 
@@ -166,12 +167,27 @@ export default function PrescriptionPad({ booking }: { booking: VetBooking }) {
           </button>
         </div>
         {savedNotice && <div className="text-[11px] text-[#1F7A4D]">Draft saved.</div>}
-        {draft.sentAt && (
-          <div className="text-[11px] text-[#8A96A3]">
-            Sent on {new Date(draft.sentAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-          </div>
-        )}
       </div>
+
+      {/* Signature block: doctor's name/qualification/NVC number with the clinic's official
+       * stamp beside it, matching how a printed prescription is signed off. */}
+      <div className="px-6 pt-2 pb-5 flex justify-end items-center gap-3">
+        <div className="text-right">
+          <div className="text-[13px] font-bold text-[#1A2027]">{booking.doctorName}</div>
+          {doctor && <div className="text-[10px] text-[#8A96A3]">{doctor.qualification}</div>}
+          {doctor && <div className="text-[10px] text-[#8A96A3]">NVC No: {doctor.nvcNumber}</div>}
+          {draft.sentAt && (
+            <div className="text-[10px] text-[#8A96A3] mt-1">
+              Sent {new Date(draft.sentAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+            </div>
+          )}
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/assets/vet-clinic-stamp.png" alt="Clinic stamp" className="w-16 h-16 object-contain shrink-0 opacity-90" />
+      </div>
+
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/assets/vet-letterhead-footer.png" alt="" className="w-full h-auto block" />
     </div>
   );
 }

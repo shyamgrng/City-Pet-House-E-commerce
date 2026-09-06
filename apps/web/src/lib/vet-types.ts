@@ -43,6 +43,7 @@ export type SharedDoc = { name: string; ts: number; from: "client" | "doctor"; u
 
 export type PrescriptionMedicine = { name: string; dosage: string; frequency: string; duration: string };
 export type Prescription = {
+  history: string;
   diagnosis: string;
   medicines: PrescriptionMedicine[];
   advice: string;

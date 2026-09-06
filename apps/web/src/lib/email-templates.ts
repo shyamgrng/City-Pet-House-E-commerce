@@ -179,12 +179,29 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
       };
     }
     case "vet_prescription": {
-      const { bookingId, ownerName, petName, doctorName, doctorQualification, diagnosis, medicines, advice } = data as {
+      const {
+        bookingId,
+        ownerName,
+        petName,
+        petSpecies,
+        petAge,
+        doctorName,
+        doctorQualification,
+        doctorNvc,
+        history,
+        diagnosis,
+        medicines,
+        advice,
+      } = data as {
         bookingId: string;
         ownerName: string;
         petName: string;
+        petSpecies: string;
+        petAge: string;
         doctorName: string;
         doctorQualification: string;
+        doctorNvc: string;
+        history: string;
         diagnosis: string;
         medicines: { name: string; dosage: string; frequency: string; duration: string }[];
         advice: string;
@@ -199,20 +216,55 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
             )
             .join("")
         : `<div style="color:#8A96A3;">No medicines prescribed.</div>`;
+      const section = (label: string, value: string) =>
+        `<div style="font-weight:700;color:#1A2027;font-size:11px;text-transform:uppercase;letter-spacing:.03em;margin:16px 0 6px;">${label}</div>
+         <div style="font-size:14px;color:#3A4652;">${value || "—"}</div>`;
       return {
         subject: `Prescription for ${petName} — ${bookingId} — ${siteSettings.shortName}`,
-        html: shell(
-          "Consult Summary & Prescription 📋",
-          `Hi ${ownerName}, here is the prescription from <strong>${doctorName}</strong>${
-            doctorQualification ? ` (${doctorQualification})` : ""
-          } for ${petName}'s consult <strong>${bookingId}</strong>.<br /><br />
-          <div style="font-weight:700;color:#1A2027;margin-bottom:6px;">Diagnosis / Notes</div>
-          <div style="margin-bottom:16px;">${diagnosis || "—"}</div>
-          <div style="font-weight:700;color:#1A2027;margin-bottom:6px;">Prescribed Medicines</div>
-          ${medRows}
-          <div style="font-weight:700;color:#1A2027;margin:16px 0 6px;">Advice</div>
-          <div>${advice || "—"}</div>`
-        ),
+        html: `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#F0F2F4;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F0F2F4;padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#ffffff;">
+            <tr>
+              <td><img src="${siteSettings.siteUrl}/assets/vet-letterhead-header.png" width="640" alt="${siteSettings.businessName}" style="display:block;width:100%;height:auto;" /></td>
+            </tr>
+            <tr>
+              <td style="padding:8px 32px 24px;">
+                <div style="font-size:13px;color:#3A4652;border-bottom:1px solid #F0F2F4;padding-bottom:12px;margin-bottom:4px;">
+                  Hi ${ownerName}, here is the consult record and prescription for <strong>${petName}</strong> (${petSpecies}, ${petAge}) —
+                  consult <strong>${bookingId}</strong>.
+                </div>
+                ${section("Pet History", history)}
+                ${section("Diagnosis / Clinical Notes", diagnosis)}
+                <div style="font-weight:700;color:#1A2027;font-size:11px;text-transform:uppercase;letter-spacing:.03em;margin:16px 0 6px;">Prescribed Medicines</div>
+                ${medRows}
+                ${section("Advice / Follow-up", advice)}
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                  <tr>
+                    <td valign="bottom">
+                      <div style="font-size:14px;font-weight:700;color:#1A2027;">${doctorName}</div>
+                      ${doctorQualification ? `<div style="font-size:11px;color:#8A96A3;">${doctorQualification}</div>` : ""}
+                      ${doctorNvc ? `<div style="font-size:11px;color:#8A96A3;">NVC No: ${doctorNvc}</div>` : ""}
+                    </td>
+                    <td align="right" valign="bottom">
+                      <img src="${siteSettings.siteUrl}/assets/vet-clinic-stamp.png" width="64" height="64" alt="Clinic stamp" style="display:block;" />
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td><img src="${siteSettings.siteUrl}/assets/vet-letterhead-footer.png" width="640" alt="" style="display:block;width:100%;height:auto;" /></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`,
       };
     }
     case "account_created": {

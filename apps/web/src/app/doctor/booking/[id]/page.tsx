@@ -45,7 +45,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="px-8 py-7 max-w-[1180px] mx-auto">
+      <div className="px-8 py-7 max-w-[1440px] mx-auto">
         <div className="max-w-[760px] mx-auto">
           <Link href="/doctor" className="text-[13px] text-primary font-semibold mb-4 inline-block">
             ← Back to Bookings
@@ -121,7 +121,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
             <div className="flex-1 min-w-0 w-full">
               <ConsultRoom booking={booking} viewer="doctor" />
             </div>
-            <div className="w-full lg:w-[400px] shrink-0">
+            <div className="w-full lg:w-[560px] shrink-0">
               <PrescriptionPad booking={booking} />
             </div>
           </div>
