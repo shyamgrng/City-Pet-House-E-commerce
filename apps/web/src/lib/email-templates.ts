@@ -179,29 +179,25 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
       };
     }
     case "vet_prescription": {
-      const { bookingId, ownerName, petName, doctorName } = data as {
+      const { bookingId, ownerName, doctorName } = data as {
         bookingId: string;
         ownerName: string;
-        petName: string;
         doctorName: string;
       };
       // The actual letterhead/prescription is a PDF attachment (built in
       // lib/prescription-pdf.ts and attached by the /api/notify route) -- this is just the
       // covering note, not the record itself.
       return {
-        subject: `Your Pet's Prescription — ${siteSettings.shortName}`,
+        subject: `Attachment prescription sent from ${doctorName}`,
         html: shell(
-          `Thank you for consulting with us${petName ? `, ${petName} says thanks too` : ""} 🐾`,
-          `Dear ${ownerName},<br /><br />
-          Thank you for consulting with us for your pet's veterinary care. We truly appreciate the opportunity to assist you and your pet.<br /><br />
+          `Dear ${ownerName},`,
+          `Thank you for consulting with us for your pet's veterinary care. We truly appreciate the opportunity to assist you and your pet.<br /><br />
           Please find attached the doctor's prescription from your consultation for your reference. We recommend keeping this document safely
           for your records and following the veterinarian's instructions as advised.<br /><br />
           If you have any questions or concerns regarding the prescription or your pet's treatment, please feel free to reach out to us.<br /><br />
           Wishing your pet a speedy recovery and good health! 🐾<br /><br />
           Warm regards,<br />
-          ${doctorName}<br />
-          ${siteSettings.businessName}<br />
-          ${siteSettings.phone} · ${siteSettings.email}
+          ${doctorName}
           <div style="margin-top:18px;font-size:12px;color:#8A96A3;">Consult reference: ${bookingId}</div>`
         ),
       };

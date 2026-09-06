@@ -687,9 +687,12 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     const emailData = {
       bookingId: booking.id,
       ownerName: booking.ownerName,
+      ownerPhone: booking.ownerPhone,
+      ownerEmail: booking.ownerEmail,
       petName: booking.petName,
       petSpecies: booking.petSpecies,
       petAge: booking.petAge,
+      reason: booking.reason,
       doctorName: booking.doctorName,
       doctorQualification: doctor?.qualification ?? "",
       doctorNvc: doctor?.nvcNumber ?? "",
