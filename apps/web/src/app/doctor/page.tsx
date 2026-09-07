@@ -92,7 +92,7 @@ export default function DoctorPortalPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-8 py-7">
-      <div className="max-w-[900px]">
+      <div className={tab === "Blog" ? "" : "max-w-[900px]"}>
         <div className="flex gap-2 flex-wrap mb-[22px]">
           {TABS.map((t) => (
             <button
