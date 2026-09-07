@@ -25,6 +25,7 @@ const ACTIVE_KEY = "cph_vet_page_active";
 
 const STORAGE_FULL_MESSAGE = "Couldn't save — your browser's storage is full. Delete an old photo or video somewhere on the site to free up space, then try again.";
 const CLOUD_ERROR_MESSAGE = "Couldn't save — check your internet connection and try again.";
+const PRESCRIPTION_EMAIL_ERROR_MESSAGE = "Couldn't email the prescription to the patient — check your connection and try again.";
 
 type BookingCore = Omit<VetBooking, "chatMessages" | "clientDocuments" | "doctorDocuments">;
 type BookingRow = { id: string; data: BookingCore };
@@ -101,7 +102,7 @@ type VetValue = {
    * clinic's own inbox for record-keeping. Takes the prescription directly (rather than
    * reading whatever was last saved) so a caller can save-and-send in one step without a
    * race between two separate state reads in the same tick. */
-  sendPrescription: (bookingId: string, prescription: Prescription) => boolean;
+  sendPrescription: (bookingId: string, prescription: Prescription) => Promise<boolean>;
 };
 
 const VetContext = createContext<VetValue | null>(null);
@@ -676,12 +677,10 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     return updateBooking(bookingId, { prescription });
   };
 
-  const sendPrescription = (bookingId: string, prescription: Prescription): boolean => {
+  const sendPrescription = async (bookingId: string, prescription: Prescription): Promise<boolean> => {
     const booking = state.bookings.find((b) => b.id === bookingId);
     if (!booking) return false;
     const sentPrescription: Prescription = { ...prescription, sentAt: Date.now() };
-    const ok = updateBooking(bookingId, { prescription: sentPrescription });
-    if (!ok) return false;
 
     const doctor = state.doctors.find((d) => d.id === booking.doctorId);
     const emailData = {
@@ -701,10 +700,23 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       medicines: sentPrescription.medicines,
       advice: sentPrescription.advice,
     };
+
     // Send to the (possibly doctor-corrected) email on the prescription itself, not the
-    // original booking record -- the doctor may have just fixed a typo the client made.
-    notifyEvent("vet_prescription", sentPrescription.ownerEmail, sentPrescription.ownerName, emailData);
-    notifyEvent("vet_prescription", siteSettings.email, `${siteSettings.shortName} Admin`, emailData);
+    // original booking record -- the doctor may have just fixed a typo the client made. This
+    // is the one that must actually land in the patient's inbox, so it's awaited and the whole
+    // send is only reported as successful once Brevo confirms it went out -- the "Sent" state
+    // in the UI should never lie about whether an email was actually delivered.
+    const emailedClient = await notifyEvent("vet_prescription", sentPrescription.ownerEmail, sentPrescription.ownerName, emailData);
+    if (!emailedClient) {
+      setState((s) => ({ ...s, saveError: PRESCRIPTION_EMAIL_ERROR_MESSAGE }));
+      return false;
+    }
+
+    // Admin's copy is a courtesy record -- doesn't block success if it fails.
+    void notifyEvent("vet_prescription", siteSettings.email, `${siteSettings.shortName} Admin`, emailData);
+
+    const ok = updateBooking(bookingId, { prescription: sentPrescription });
+    if (!ok) return false;
     logActivity("Approval", `Prescription for ${booking.petName} emailed to ${booking.ownerName} and admin`);
     return true;
   };

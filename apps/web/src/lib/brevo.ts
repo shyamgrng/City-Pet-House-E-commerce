@@ -17,7 +17,7 @@ export async function sendBrevoEmail({ to, toName, subject, html, attachments }:
     return { skipped: true };
   }
 
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || "no-reply@citypethouse.com.np";
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || "info@citypethouse.com.np";
   const senderName = process.env.BREVO_SENDER_NAME || "City Pet House & Animal Clinic";
 
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {

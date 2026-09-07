@@ -65,10 +65,10 @@ export default function PrescriptionPad({ booking, fillHeight = false }: { booki
     }
   };
 
-  const send = () => {
+  const send = async () => {
     setSending(true);
     const sentAt = Date.now();
-    const ok = sendPrescription(booking.id, { ...draft, updatedAt: sentAt });
+    const ok = await sendPrescription(booking.id, { ...draft, updatedAt: sentAt });
     if (ok) setDraft((d) => ({ ...d, sentAt }));
     setSending(false);
   };
