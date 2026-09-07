@@ -7,7 +7,7 @@ import ConsultRoom from "@/components/vet/ConsultRoom";
 import PrescriptionPad from "@/components/vet/PrescriptionPad";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
-import { STATUS_COLORS, type VetBooking } from "@/lib/vet-types";
+import { isBookingActionable, STATUS_COLORS, type VetBooking } from "@/lib/vet-types";
 
 export default function DoctorBookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -150,11 +150,18 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
         </div>
 
         <div className="max-w-[760px] mx-auto">
-          {booking.status === "Confirmed" && (
-            <div className="mb-4">
-              <ChatPanel booking={booking} onCall={() => startCall(booking.id)} />
-            </div>
-          )}
+          {booking.status === "Confirmed" &&
+            (isBookingActionable(booking) ? (
+              <div className="mb-4">
+                <ChatPanel booking={booking} onCall={() => startCall(booking.id)} />
+              </div>
+            ) : (
+              <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4 bg-white text-xs text-[#8A96A3]">
+                This is a scheduled consult for <strong className="text-[#3A4652]">{booking.scheduledDate} at {booking.scheduledTime}</strong>.
+                Chat and the call will open here once it&apos;s within an hour of that time — this booking is already visible in your{" "}
+                <strong className="text-[#3A4652]">Upcoming</strong> list.
+              </div>
+            ))}
         </div>
 
         {booking.status === "In Progress" && (

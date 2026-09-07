@@ -14,7 +14,7 @@ import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { useVet } from "@/context/VetContext";
 import { isAuthoredBy, type BlogPost } from "@/lib/blog-types";
-import { STATUS_COLORS } from "@/lib/vet-types";
+import { isBookingActionable, STATUS_COLORS } from "@/lib/vet-types";
 
 const TABS = ["Overview", "Bookings", "Upcoming", "Availability", "Finance", "Blog", "Profile"] as const;
 type Tab = (typeof TABS)[number];
@@ -39,8 +39,14 @@ export default function DoctorPortalPage() {
   const doctorRecord = doctors.find((d) => d.id === doctor.doctorId);
   const mine = bookings.filter((b) => b.doctorId === doctor.doctorId);
   const completed = mine.filter((b) => b.status === "Completed");
+  // Every confirmed/in-progress booking, scheduled or not -- this is the doctor's full advance
+  // calendar, so a scheduled booking shows up here as soon as it's confirmed, however far out.
   const upcoming = mine.filter((b) => b.status === "Confirmed" || b.status === "In Progress");
-  const readyForCall = mine.filter((b) => b.status === "In Progress" || (b.status === "Confirmed" && b.instant));
+  // A scheduled (non-instant) confirmed booking only belongs in the actionable Bookings list
+  // once it's within an hour of its appointment -- before that it's still just an upcoming
+  // calendar entry, not something to join yet.
+  const bookingsListVisible = mine.filter((b) => b.status !== "Confirmed" || isBookingActionable(b));
+  const readyForCall = mine.filter((b) => b.status === "In Progress" || (b.status === "Confirmed" && isBookingActionable(b)));
   const received = completed.reduce((sum, b) => sum + b.amount, 0);
   const remaining = upcoming.reduce((sum, b) => sum + b.amount, 0);
   const ownPosts = posts.filter((p) => isAuthoredBy(p.author, doctor.name));
@@ -152,7 +158,7 @@ export default function DoctorPortalPage() {
           </>
         )}
 
-        {tab === "Bookings" && <BookingList bookings={mine} />}
+        {tab === "Bookings" && <BookingList bookings={bookingsListVisible} />}
         {tab === "Upcoming" && <BookingList bookings={upcoming} />}
         {tab === "Availability" && <AvailabilityTab doctorId={doctor.doctorId} />}
         {tab === "Finance" && <FinanceTab bookings={mine} />}

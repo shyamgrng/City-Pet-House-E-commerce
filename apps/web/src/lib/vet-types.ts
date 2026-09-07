@@ -28,6 +28,39 @@ export function next14Days(): string[] {
   return days;
 }
 
+/** Turns the booking form's date/time chip labels (e.g. "Tomorrow", "9:00 AM") into an actual
+ * timestamp, by re-deriving today's day offset from next14Days() the same way the booking form
+ * generated the label in the first place. Returns null if either label doesn't parse -- callers
+ * should treat that as "no gating info available" rather than fail the booking. */
+export function computeScheduledAt(dateLabel: string, timeLabel: string): number | null {
+  if (!dateLabel || !timeLabel) return null;
+  const offset = next14Days().indexOf(dateLabel);
+  if (offset === -1) return null;
+  const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(timeLabel.trim());
+  if (!match) return null;
+  let hour = parseInt(match[1], 10);
+  const minute = parseInt(match[2], 10);
+  const meridiem = match[3].toUpperCase();
+  if (meridiem === "PM" && hour !== 12) hour += 12;
+  if (meridiem === "AM" && hour === 12) hour = 0;
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  d.setHours(hour, minute, 0, 0);
+  return d.getTime();
+}
+
+const CONSULT_WINDOW_MS = 60 * 60 * 1000;
+
+/** Whether a doctor should be able to see/join this booking as an active consult right now.
+ * Instant bookings are always actionable; a scheduled booking only becomes actionable within
+ * an hour of its appointment time. Bookings from before this field existed (scheduledAt
+ * missing) fall back to always-actionable rather than being silently locked out. */
+export function isBookingActionable(booking: Pick<VetBooking, "instant" | "scheduledAt">): boolean {
+  if (booking.instant) return true;
+  if (!booking.scheduledAt) return true;
+  return booking.scheduledAt - Date.now() <= CONSULT_WINDOW_MS;
+}
+
 export type VetStatus =
   | "Pending Payment"
   | "Payment Review"
@@ -76,6 +109,10 @@ export type VetBooking = {
   instant: boolean;
   scheduledDate: string;
   scheduledTime: string;
+  // Epoch ms for the actual appointment moment, derived from scheduledDate/scheduledTime at
+  // booking time -- null for instant bookings (there's no future moment to gate on) and for
+  // legacy bookings saved before this field existed.
+  scheduledAt: number | null;
   amount: number;
   status: VetStatus;
   paymentReceiptUploaded: boolean;

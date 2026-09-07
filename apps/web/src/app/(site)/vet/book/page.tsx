@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useVet } from "@/context/VetContext";
 import { isValidEmail } from "@/lib/email-format";
 import { isValidNepalPhone } from "@/lib/phone";
-import { next14Days } from "@/lib/vet-types";
+import { computeScheduledAt, next14Days } from "@/lib/vet-types";
 
 function BookInner() {
   const router = useRouter();
@@ -107,6 +107,7 @@ function BookInner() {
       instant: doctor.online,
       scheduledDate: doctor.online ? "" : date,
       scheduledTime: doctor.online ? "" : time,
+      scheduledAt: doctor.online ? null : computeScheduledAt(date, time),
       amount: doctor.feeRs,
     });
     if (!booking) {
