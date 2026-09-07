@@ -68,9 +68,9 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="h-2 w-full" style={{ background: "linear-gradient(90deg, #1996C8, #4CC3E8)" }} />
+      <div className="h-16 w-full" style={{ background: "linear-gradient(90deg, #1996C8, #4CC3E8)" }} />
       <div className="px-8 py-7 max-w-[1440px] mx-auto">
-        <div className="max-w-[760px] mx-auto">
+        <div>
           <Link href="/doctor" className="text-[13px] text-primary font-semibold mb-4 inline-block">
             ← Back to Bookings
           </Link>
@@ -171,7 +171,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
           </div>
         )}
 
-        <div className="max-w-[760px] mx-auto">
+        <div className="max-w-[760px]">
           {booking.status === "In Progress" && (
             <button
               onClick={() => endCall(booking.id)}
