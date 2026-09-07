@@ -11,6 +11,7 @@ import FinanceTab from "@/components/doctor/FinanceTab";
 import ProfileTab from "@/components/doctor/ProfileTab";
 import { useBlog } from "@/context/BlogContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { useVet } from "@/context/VetContext";
 import { isAuthoredBy, type BlogPost } from "@/lib/blog-types";
 import { STATUS_COLORS } from "@/lib/vet-types";
@@ -22,6 +23,7 @@ export default function DoctorPortalPage() {
   const { doctor, ready, signOut } = useDoctorAuth();
   const { doctors, bookings, toggleDoctorOnline } = useVet();
   const { posts, addPost, updatePost, deletePost } = useBlog();
+  const { settings } = useSiteSettings();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("Overview");
   const [blogModalOpen, setBlogModalOpen] = useState(false);
@@ -57,20 +59,30 @@ export default function DoctorPortalPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
-      <div className="bg-white border-b border-[#E4E9EC] px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Image src="/assets/cph-logo.jpeg" alt="" width={28} height={28} className="rounded-md object-cover" />
-          <span className="font-heading font-bold text-sm text-[#1A2027]">CPH Doctor Portal</span>
+      <div className="bg-[#F7F9FA] border-b border-[#E4E9EC]">
+        <div className="flex items-center justify-center gap-4 max-w-7xl mx-auto px-8 py-1.5 text-[11px] text-[#5B6773]">
+          <div>📞 {settings.phone}</div>
+          <div>📍 {settings.address}</div>
+          <div>{settings.hours}</div>
         </div>
-        <button
-          onClick={() => {
-            signOut();
-            router.push("/doctor/login");
-          }}
-          className="text-xs font-semibold text-[#D64545] cursor-pointer"
-        >
-          Sign Out
-        </button>
+      </div>
+
+      <div className="bg-white border-b border-[#E4E9EC]">
+        <div className="flex items-center justify-between max-w-7xl mx-auto px-8 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <Image src="/assets/cph-logo.jpeg" alt="" width={34} height={34} className="rounded-md object-contain" />
+            <span className="font-heading font-bold text-[15px] text-[#1A2027]">CPH Doctor Portal</span>
+          </div>
+          <button
+            onClick={() => {
+              signOut();
+              router.push("/doctor/login");
+            }}
+            className="text-[13px] font-semibold text-[#D64545] cursor-pointer"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
 
       <div className="px-8 py-7 max-w-[900px]">
