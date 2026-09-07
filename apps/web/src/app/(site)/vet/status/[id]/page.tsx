@@ -4,10 +4,10 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useVet } from "@/context/VetContext";
 import ConsultRoom from "@/components/vet/ConsultRoom";
+import { isBookingActionable } from "@/lib/vet-types";
 
-/** Ticks up from when this page first saw the booking as Confirmed -- there's no reliable,
- * cross-device "confirmed at" timestamp to count down from (scheduled times are stored as
- * display strings like "Tomorrow" / "3:00 PM", not parseable dates), so this shows how long
+/** Ticks up from when this page first saw the booking as Confirmed and actionable -- there's no
+ * reliable, cross-device "confirmed at" timestamp to count down from, so this shows how long
  * they've been waiting rather than a countdown to an exact moment. */
 function WaitingTimer() {
   const [seconds, setSeconds] = useState(0);
@@ -121,6 +121,30 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
           <div className="text-base text-[#6B5D2E] leading-relaxed">
             Thanks {booking.ownerName} — we&apos;ve received your payment receipt for your <strong>Vet Consult</strong> with{" "}
             <strong>{booking.doctorName}</strong>. Our team is verifying it now and you&apos;ll be notified the moment it&apos;s approved.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // A scheduled (non-instant) consult sits here once confirmed, well before it's actually
+  // joinable -- show the booked date/time instead of the "waiting for the doctor" countdown,
+  // which only makes sense once the call could plausibly start any second.
+  if (booking.status === "Confirmed" && !isBookingActionable(booking)) {
+    return (
+      <div className="px-8 py-16 flex justify-center">
+        <div className="max-w-[720px] w-full text-center bg-[#EAF6EE] border border-[#CFE9D8] rounded-2xl px-12 py-14">
+          <div className="text-5xl mb-4">✓</div>
+          <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3.5">Consult Confirmed</div>
+          <div className="text-base text-[#3A6B4C] leading-relaxed mb-4">
+            Your consult with {booking.doctorName} is confirmed for{" "}
+            <strong>
+              {booking.scheduledDate} at {booking.scheduledTime}
+            </strong>
+            . Invoice {booking.invoiceNumber} has been emailed to you.
+          </div>
+          <div className="bg-white border border-[#CFE9D8] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#3A6B4C] font-semibold inline-block">
+            Come back closer to your appointment — you&apos;ll be able to join the call starting 30 minutes before.
           </div>
         </div>
       </div>

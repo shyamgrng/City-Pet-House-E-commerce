@@ -158,7 +158,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
             ) : (
               <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4 bg-white text-xs text-[#8A96A3]">
                 This is a scheduled consult for <strong className="text-[#3A4652]">{booking.scheduledDate} at {booking.scheduledTime}</strong>.
-                Chat and the call will open here once it&apos;s within an hour of that time — this booking is already visible in your{" "}
+                Chat and the call will open here once it&apos;s within 30 minutes of that time — this booking is already visible in your{" "}
                 <strong className="text-[#3A4652]">Upcoming</strong> list.
               </div>
             ))}

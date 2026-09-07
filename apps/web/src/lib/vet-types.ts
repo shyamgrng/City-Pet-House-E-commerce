@@ -49,11 +49,11 @@ export function computeScheduledAt(dateLabel: string, timeLabel: string): number
   return d.getTime();
 }
 
-const CONSULT_WINDOW_MS = 60 * 60 * 1000;
+const CONSULT_WINDOW_MS = 30 * 60 * 1000;
 
 /** Whether a doctor should be able to see/join this booking as an active consult right now.
  * Instant bookings are always actionable; a scheduled booking only becomes actionable within
- * an hour of its appointment time. Bookings from before this field existed (scheduledAt
+ * 30 minutes of its appointment time. Bookings from before this field existed (scheduledAt
  * missing) fall back to always-actionable rather than being silently locked out. */
 export function isBookingActionable(booking: Pick<VetBooking, "instant" | "scheduledAt">): boolean {
   if (booking.instant) return true;
