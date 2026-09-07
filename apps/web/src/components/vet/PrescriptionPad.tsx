@@ -58,16 +58,18 @@ export default function PrescriptionPad({ booking, fillHeight = false }: { booki
   const removeMedicine = (index: number) => setDraft((d) => ({ ...d, medicines: d.medicines.filter((_, i) => i !== index) }));
 
   const saveDraft = () => {
-    savePrescriptionDraft(booking.id, { ...draft, updatedAt: Date.now() });
-    setSavedNotice(true);
-    setTimeout(() => setSavedNotice(false), 2000);
+    const ok = savePrescriptionDraft(booking.id, { ...draft, updatedAt: Date.now() });
+    if (ok) {
+      setSavedNotice(true);
+      setTimeout(() => setSavedNotice(false), 2000);
+    }
   };
 
   const send = () => {
     setSending(true);
     const sentAt = Date.now();
-    sendPrescription(booking.id, { ...draft, updatedAt: sentAt });
-    setDraft((d) => ({ ...d, sentAt }));
+    const ok = sendPrescription(booking.id, { ...draft, updatedAt: sentAt });
+    if (ok) setDraft((d) => ({ ...d, sentAt }));
     setSending(false);
   };
 
@@ -201,7 +203,7 @@ export default function PrescriptionPad({ booking, fillHeight = false }: { booki
             disabled={sending}
             className="flex-1 bg-[#1F7A4D] text-white py-2 rounded-md text-xs font-semibold cursor-pointer disabled:opacity-60"
           >
-            {draft.sentAt ? "Update & Resend to Patient" : "Send to Patient"}
+            {sending ? "Sending…" : "Send"}
           </button>
         </div>
         <div className="text-[11px] text-[#8A96A3]">
