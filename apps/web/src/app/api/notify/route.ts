@@ -31,7 +31,11 @@ export async function POST(request: Request) {
     const result = await sendBrevoEmail({ to, toName, subject: rendered.subject, html: rendered.html, attachments });
     return NextResponse.json({ ok: true, skipped: result.skipped });
   } catch (err) {
-    console.error(`[api/notify] failed to send "${event}" to ${to}`, err);
-    return NextResponse.json({ ok: false, error: "Failed to send email" }, { status: 502 });
+    // Surface the real reason (e.g. Brevo rejecting an unverified sender) instead of a generic
+    // message -- this is what a doctor sees when a send fails, and what shows up in a bug
+    // report screenshot, so it needs to say what actually went wrong.
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error(`[api/notify] failed to send "${event}" to ${to}: ${message}`);
+    return NextResponse.json({ ok: false, error: message }, { status: 502 });
   }
 }

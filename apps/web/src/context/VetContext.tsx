@@ -706,9 +706,10 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     // is the one that must actually land in the patient's inbox, so it's awaited and the whole
     // send is only reported as successful once Brevo confirms it went out -- the "Sent" state
     // in the UI should never lie about whether an email was actually delivered.
-    const emailedClient = await notifyEvent("vet_prescription", sentPrescription.ownerEmail, sentPrescription.ownerName, emailData);
-    if (!emailedClient) {
-      setState((s) => ({ ...s, saveError: PRESCRIPTION_EMAIL_ERROR_MESSAGE }));
+    const emailResult = await notifyEvent("vet_prescription", sentPrescription.ownerEmail, sentPrescription.ownerName, emailData);
+    if (!emailResult.ok) {
+      const detail = emailResult.error ? ` (${emailResult.error})` : "";
+      setState((s) => ({ ...s, saveError: `${PRESCRIPTION_EMAIL_ERROR_MESSAGE}${detail}` }));
       return false;
     }
 
