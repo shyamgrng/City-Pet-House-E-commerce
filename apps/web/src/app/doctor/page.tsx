@@ -85,7 +85,8 @@ export default function DoctorPortalPage() {
         </div>
       </div>
 
-      <div className="px-8 py-7 max-w-[900px]">
+      <div className="max-w-7xl mx-auto px-8 py-7">
+      <div className="max-w-[900px]">
         <div className="flex gap-2 flex-wrap mb-[22px]">
           {TABS.map((t) => (
             <button
@@ -202,6 +203,7 @@ export default function DoctorPortalPage() {
             }}
           />
         )}
+      </div>
       </div>
 
       {blogModalOpen && editingPost && (
