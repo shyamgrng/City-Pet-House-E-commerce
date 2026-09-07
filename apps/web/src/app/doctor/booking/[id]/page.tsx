@@ -150,19 +150,6 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
         </div>
 
         <div className="max-w-[760px] mx-auto">
-          <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4 bg-white">
-            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Client Shared Files</div>
-            {booking.clientDocuments.length === 0 ? (
-              <div className="text-xs text-[#8A96A3]">No files shared by the client yet</div>
-            ) : (
-              booking.clientDocuments.map((d, i) => (
-                <div key={i} className="text-xs text-[#3A4652] py-1.5 border-b border-[#F0F2F4] last:border-0">
-                  📎 {d.name}
-                </div>
-              ))
-            )}
-          </div>
-
           {booking.status === "Confirmed" && (
             <div className="mb-4">
               <ChatPanel booking={booking} onCall={() => startCall(booking.id)} />
