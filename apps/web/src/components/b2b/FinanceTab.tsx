@@ -22,25 +22,29 @@ export default function FinanceTab({ submissions }: { submissions: B2BProductSub
 
       <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Approved Products — Payout Breakdown</div>
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-        <div className="grid grid-cols-5 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
-          <div>Product</div>
-          <div>Approved On</div>
-          <div>Value</div>
-          <div>Commission</div>
-          <div>Net Payout</div>
-        </div>
         {approved.length === 0 ? (
           <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No approved products yet — payouts will appear here once City Pet House approves a submission</div>
         ) : (
-          approved.map((s) => (
-            <div key={s.id} className="grid grid-cols-5 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-              <div className="font-semibold text-[#1A2027]">{s.name}</div>
-              <div className="text-[#5B6773]">{fmtDate(s.submittedAt)}</div>
-              <div className="text-[#5B6773]">{fmt(s.price * s.qty)}</div>
-              <div className="text-[#D64545]">{s.commissionPct}%</div>
-              <div className="font-semibold text-[#1F7A4D]">{fmt(netPayout(s))}</div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[560px]">
+              <div className="grid grid-cols-5 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+                <div>Product</div>
+                <div>Approved On</div>
+                <div>Value</div>
+                <div>Commission</div>
+                <div>Net Payout</div>
+              </div>
+              {approved.map((s) => (
+                <div key={s.id} className="grid grid-cols-5 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                  <div className="font-semibold text-[#1A2027]">{s.name}</div>
+                  <div className="text-[#5B6773]">{fmtDate(s.submittedAt)}</div>
+                  <div className="text-[#5B6773]">{fmt(s.price * s.qty)}</div>
+                  <div className="text-[#D64545]">{s.commissionPct}%</div>
+                  <div className="font-semibold text-[#1F7A4D]">{fmt(netPayout(s))}</div>
+                </div>
+              ))}
             </div>
-          ))
+          </div>
         )}
       </div>
     </div>

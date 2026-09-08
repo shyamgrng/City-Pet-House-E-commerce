@@ -276,8 +276,8 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
 
 function FormRow({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-8 py-3.5 px-4">
-      <div className="w-[190px] shrink-0 text-[13px] text-[#3A4652] pt-2.5">
+    <div className="flex flex-col sm:flex-row sm:items-start gap-1.5 sm:gap-8 py-3.5 px-4">
+      <div className="sm:w-[190px] sm:shrink-0 text-[13px] text-[#3A4652] sm:pt-2.5 empty:hidden sm:empty:block">
         {label}
         {required && <span> *</span>}
       </div>
@@ -335,7 +335,7 @@ function DocumentRow({ label, value, onUpload }: { label: string; value: string;
         >
           {present && "✓"}
         </span>
-        <div className="text-[13px] text-[#3A4652] w-[190px]">{label}</div>
+        <div className="text-[13px] text-[#3A4652] flex-1 min-w-[120px] sm:w-[190px] sm:flex-none">{label}</div>
         <input ref={inputRef} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
         {busy ? (
           <div className="text-[11px] font-semibold text-[#8A96A3]">Processing…</div>
