@@ -19,8 +19,8 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
   const { doctor, updateAddress, updatePhoto, updateDocument, changePassword } = useDoctorAuth();
   const { setDoctorFee } = useVet();
 
-  const [addressEditing, setAddressEditing] = useState(false);
   const [addressDraft, setAddressDraft] = useState(doctor?.address ?? "");
+  const [addressSaved, setAddressSaved] = useState(false);
 
   const [feeDraft, setFeeDraft] = useState(doctorRecord?.feeRs ?? 800);
   const [feeSaved, setFeeSaved] = useState(false);
@@ -34,13 +34,11 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
 
   const verified = doctorRecord?.verified ?? false;
 
-  const startEditAddress = () => {
-    setAddressDraft(doctor.address);
-    setAddressEditing(true);
-  };
   const saveAddress = () => {
+    if (!addressDraft.trim()) return;
     updateAddress(addressDraft);
-    setAddressEditing(false);
+    setAddressSaved(true);
+    setTimeout(() => setAddressSaved(false), 3000);
   };
 
   const saveFee = () => {
@@ -59,12 +57,10 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
     setTimeout(() => setPasswordSaved(false), 3000);
   };
 
-  const documentsComplete = REQUIRED_DOCUMENTS.every((d) => Boolean(doctor[d.field]));
-
   return (
     <div>
       <div
-        className="px-4 py-3 rounded-[10px] mb-5"
+        className="px-4 py-3 rounded-[10px] mb-6"
         style={{ background: verified ? "#EAF6EE" : "#FFF8EA", border: `1px solid ${verified ? "#CFE9D8" : "#F0DFAE"}` }}
       >
         <div className="text-xs font-bold" style={{ color: verified ? "#1F7A4D" : "#8A6D1F" }}>
@@ -77,139 +73,135 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
         </div>
       </div>
 
-      <div className="bg-white border border-[#E4E9EC] rounded-xl overflow-hidden">
-        <div className="px-6 py-5 flex items-center gap-4 border-b border-[#E4E9EC]">
-          <div className="w-[76px] shrink-0">
-            <ImageUploadField value={doctor.photo} onChange={updatePhoto} label="passport photo" height="h-[76px]" maxWidth={400} maxHeight={520} />
+      <div className="bg-white rounded-xl px-2 py-2 max-w-[760px]">
+        <FormRow label="Passport Photo">
+          <div className="w-[130px]">
+            <ImageUploadField value={doctor.photo} onChange={updatePhoto} label="passport photo" height="h-[100px]" maxWidth={400} maxHeight={520} />
           </div>
-          <div>
-            <div className="text-base font-bold text-[#1A2027]">{doctor.name}</div>
-            <div className="text-xs text-[#8A96A3] mt-0.5">Doctor ID: {doctor.doctorId}</div>
+        </FormRow>
+
+        <FormRow label="Doctor ID">
+          <StaticField value={doctor.doctorId} />
+        </FormRow>
+
+        <FormRow label="Full Name">
+          <StaticField value={doctor.name} />
+        </FormRow>
+
+        <Divider />
+
+        <FormRow label="Email address">
+          <StaticField value={doctor.email} />
+        </FormRow>
+
+        <FormRow label="Phone">
+          <StaticField value={doctor.phone} />
+        </FormRow>
+
+        <FormRow label="Emergency number">
+          <StaticField value={doctor.emergencyPhone} />
+        </FormRow>
+
+        <FormRow label="Address" required>
+          <input
+            value={addressDraft}
+            onChange={(e) => setAddressDraft(e.target.value)}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+          <div className="flex items-center gap-2.5 mt-2">
+            <button onClick={saveAddress} className="bg-primary text-white px-4 py-2 rounded-md text-xs font-semibold cursor-pointer">
+              Save
+            </button>
+            {addressSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Address updated</div>}
           </div>
-        </div>
+        </FormRow>
 
-        <div className="px-6">
-          <ProfileRow label="Email" value={doctor.email} locked />
-          <ProfileRow label="Phone" value={doctor.phone} locked />
-          <ProfileRow label="Emergency Number" value={doctor.emergencyPhone} locked />
+        <Divider />
 
-          <ProfileRowShell label="Address">
-            {!addressEditing ? (
-              <div className="flex items-center gap-3">
-                <div className="text-[13px] font-semibold text-[#1A2027]">{doctor.address}</div>
-                <button onClick={startEditAddress} className="text-[11px] font-semibold text-primary cursor-pointer">
-                  Edit
-                </button>
-              </div>
-            ) : (
-              <div>
-                <input
-                  value={addressDraft}
-                  onChange={(e) => setAddressDraft(e.target.value)}
-                  className="w-full max-w-[420px] px-2.5 py-2 rounded-lg border border-[#E4E9EC] text-xs mb-2 box-border"
-                />
-                <div className="flex gap-2">
-                  <button onClick={saveAddress} className="bg-primary text-white px-3.5 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer">
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setAddressEditing(false)}
-                    className="bg-[#F0F2F4] text-[#5B6773] px-3.5 py-1.5 rounded-md text-[11px] font-semibold cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-          </ProfileRowShell>
+        <FormRow label="Qualification">
+          <StaticField value={doctorRecord?.qualification ?? ""} />
+        </FormRow>
 
-          <ProfileRow label="Qualification" value={doctorRecord?.qualification ?? ""} locked />
-          <ProfileRow label="NVC Number" value={doctorRecord?.nvcNumber ?? ""} locked last />
-        </div>
+        <FormRow label="NVC Number">
+          <StaticField value={doctorRecord?.nvcNumber ?? ""} />
+        </FormRow>
 
-        <div className="px-6 py-5 border-t border-[#E4E9EC]">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-3.5">Consultation Fee</div>
-          <div className="flex items-end gap-3 flex-wrap">
-            <div className="w-[160px]">
-              <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Fee per consult (Rs.)</div>
+        <Divider />
+
+        <FormRow label="Consultation fee (Rs.)" required>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="w-[150px]">
               <PriceInput value={feeDraft} onChange={setFeeDraft} />
             </div>
-            <button onClick={saveFee} className="bg-primary text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer">
-              Update Fee
+            <button onClick={saveFee} className="bg-primary text-white px-4 py-2.5 rounded-md text-xs font-semibold cursor-pointer">
+              Update
             </button>
-            {feeSaved && <div className="text-[11px] text-[#1F7A4D]">✓ New consults will now use this fee</div>}
+            {feeSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Updated</div>}
           </div>
-        </div>
+        </FormRow>
 
-        <div className="px-6 py-5 border-t border-[#E4E9EC]">
-          <div className="text-[13px] font-bold text-[#1A2027] mb-3.5">Change Password</div>
-          <div className="flex gap-4 flex-wrap items-start">
-            <div className="w-full max-w-[240px]">
-              <div className="text-xs font-semibold text-[#3A4652] mb-1.5">New Password</div>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
-              />
-            </div>
-            <div className="w-full max-w-[240px]">
-              <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Reconfirm Password</div>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
-              />
-            </div>
-            <button
-              onClick={submitPasswordChange}
-              className="bg-primary text-white px-5 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer h-[42px]"
-            >
+        <Divider />
+
+        <FormRow label="New password">
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full max-w-[300px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+        </FormRow>
+
+        <FormRow label="Reconfirm password">
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full max-w-[300px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+          {mismatch && <div className="text-[11px] text-[#D64545] mt-1.5">Passwords do not match</div>}
+        </FormRow>
+
+        <FormRow label="">
+          <div className="flex items-center gap-2.5">
+            <button onClick={submitPasswordChange} className="bg-primary text-white px-5 py-2.5 rounded-md text-[13px] font-semibold cursor-pointer">
               Update Password
             </button>
+            {passwordSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Password updated</div>}
           </div>
-          {mismatch && <div className="text-[11px] text-[#D64545] mt-2">Passwords do not match</div>}
-          {passwordSaved && <div className="text-[11px] text-[#1F7A4D] mt-2">✓ Password updated</div>}
-        </div>
+        </FormRow>
 
-        <div className="px-6 py-5 border-t border-[#E4E9EC]">
-          <div className="flex items-center justify-between mb-3.5">
-            <div className="text-[13px] font-bold text-[#1A2027]">Registration Documents</div>
-            {documentsComplete ? (
-              <div className="text-[11px] font-bold text-[#1F7A4D]">✓ All documents on file</div>
-            ) : (
-              <div className="text-[11px] font-bold text-[#8A6D1F]">Documents missing</div>
-            )}
+        <Divider />
+
+        <FormRow label="Registration documents">
+          <div className="flex flex-col gap-3.5">
+            {REQUIRED_DOCUMENTS.map((d) => (
+              <DocumentRow key={d.field} label={d.label} value={doctor[d.field]} onUpload={(v) => updateDocument(d.field, v)} />
+            ))}
           </div>
-          {REQUIRED_DOCUMENTS.map((d) => (
-            <DocumentRow key={d.field} label={d.label} value={doctor[d.field]} onUpload={(v) => updateDocument(d.field, v)} />
-          ))}
-        </div>
+        </FormRow>
       </div>
     </div>
   );
 }
 
-function ProfileRow({ label, value, locked, last }: { label: string; value: string; locked?: boolean; last?: boolean }) {
+function FormRow({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <div className={`flex items-center justify-between py-3.5 ${last ? "" : "border-b border-[#F0F2F4]"}`}>
-      <div className="text-xs text-[#8A96A3]">{label}</div>
-      <div className="text-[13px] font-semibold text-[#1A2027] flex items-center gap-1.5">
-        {value}
-        {locked && <span className="text-[11px]">🔒</span>}
+    <div className="flex items-start gap-8 py-3.5 px-4">
+      <div className="w-[190px] shrink-0 text-[13px] text-[#3A4652] pt-2.5">
+        {label}
+        {required && <span> *</span>}
       </div>
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
 }
 
-function ProfileRowShell({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between py-3.5 border-b border-[#F0F2F4] gap-4">
-      <div className="text-xs text-[#8A96A3] shrink-0">{label}</div>
-      <div className="text-right">{children}</div>
-    </div>
-  );
+function Divider() {
+  return <div className="border-t border-[#E4E9EC] my-2" />;
+}
+
+function StaticField({ value }: { value: string }) {
+  return <div className="px-3 py-2.5 rounded-md bg-[#F7F9FA] border border-[#E4E9EC] text-[13px] text-[#5B6773] max-w-[360px]">{value}</div>;
 }
 
 function DocumentRow({ label, value, onUpload }: { label: string; value: string; onUpload: (v: string) => void }) {
@@ -241,8 +233,8 @@ function DocumentRow({ label, value, onUpload }: { label: string; value: string;
   };
 
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] last:border-0 gap-4 flex-wrap">
-      <div className="flex items-center gap-2.5">
+    <div>
+      <div className="flex items-center gap-3 flex-wrap">
         <span
           className="w-[18px] h-[18px] rounded-[4px] shrink-0 flex items-center justify-center text-[11px] font-bold"
           style={{
@@ -253,9 +245,7 @@ function DocumentRow({ label, value, onUpload }: { label: string; value: string;
         >
           {present && "✓"}
         </span>
-        <div className="text-[13px] font-semibold text-[#1A2027]">{label}</div>
-      </div>
-      <div className="flex items-center gap-2.5 shrink-0">
+        <div className="text-[13px] text-[#3A4652] w-[190px]">{label}</div>
         <input ref={inputRef} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
         {busy ? (
           <div className="text-[11px] font-semibold text-[#8A96A3]">Processing…</div>
@@ -272,7 +262,7 @@ function DocumentRow({ label, value, onUpload }: { label: string; value: string;
           </button>
         )}
       </div>
-      {error && <div className="text-[11px] text-[#D64545] w-full text-right">{error}</div>}
+      {error && <div className="text-[11px] text-[#D64545] mt-1">{error}</div>}
     </div>
   );
 }
