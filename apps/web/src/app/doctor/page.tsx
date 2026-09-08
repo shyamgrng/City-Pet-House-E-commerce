@@ -92,7 +92,7 @@ export default function DoctorPortalPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-8 py-7">
-      <div className={tab === "Blog" ? "" : "max-w-[900px]"}>
+      <div className={tab === "Blog" || tab === "Overview" ? "" : "max-w-[900px]"}>
         <div className="flex gap-2 flex-wrap mb-[22px]">
           {TABS.map((t) => (
             <button
@@ -119,7 +119,7 @@ export default function DoctorPortalPage() {
             </div>
 
             {doctorRecord && (
-              <div className="border border-[#E4E9EC] rounded-xl p-4 mb-5 flex justify-between items-center max-w-[480px]">
+              <div className="border border-[#E4E9EC] rounded-xl p-4 mb-5 flex justify-between items-center">
                 <div>
                   <div className="text-sm font-semibold text-[#1A2027]">Availability</div>
                   <div className="text-xs text-[#8A96A3] mt-0.5">{doctorRecord.online ? "You're online — clients can book you now" : "You're offline"}</div>
