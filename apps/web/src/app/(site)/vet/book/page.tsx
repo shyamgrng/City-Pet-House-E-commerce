@@ -57,7 +57,7 @@ function BookInner() {
 
   if (!user) {
     return (
-      <div className="px-8 py-16 flex justify-center">
+      <div className="px-4 md:px-8 py-16 flex justify-center">
         <div className="max-w-[420px] w-full border border-[#E4E9EC] rounded-2xl p-8 text-center">
           <div className="font-heading font-bold text-lg text-[#1A2027] mb-2">Book a Vet Consult</div>
           <div className="text-[13px] text-[#5B6773] leading-relaxed mb-6">
@@ -118,7 +118,7 @@ function BookInner() {
   };
 
   return (
-    <div className="px-8 py-7 max-w-[600px]">
+    <div className="px-4 md:px-8 py-7 max-w-[600px]">
       <Link href="/vet" className="text-[13px] text-primary font-semibold mb-4 inline-block">
         ← Back to Web Vet
       </Link>

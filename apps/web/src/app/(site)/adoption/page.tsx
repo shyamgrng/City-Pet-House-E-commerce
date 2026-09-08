@@ -18,7 +18,7 @@ export default function AdoptionPage() {
   return (
     <div>
       <div
-        className="mx-8 mt-7 mb-6 p-8 rounded-2xl flex items-center justify-between gap-5 flex-wrap"
+        className="mx-4 md:mx-8 mt-7 mb-6 p-8 rounded-2xl flex items-center justify-between gap-5 flex-wrap"
         style={{
           backgroundImage:
             "repeating-linear-gradient(45deg, #EAF4F9, #EAF4F9 10px, #DCEBF3 10px, #DCEBF3 20px)",
@@ -32,7 +32,7 @@ export default function AdoptionPage() {
         </div>
       </div>
 
-      <div className="px-8 pb-8 flex gap-7 flex-wrap">
+      <div className="px-4 md:px-8 pb-8 flex gap-7 flex-wrap">
         <div className="flex-[1.4] min-w-[400px]">
           <div className="font-heading font-bold text-base text-[#1A2027] mb-4">Dogs Looking for a Home</div>
           {posts.length === 0 ? (

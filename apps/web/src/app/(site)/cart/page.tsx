@@ -45,7 +45,7 @@ export default function CartPage() {
   const total = items.length > 0 ? subtotal + deliveryResult.fee : 0;
 
   return (
-    <div className="px-8 py-7 max-w-[720px] mx-auto">
+    <div className="px-4 md:px-8 py-7 max-w-[720px] mx-auto">
       <div className="font-heading font-bold text-xl text-[#1A2027] mb-5">Cart &amp; Checkout</div>
 
       {items.length === 0 ? (

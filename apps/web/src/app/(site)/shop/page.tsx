@@ -99,7 +99,7 @@ function ShopContent() {
   };
 
   return (
-    <div className="flex gap-6 px-8 py-7">
+    <div className="flex gap-6 px-4 md:px-8 py-7">
       <div className="w-[200px] shrink-0">
         <div className="font-heading font-bold text-sm text-[#1A2027] mb-3">Categories</div>
         {categories.map((c) => (

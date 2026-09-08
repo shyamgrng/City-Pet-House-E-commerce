@@ -13,7 +13,7 @@ export default function CareerPage() {
     <div>
       <MediaSlot src={content.bannerImage} label="career banner image" fit="cover" className="w-full h-[280px]" />
 
-      <div className="max-w-[1100px] mx-auto px-8 py-11 pb-14 flex gap-10 items-center flex-wrap">
+      <div className="max-w-[1100px] mx-auto px-4 md:px-8 py-11 pb-14 flex gap-10 items-center flex-wrap">
         <MediaSlot src={content.teamPhoto} label="team / store photo" className="flex-1 min-w-[280px] h-[300px] rounded-2xl" />
         <div className="flex-1 min-w-[280px]">
           <div className="font-heading font-extrabold text-[28px] text-[#1A2027] leading-tight mb-[22px]">{content.headline}</div>
@@ -26,7 +26,7 @@ export default function CareerPage() {
         </div>
       </div>
 
-      <div id="positions" className="max-w-[1100px] mx-auto px-8 pb-14">
+      <div id="positions" className="max-w-[1100px] mx-auto px-4 md:px-8 pb-14">
         <div className="font-heading font-bold text-xl text-[#1A2027] mb-5">Open Positions</div>
         <div className="grid gap-[18px]" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
           {content.jobs.map((job) => (

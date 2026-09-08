@@ -12,7 +12,7 @@ export default function AvailablePuppiesRail() {
   const available = pets.filter((p) => p.status === "Available").slice(0, 6);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-8 pb-8">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-4 md:px-8 pb-8">
       {available.map((p) => (
         <Link
           key={p.id}

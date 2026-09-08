@@ -46,7 +46,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
 
   if (!booking) {
     return (
-      <div className="px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="px-4 md:px-8 py-10 text-center text-sm text-[#8A96A3]">
         Booking not found. <Link href="/vet" className="text-primary font-semibold">Back to Web Vet</Link>
       </div>
     );
@@ -54,7 +54,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
 
   if (booking.status === "Completed" || leftCall) {
     return (
-      <div className="px-8 py-16 flex justify-center">
+      <div className="px-4 md:px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#F7F9FA] border border-[#E4E9EC] rounded-2xl px-12 py-14">
           <div className="text-5xl mb-4">✓</div>
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Thank You!</div>
@@ -69,7 +69,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
 
   if (booking.status === "Payment Rejected") {
     return (
-      <div className="px-8 py-16 flex justify-center">
+      <div className="px-4 md:px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#FDEDEC] border border-[#F3C7C3] rounded-2xl px-12 py-14">
           <div className="text-5xl mb-4">✕</div>
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Payment Receipt Rejected</div>
@@ -93,7 +93,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
 
   if (booking.status === "Pending Payment") {
     return (
-      <div className="px-8 py-16 flex justify-center">
+      <div className="px-4 md:px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#FFF8EA] border border-[#F0DFAE] rounded-2xl px-12 py-14">
           <div className="text-5xl mb-4">⏳</div>
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Request Sent</div>
@@ -114,7 +114,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
 
   if (booking.status === "Payment Review") {
     return (
-      <div className="px-8 py-16 flex justify-center">
+      <div className="px-4 md:px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#FFF8EA] border border-[#F0DFAE] rounded-2xl px-12 py-14">
           <div className="text-5xl mb-4">⏳</div>
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Payment Submitted</div>
@@ -132,7 +132,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
   // which only makes sense once the call could plausibly start any second.
   if (booking.status === "Confirmed" && !isBookingActionable(booking)) {
     return (
-      <div className="px-8 py-16 flex justify-center">
+      <div className="px-4 md:px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#EAF6EE] border border-[#CFE9D8] rounded-2xl px-12 py-14">
           <div className="text-5xl mb-4">✓</div>
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3.5">Consult Confirmed</div>
@@ -155,7 +155,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
   const inCall = readyForCall && callJoined;
 
   return (
-    <div className="px-8 py-14 flex justify-center">
+    <div className="px-4 md:px-8 py-14 flex justify-center">
       <div className="max-w-[720px] w-full">
         {!inCall && (
           <div className="bg-[#EAF6EE] border border-[#CFE9D8] rounded-2xl px-10 py-8 text-center mb-5">

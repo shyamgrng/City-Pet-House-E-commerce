@@ -7,7 +7,7 @@ export default function LegalPageView({ title, doc }: { title: string; doc: Lega
 
   return (
     <div className="pb-10">
-      <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-8 pt-11 pb-9">
+      <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-4 md:px-8 pt-11 pb-9">
         <Link href="/" className="text-[13px] text-primary font-semibold mb-4 inline-block">
           ← Back to Home
         </Link>
@@ -17,7 +17,7 @@ export default function LegalPageView({ title, doc }: { title: string; doc: Lega
           <div>Last Updated: {doc.lastUpdated}</div>
         </div>
       </div>
-      <div className="max-w-[760px] mx-auto px-8 pt-9">
+      <div className="max-w-[760px] mx-auto px-4 md:px-8 pt-9">
         {sections.map((sec, i) => (
           <div key={i} className="mb-[34px] pb-[34px] border-b border-[#EEF1F2] last:border-0">
             <div className="flex items-baseline gap-2.5 mb-3.5">

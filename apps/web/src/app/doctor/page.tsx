@@ -66,7 +66,7 @@ export default function DoctorPortalPage() {
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
       <div className="bg-[#F7F9FA] border-b border-[#E4E9EC]">
-        <div className="flex items-center justify-center gap-4 max-w-7xl mx-auto px-8 py-1.5 text-[11px] text-[#5B6773]">
+        <div className="flex items-center justify-center gap-4 max-w-7xl mx-auto px-4 md:px-8 py-1.5 text-[11px] text-[#5B6773]">
           <div>📞 {settings.phone}</div>
           <div>📍 {settings.address}</div>
           <div>{settings.hours}</div>
@@ -74,7 +74,7 @@ export default function DoctorPortalPage() {
       </div>
 
       <div className="bg-white border-b border-[#E4E9EC]">
-        <div className="flex items-center justify-between max-w-7xl mx-auto px-8 py-3.5">
+        <div className="flex items-center justify-between max-w-7xl mx-auto px-4 md:px-8 py-3.5">
           <div className="flex items-center gap-2.5">
             <Image src="/assets/cph-logo.jpeg" alt="" width={34} height={34} className="rounded-md object-contain" />
             <span className="font-heading font-bold text-[15px] text-[#1A2027]">CPH Doctor Portal</span>
@@ -91,7 +91,7 @@ export default function DoctorPortalPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-7">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-7">
         <div className="flex gap-2 flex-wrap mb-[22px]">
           {TABS.map((t) => (
             <button

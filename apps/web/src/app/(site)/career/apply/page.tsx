@@ -59,7 +59,7 @@ function CareerApplyForm() {
 
   if (submitted) {
     return (
-      <div className="px-8 py-16 flex justify-center">
+      <div className="px-4 md:px-8 py-16 flex justify-center">
         <div className="max-w-[480px] w-full text-center">
           <div className="font-heading font-extrabold text-2xl text-[#1A2027] mb-2">Application Submitted</div>
           <div className="text-sm text-[#5B6773] mb-6">Thanks {name} — our team will review your application and reach out soon.</div>
@@ -72,7 +72,7 @@ function CareerApplyForm() {
   }
 
   return (
-    <div className="px-8 py-10 flex justify-center">
+    <div className="px-4 md:px-8 py-10 flex justify-center">
       <div className="max-w-[600px] w-full">
         <Link href="/career" className="text-[13px] text-primary font-semibold mb-4 inline-block">
           ← Back to Home

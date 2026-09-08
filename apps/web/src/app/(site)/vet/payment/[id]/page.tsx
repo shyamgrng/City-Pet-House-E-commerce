@@ -18,7 +18,7 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
 
   if (!booking) {
     return (
-      <div className="px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="px-4 md:px-8 py-10 text-center text-sm text-[#8A96A3]">
         Booking not found. <Link href="/vet" className="text-primary font-semibold">Back to Web Vet</Link>
       </div>
     );
@@ -56,7 +56,7 @@ export default function VetPaymentPage({ params }: { params: Promise<{ id: strin
   };
 
   return (
-    <div className="px-8 py-7 flex justify-center">
+    <div className="px-4 md:px-8 py-7 flex justify-center">
       <div className="max-w-[480px] w-full">
         <Link href={`/vet/book?doctor=${booking.doctorId}`} className="text-[13px] text-primary font-semibold mb-4 inline-block">
           ← Back

@@ -14,7 +14,7 @@ export default function WebVetPage() {
 
   if (!webVetActive) {
     return (
-      <div className="px-8 py-[100px] flex flex-col items-center text-center">
+      <div className="px-4 md:px-8 py-[100px] flex flex-col items-center text-center">
         <div className="text-5xl mb-4">🚧</div>
         <div className="font-heading font-bold text-2xl text-[#1A2027] mb-2.5">Web Vet is Under Construction</div>
         <div className="text-sm text-[#5B6773] max-w-[440px] leading-relaxed">
@@ -26,7 +26,7 @@ export default function WebVetPage() {
 
   return (
     <div>
-      <div className="mx-8 mt-7 mb-6 p-8 rounded-2xl bg-[#EAF4F9] flex items-center justify-between gap-5 flex-wrap">
+      <div className="mx-4 md:mx-8 mt-7 mb-6 p-8 rounded-2xl bg-[#EAF4F9] flex items-center justify-between gap-5 flex-wrap">
         <div>
           <div className="font-heading font-bold text-xl text-[#1A2027] mb-1.5">Talk to a Certified Vet</div>
           <div className="text-[13px] text-[#3A4652] max-w-[480px]">
@@ -38,8 +38,8 @@ export default function WebVetPage() {
         </Link>
       </div>
 
-      <div className="px-8 pb-4 font-heading font-bold text-base text-[#1A2027]">Our Doctors</div>
-      <div className="px-8 pb-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+      <div className="px-4 md:px-8 pb-4 font-heading font-bold text-base text-[#1A2027]">Our Doctors</div>
+      <div className="px-4 md:px-8 pb-8 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
         {doctors.map((doc) => (
           <div key={doc.id} className="border border-[#E4E9EC] rounded-xl overflow-hidden">
             <div
@@ -73,7 +73,7 @@ export default function WebVetPage() {
       </div>
 
       {doctorPosts.length > 0 && (
-        <div className="px-8 pb-8">
+        <div className="px-4 md:px-8 pb-8">
           <div className="font-heading font-bold text-base text-[#1A2027] mb-4">Blogs by Our Doctors</div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-[18px]">
             {doctorPosts.map((post) => (

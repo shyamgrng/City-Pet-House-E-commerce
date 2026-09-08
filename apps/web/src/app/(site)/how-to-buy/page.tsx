@@ -9,7 +9,7 @@ export default function HowToBuyPage() {
 
   return (
     <div className="pb-12">
-      <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-8 pt-11 pb-9">
+      <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-4 md:px-8 pt-11 pb-9">
         <Link href="/" className="text-[13px] text-primary font-semibold mb-4 inline-block">
           ← Back to Home
         </Link>
@@ -17,7 +17,7 @@ export default function HowToBuyPage() {
         <div className="text-sm text-[#3A4652] leading-[1.8]">{content.intro}</div>
       </div>
 
-      <div className="max-w-[760px] mx-auto px-8 pt-9">
+      <div className="max-w-[760px] mx-auto px-4 md:px-8 pt-9">
         <div className="bg-white border border-[#E4E9EC] rounded-2xl p-5 flex gap-4 items-center mb-9">
           <div className="w-16 h-16 rounded-xl bg-[#1A2027] text-white flex items-center justify-center text-2xl shrink-0">▶</div>
           <div>

@@ -100,7 +100,7 @@ function PetTagArchiveContent() {
           <div className="text-lg text-white/85 font-bold tracking-[0.6px]">🐾 PET DETAILS</div>
         </div>
 
-        <div className="flex justify-center px-8 pb-12">
+        <div className="flex justify-center px-4 md:px-8 pb-12">
           <div className="w-full max-w-[520px] -mt-14">
             <div className="bg-white rounded-2xl p-7 text-center mb-5" style={{ boxShadow: "0 12px 30px rgba(0,0,0,0.1)" }}>
               <div className="w-[100px] h-[100px] -mt-[72px] mb-3 mx-auto rounded-full border-[5px] border-white shadow-[0_6px_14px_rgba(0,0,0,0.14)]">
@@ -180,7 +180,7 @@ function PetTagArchiveContent() {
         <div className="text-sm text-white/80 font-semibold tracking-[0.5px]">🐾 CITY PET HOUSE · PET TAG REGISTRY</div>
       </div>
 
-      <div className="flex gap-10 px-8 py-11 items-start flex-wrap lg:flex-nowrap">
+      <div className="flex gap-10 px-4 md:px-8 py-11 items-start flex-wrap lg:flex-nowrap">
         <div className="w-full lg:w-[280px] shrink-0 lg:sticky lg:top-5">
           <div className="border border-[#E4E9EC] rounded-[10px] overflow-hidden">
             <div className="h-1 bg-primary" />

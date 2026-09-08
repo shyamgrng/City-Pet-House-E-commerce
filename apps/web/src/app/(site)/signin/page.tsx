@@ -89,7 +89,7 @@ function SigninInner() {
   };
 
   return (
-    <div className="py-[60px] px-8 flex justify-center">
+    <div className="py-[60px] px-4 md:px-8 flex justify-center">
       <div ref={cardRef} className="w-full max-w-[400px] border border-[#E4E9EC] rounded-[14px] p-8">
         <div className="flex gap-1.5 bg-[#F0F2F4] rounded-[9px] p-1 mb-6">
           {(["signin", "register"] as const).map((m) => (

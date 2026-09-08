@@ -9,7 +9,7 @@ const roles = [
 
 export default function PortalPage() {
   return (
-    <div className="py-[60px] px-8 flex flex-col items-center" style={{ background: "#EAF4FB" }}>
+    <div className="py-[60px] px-4 md:px-8 flex flex-col items-center" style={{ background: "#EAF4FB" }}>
       <div className="font-heading font-bold text-[22px] text-[#1A2027] mb-1.5">How would you like to sign in?</div>
       <div className="text-[13px] text-[#8A96A3] mb-8">Choose your account type to continue</div>
 

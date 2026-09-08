@@ -15,14 +15,14 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
 
   if (!post) {
     return (
-      <div className="px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="px-4 md:px-8 py-10 text-center text-sm text-[#8A96A3]">
         Article not found. <Link href="/blog" className="text-primary font-semibold">Back to Blog</Link>
       </div>
     );
   }
 
   return (
-    <div className="px-8 py-7 max-w-[720px]">
+    <div className="px-4 md:px-8 py-7 max-w-[720px]">
       <Link href="/blog" className="text-[13px] text-primary font-semibold mb-4 inline-block">
         ← Back to Blog
       </Link>

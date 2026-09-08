@@ -49,7 +49,7 @@ function ContactContent() {
 
   return (
     <div>
-      <div className="px-8 py-10 flex gap-12 flex-wrap max-w-[1300px] mx-auto">
+      <div className="px-4 md:px-8 py-10 flex gap-12 flex-wrap max-w-[1300px] mx-auto">
         <div className="flex-1 min-w-[340px]">
           <div className="font-heading font-extrabold text-[34px] text-[#1A2027] mb-4">Contact Information</div>
           <div className="text-sm text-[#5B6773] leading-[1.8] mb-7">{content.intro}</div>
@@ -135,7 +135,7 @@ function ContactContent() {
         </div>
       </div>
 
-      <div className="px-8 max-w-[1300px] mx-auto mt-6 mb-12">
+      <div className="px-4 md:px-8 max-w-[1300px] mx-auto mt-6 mb-12">
         <div className="rounded-2xl overflow-hidden border border-[#E4E9EC] h-[320px]">
           <iframe src={content.mapLink} className="w-full h-full border-0" loading="lazy" />
         </div>

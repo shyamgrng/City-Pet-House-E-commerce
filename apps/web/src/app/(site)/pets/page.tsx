@@ -127,7 +127,7 @@ function PetsAvailableContent() {
     };
 
     return (
-      <div className="px-8 py-7">
+      <div className="px-4 md:px-8 py-7">
         <div onClick={() => setSelected(null)} className="text-[13px] font-semibold text-primary cursor-pointer mb-4">
           ← Back to Pets Available
         </div>
@@ -279,7 +279,7 @@ function PetsAvailableContent() {
   }
 
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 md:px-8 py-7">
       <div className="font-heading font-bold text-xl text-[#1A2027] mb-1.5">Pets Available for Sale</div>
       <div className="text-[13px] text-[#5B6773] mb-[18px]">Verified, healthy puppies ready to bring home.</div>
 

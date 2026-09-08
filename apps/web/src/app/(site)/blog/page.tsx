@@ -10,7 +10,7 @@ export default function BlogPage() {
   if (!ready) return null;
 
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 md:px-8 py-7">
       <div className="font-heading font-bold text-xl text-[#1A2027] mb-5">Blog</div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">

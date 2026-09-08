@@ -22,7 +22,7 @@ export default function FaqPage() {
 
   return (
     <div className="pb-12">
-      <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-8 pt-11 pb-9">
+      <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-4 md:px-8 pt-11 pb-9">
         <Link href="/" className="text-[13px] text-primary font-semibold mb-4 inline-block">
           ← Back to Home
         </Link>
@@ -36,7 +36,7 @@ export default function FaqPage() {
         />
       </div>
 
-      <div className="max-w-[760px] mx-auto px-8 pt-9">
+      <div className="max-w-[760px] mx-auto px-4 md:px-8 pt-9">
         <div className="flex gap-2 flex-wrap mb-[26px]">
           {categories.map((cat) => (
             <div

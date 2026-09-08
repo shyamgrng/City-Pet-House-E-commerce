@@ -8,7 +8,7 @@ export default function LatestBlogRail() {
   const { posts } = useBlog();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 px-8 pb-9">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 px-4 md:px-8 pb-9">
       {posts.map((post) => (
         <Link key={post.id} href={`/blog/${post.id}`} className="block border border-[#E4E9EC] rounded-[10px] overflow-hidden cursor-pointer">
           <MediaSlot src={post.photo} label="blog photo" striped className="h-[100px]" />

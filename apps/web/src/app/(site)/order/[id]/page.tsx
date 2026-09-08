@@ -17,7 +17,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
   if (!order || !user || order.ownerId !== user.id) {
     return (
-      <div className="px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="px-4 md:px-8 py-10 text-center text-sm text-[#8A96A3]">
         Order not found.{" "}
         <Link href="/account" className="text-primary font-semibold">
           Back to My Account
@@ -30,7 +30,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   return (
-    <div className="px-8 py-7 max-w-[560px] mx-auto">
+    <div className="px-4 md:px-8 py-7 max-w-[560px] mx-auto">
       <Link href="/account" className="text-[13px] text-primary font-semibold mb-4 inline-block">
         ← Back to My Orders
       </Link>

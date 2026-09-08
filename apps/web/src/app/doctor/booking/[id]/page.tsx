@@ -60,7 +60,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-white px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="min-h-screen bg-white px-4 md:px-8 py-10 text-center text-sm text-[#8A96A3]">
         Booking not found. <Link href="/doctor" className="text-primary font-semibold">Back to Portal</Link>
       </div>
     );
@@ -69,7 +69,7 @@ export default function DoctorBookingDetailPage({ params }: { params: Promise<{ 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
       <div className="h-16 w-full" style={{ background: "linear-gradient(90deg, #1996C8, #4CC3E8)" }} />
-      <div className="px-8 py-7 max-w-[1440px] mx-auto">
+      <div className="px-4 md:px-8 py-7 max-w-[1440px] mx-auto">
         <div>
           <Link href="/doctor" className="text-[13px] text-primary font-semibold mb-4 inline-block">
             ← Back to Bookings

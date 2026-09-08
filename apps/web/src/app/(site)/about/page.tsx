@@ -11,12 +11,12 @@ export default function AboutPage() {
 
   return (
     <div>
-      <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-8 pt-11 pb-9">
+      <div style={{ background: "linear-gradient(135deg, #EAF4F9, #F3F9FC)" }} className="px-4 md:px-8 pt-11 pb-9">
         <div className="text-xs font-bold tracking-[1.5px] text-primary mb-2.5">ABOUT US</div>
         <div className="font-heading font-bold text-[30px] text-[#1A2027]">City Pet House &amp; Animal Clinic</div>
       </div>
 
-      <div className="max-w-[760px] mx-auto px-8 py-9 pb-14">
+      <div className="max-w-[760px] mx-auto px-4 md:px-8 py-9 pb-14">
         <div className="text-[13px] font-bold text-primary tracking-[1px] mb-2.5">INTRODUCTION</div>
         <div className="text-[15px] text-[#3A4652] leading-[1.9] mb-8">{content.intro}</div>
 

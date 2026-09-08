@@ -28,7 +28,7 @@ export default function HomePage() {
       </Suspense>
 
       {/* Hero */}
-      <div className="flex flex-col lg:flex-row gap-3.5 px-8 pt-5 pb-2">
+      <div className="flex flex-col lg:flex-row gap-3.5 px-4 md:px-8 pt-5 pb-2">
         <div className="flex-[2.2] relative h-[300px] rounded-xl overflow-hidden">
           <MediaSlot src={content.heroImage} label="cover photo — shop & clinic" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
@@ -83,7 +83,7 @@ export default function HomePage() {
       </div>
 
       {/* Categories */}
-      <div className="flex flex-wrap gap-3.5 px-8 pt-4 pb-6">
+      <div className="flex flex-wrap gap-3.5 px-4 md:px-8 pt-4 pb-6">
         {categories.map((cat) => (
           <Link
             key={cat.slug}
@@ -103,7 +103,7 @@ export default function HomePage() {
 
       {/* Available Puppies */}
       <div className="pt-1">
-        <div className="px-8 pb-2.5 flex justify-between items-center">
+        <div className="px-4 md:px-8 pb-2.5 flex justify-between items-center">
           <div className="font-heading font-bold text-base text-[#1A2027]">Available Puppies</div>
           <Link href="/pets" className="text-xs text-primary font-semibold cursor-pointer">
             See all →
@@ -112,7 +112,7 @@ export default function HomePage() {
         <AvailablePuppiesRail />
 
         {/* Microchip banner */}
-        <div className="mx-8 mb-7 aspect-[1400/200] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-8 gap-3">
+        <div className="mx-4 md:mx-8 mb-7 aspect-[1400/200] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-4 md:px-8 gap-3">
           <MediaSlot src={content.microchipBannerImage} label="banner — pet microchipping" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="relative text-white font-heading font-bold text-[19px]"
@@ -130,7 +130,7 @@ export default function HomePage() {
       </div>
 
       {/* Health & Wellness Care */}
-      <div className="mx-8 px-5 pt-5 pb-6 rounded-xl bg-[#E7EFEC]">
+      <div className="mx-4 md:mx-8 px-5 pt-5 pb-6 rounded-xl bg-[#E7EFEC]">
         <div className="flex justify-center items-center mb-[26px] relative">
           <div className="font-heading font-bold text-lg text-[#1A2027]">City Pet Health &amp; Wellness Care</div>
           <Link href="/services" className="text-xs text-[#1F7A4D] font-semibold cursor-pointer absolute right-0">
@@ -141,7 +141,7 @@ export default function HomePage() {
       </div>
 
       {/* Hot Sales Banner */}
-      <div className="mx-8 mt-[22px] mb-3.5 aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center px-8">
+      <div className="mx-4 md:mx-8 mt-[22px] mb-3.5 aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center px-4 md:px-8">
         <MediaSlot src={content.hotSaleBannerImage} label="banner" fit="cover" className="absolute inset-0 w-full h-full" />
         {hotSaleBannerText && (
           <div className="relative text-white font-heading font-bold text-lg" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
@@ -164,7 +164,7 @@ export default function HomePage() {
       <ProductRail title="Toys for Your Pet" category="Pet Toys" />
 
       {/* Delivery banner */}
-      <div className="mx-8 mb-8 aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center justify-center">
+      <div className="mx-4 md:mx-8 mb-8 aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center justify-center">
         <MediaSlot src={content.deliveryBannerImage} label="delivery banner" fit="cover" className="absolute inset-0 w-full h-full" />
         {deliveryBannerText && (
           <div className="relative text-primary text-sm font-semibold bg-white/85 px-[18px] py-2 rounded-lg">
@@ -175,7 +175,7 @@ export default function HomePage() {
 
       {/* Shop by Brand + Grooming Accessories (light blue section) */}
       <div className="pt-1">
-        <div className="px-8 pb-2.5">
+        <div className="px-4 md:px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Shop by Brand</div>
         </div>
         <BrandCarousel brands={brands} images={content.brandImages} />
@@ -183,7 +183,7 @@ export default function HomePage() {
       </div>
 
       {/* Big grooming banner */}
-      <div className="mx-8 mt-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center px-8">
+      <div className="mx-4 md:mx-8 mt-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center px-4 md:px-8">
         <MediaSlot src={content.groomingBannerImage} label="big banner — dog grooming services" fit="cover" className="absolute inset-0 w-full h-full" />
         <div className="relative flex flex-col items-start gap-4">
           <div className="text-white font-heading font-bold text-xl" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
@@ -200,12 +200,12 @@ export default function HomePage() {
 
       {/* Testimonials + Blog (cream section) */}
       <div className="pt-1">
-        <div className="px-8 pb-2.5">
+        <div className="px-4 md:px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Our Happy Customers</div>
         </div>
         <TestimonialsRail />
 
-        <div className="px-8 pb-2.5">
+        <div className="px-4 md:px-8 pb-2.5">
           <div className="font-heading font-bold text-base text-[#1A2027]">Latest from the Blog</div>
         </div>
         <LatestBlogRail />

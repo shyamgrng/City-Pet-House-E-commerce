@@ -15,14 +15,14 @@ export default function ServiceDetailPage({ params }: { params: Promise<{ id: st
 
   if (!service) {
     return (
-      <div className="px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="px-4 md:px-8 py-10 text-center text-sm text-[#8A96A3]">
         Service not found. <Link href="/services" className="text-primary font-semibold">Back to Services</Link>
       </div>
     );
   }
 
   return (
-    <div className="px-8 py-7 max-w-[800px]">
+    <div className="px-4 md:px-8 py-7 max-w-[800px]">
       <Link href="/services" className="text-[13px] text-primary font-semibold mb-4 inline-block">
         ← Back to Services
       </Link>

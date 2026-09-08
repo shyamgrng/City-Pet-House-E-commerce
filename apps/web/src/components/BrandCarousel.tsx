@@ -39,7 +39,7 @@ export default function BrandCarousel({ brands, images }: { brands: string[]; im
   const showArrows = !(atStart && atEnd);
 
   return (
-    <div className="px-8 pb-7">
+    <div className="px-4 md:px-8 pb-7">
       <div className="relative">
         <div
           ref={scrollerRef}

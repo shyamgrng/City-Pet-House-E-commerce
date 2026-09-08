@@ -18,7 +18,7 @@ export default function SignInNoticeBanner() {
   if (!show) return null;
 
   return (
-    <div className="mx-8 mt-4 px-5 py-4 rounded-xl bg-[#FDEDEC] border border-[#F2C0BC] flex justify-between items-center gap-4 flex-wrap">
+    <div className="mx-4 md:mx-8 mt-4 px-5 py-4 rounded-xl bg-[#FDEDEC] border border-[#F2C0BC] flex justify-between items-center gap-4 flex-wrap">
       <div className="text-[13px] text-[#A32E27]">
         <strong>Please sign in or create your account</strong> to access My Account, bookings, and orders.
       </div>

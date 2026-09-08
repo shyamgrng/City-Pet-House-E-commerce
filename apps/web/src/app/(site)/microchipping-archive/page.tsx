@@ -216,7 +216,7 @@ function MicrochippingArchiveInner() {
         <div className="text-sm text-white/80 font-semibold tracking-[0.5px]">💠 CITY PET HOUSE · MICROCHIP REGISTRY</div>
       </div>
 
-      <div className="flex gap-10 px-8 py-11 items-start flex-wrap lg:flex-nowrap">
+      <div className="flex gap-10 px-4 md:px-8 py-11 items-start flex-wrap lg:flex-nowrap">
         <div className="w-full lg:w-[280px] shrink-0 lg:sticky lg:top-5">
           <div className="border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-4">
             <div className="h-1 bg-[#7A56C8]" />

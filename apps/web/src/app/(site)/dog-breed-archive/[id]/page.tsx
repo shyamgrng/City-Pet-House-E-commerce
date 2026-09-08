@@ -15,7 +15,7 @@ export default function DogBreedDetailPage({ params }: { params: Promise<{ id: s
 
   if (!breed) {
     return (
-      <div className="px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="px-4 md:px-8 py-10 text-center text-sm text-[#8A96A3]">
         Breed not found.{" "}
         <Link href="/dog-breed-archive" className="text-primary font-semibold">
           Back to Dog Breed Archive
@@ -25,7 +25,7 @@ export default function DogBreedDetailPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="px-8 py-7 max-w-[900px]">
+    <div className="px-4 md:px-8 py-7 max-w-[900px]">
       <Link href="/dog-breed-archive" className="text-[13px] text-primary font-semibold mb-4 inline-block">
         ← Back to Dog Breed Archive
       </Link>

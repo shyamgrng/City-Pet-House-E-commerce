@@ -10,7 +10,7 @@ export default function DogBreedArchivePage() {
   if (!ready) return null;
 
   return (
-    <div className="px-8 py-7">
+    <div className="px-4 md:px-8 py-7">
       <Link href="/" className="text-[13px] text-primary font-semibold mb-3.5 inline-block">
         ← Back to Home
       </Link>

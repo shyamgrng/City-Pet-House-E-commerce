@@ -21,7 +21,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   if (!product) {
     return (
-      <div className="px-8 py-10 text-center text-sm text-[#8A96A3]">
+      <div className="px-4 md:px-8 py-10 text-center text-sm text-[#8A96A3]">
         Product not found. <Link href="/shop" className="text-primary font-semibold">Back to Shop</Link>
       </div>
     );
@@ -33,7 +33,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <div className="flex gap-8 px-8 py-7">
+      <div className="flex gap-8 px-4 md:px-8 py-7">
         <div className="flex-1">
           <div className="h-[380px] rounded-2xl relative overflow-hidden mb-2.5">
             <MediaSlot
@@ -160,7 +160,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {similar.length > 0 && (
-        <div className="px-8 pb-8 pt-2">
+        <div className="px-4 md:px-8 pb-8 pt-2">
           <div className="font-heading font-bold text-base text-[#1A2027] mb-3.5">Similar Products</div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
             {similar.map((p) => (
