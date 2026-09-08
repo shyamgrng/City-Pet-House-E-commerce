@@ -33,7 +33,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <div className="flex gap-8 px-4 md:px-8 py-7">
+      <div className="flex flex-col lg:flex-row gap-8 px-4 md:px-8 py-7">
         <div className="flex-1">
           <div className="h-[380px] rounded-2xl relative overflow-hidden mb-2.5">
             <MediaSlot

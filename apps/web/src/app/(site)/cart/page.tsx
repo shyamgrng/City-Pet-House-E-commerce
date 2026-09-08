@@ -60,7 +60,7 @@ export default function CartPage() {
           {items.map((it) => {
             const product = products.find((p) => p.id === it.productId);
             return (
-            <div key={it.productId} className="flex justify-between items-center px-4 py-3.5 border-b border-[#F0F2F4] last:border-0">
+            <div key={it.productId} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 px-4 py-3.5 border-b border-[#F0F2F4] last:border-0">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0 bg-[#F7F9FA]">
                   <MediaSlot src={product?.photo} label="product photo" className="w-full h-full text-[7px]" />
@@ -70,16 +70,18 @@ export default function CartPage() {
                   <div className="text-xs text-[#8A96A3] mt-0.5">{formatRs(it.price)} each</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button onClick={() => dec(it.productId)} className="w-7 h-7 rounded-md border border-[#E4E9EC] text-[#3A4652] font-bold cursor-pointer">
-                  −
-                </button>
-                <div className="w-6 text-center text-xs font-semibold">{it.qty}</div>
-                <button onClick={() => inc(it.productId)} className="w-7 h-7 rounded-md border border-[#E4E9EC] text-[#3A4652] font-bold cursor-pointer">
-                  +
-                </button>
+              <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pl-14 sm:pl-0">
+                <div className="flex items-center gap-2">
+                  <button onClick={() => dec(it.productId)} className="w-7 h-7 rounded-md border border-[#E4E9EC] text-[#3A4652] font-bold cursor-pointer">
+                    −
+                  </button>
+                  <div className="w-6 text-center text-xs font-semibold">{it.qty}</div>
+                  <button onClick={() => inc(it.productId)} className="w-7 h-7 rounded-md border border-[#E4E9EC] text-[#3A4652] font-bold cursor-pointer">
+                    +
+                  </button>
+                </div>
                 <div className="w-[76px] text-right text-[13px] font-bold text-[#1A2027]">{formatRs(it.price * it.qty)}</div>
-                <button onClick={() => remove(it.productId)} className="text-xs font-semibold text-[#D64545] cursor-pointer ml-1">
+                <button onClick={() => remove(it.productId)} className="text-xs font-semibold text-[#D64545] cursor-pointer">
                   Remove
                 </button>
               </div>

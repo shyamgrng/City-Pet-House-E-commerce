@@ -61,6 +61,7 @@ function ShopContent() {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiNote, setAiNote] = useState("");
   const [aiResultNames, setAiResultNames] = useState<string[] | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const filtered = useMemo(() => {
     if (aiResultNames) {
@@ -99,59 +100,68 @@ function ShopContent() {
   };
 
   return (
-    <div className="flex gap-6 px-4 md:px-8 py-7">
-      <div className="w-[200px] shrink-0">
-        <div className="font-heading font-bold text-sm text-[#1A2027] mb-3">Categories</div>
-        {categories.map((c) => (
-          <div
-            key={c}
-            onClick={() => setCategory(category === c ? "" : c)}
-            className="text-[13px] py-2 border-b border-[#F0F2F4] cursor-pointer"
-            style={{ fontWeight: category === c ? 700 : 400, color: category === c ? "#1996C8" : "#3A4652" }}
-          >
-            {c}
-          </div>
-        ))}
+    <div className="flex flex-col lg:flex-row gap-6 px-4 md:px-8 py-7">
+      <div className="lg:w-[200px] lg:shrink-0">
+        <button
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="lg:hidden w-full flex items-center justify-between px-4 py-2.5 rounded-lg border border-[#E4E9EC] text-sm font-semibold text-[#1A2027] cursor-pointer mb-3"
+        >
+          Filters
+          <span>{filtersOpen ? "▲" : "▼"}</span>
+        </button>
+        <div className={filtersOpen ? "block" : "hidden lg:block"}>
+          <div className="font-heading font-bold text-sm text-[#1A2027] mb-3">Categories</div>
+          {categories.map((c) => (
+            <div
+              key={c}
+              onClick={() => setCategory(category === c ? "" : c)}
+              className="text-[13px] py-2 border-b border-[#F0F2F4] cursor-pointer"
+              style={{ fontWeight: category === c ? 700 : 400, color: category === c ? "#1996C8" : "#3A4652" }}
+            >
+              {c}
+            </div>
+          ))}
 
-        <div className="font-heading font-bold text-sm text-[#1A2027] mt-[18px] mb-3">Brand</div>
-        {brandNames.map((b) => (
-          <div
-            key={b}
-            onClick={() => setBrand(brand === b ? "" : b)}
-            className="text-[13px] py-2 border-b border-[#F0F2F4] cursor-pointer"
-            style={{ fontWeight: brand === b ? 700 : 400, color: brand === b ? "#1996C8" : "#3A4652" }}
-          >
-            {b}
-          </div>
-        ))}
+          <div className="font-heading font-bold text-sm text-[#1A2027] mt-[18px] mb-3">Brand</div>
+          {brandNames.map((b) => (
+            <div
+              key={b}
+              onClick={() => setBrand(brand === b ? "" : b)}
+              className="text-[13px] py-2 border-b border-[#F0F2F4] cursor-pointer"
+              style={{ fontWeight: brand === b ? 700 : 400, color: brand === b ? "#1996C8" : "#3A4652" }}
+            >
+              {b}
+            </div>
+          ))}
 
-        <div className="font-heading font-bold text-sm text-[#1A2027] mt-[18px] mb-3">Rating</div>
-        {ratingOptions.map((n) => (
-          <div
-            key={n}
-            onClick={() => setRating(rating === n ? 0 : n)}
-            className="text-[13px] py-2 border-b border-[#F0F2F4] cursor-pointer"
-            style={{ fontWeight: rating === n ? 700 : 400, color: rating === n ? "#1996C8" : "#3A4652" }}
-          >
-            {"★".repeat(n) + "☆".repeat(5 - n)} {n} &amp; up
-          </div>
-        ))}
+          <div className="font-heading font-bold text-sm text-[#1A2027] mt-[18px] mb-3">Rating</div>
+          {ratingOptions.map((n) => (
+            <div
+              key={n}
+              onClick={() => setRating(rating === n ? 0 : n)}
+              className="text-[13px] py-2 border-b border-[#F0F2F4] cursor-pointer"
+              style={{ fontWeight: rating === n ? 700 : 400, color: rating === n ? "#1996C8" : "#3A4652" }}
+            >
+              {"★".repeat(n) + "☆".repeat(5 - n)} {n} &amp; up
+            </div>
+          ))}
 
-        <div className="font-heading font-bold text-sm text-[#1A2027] mt-[18px] mb-3">Price</div>
-        {priceRangeOptions.map((pr) => (
-          <div
-            key={pr.label}
-            onClick={() => setPriceRange(priceRange?.min === pr.min ? null : { min: pr.min, max: pr.max })}
-            className="text-[13px] py-2 border-b border-[#F0F2F4] cursor-pointer"
-            style={{ fontWeight: priceRange?.min === pr.min ? 700 : 400, color: priceRange?.min === pr.min ? "#1996C8" : "#3A4652" }}
-          >
-            {pr.label}
-          </div>
-        ))}
+          <div className="font-heading font-bold text-sm text-[#1A2027] mt-[18px] mb-3">Price</div>
+          {priceRangeOptions.map((pr) => (
+            <div
+              key={pr.label}
+              onClick={() => setPriceRange(priceRange?.min === pr.min ? null : { min: pr.min, max: pr.max })}
+              className="text-[13px] py-2 border-b border-[#F0F2F4] cursor-pointer"
+              style={{ fontWeight: priceRange?.min === pr.min ? 700 : 400, color: priceRange?.min === pr.min ? "#1996C8" : "#3A4652" }}
+            >
+              {pr.label}
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="flex-1">
-        <div className="flex justify-between items-center mb-4">
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
           <div className="font-heading font-bold text-xl text-[#1A2027]">Shop</div>
           <div className="flex gap-2">
             <input
@@ -161,11 +171,11 @@ function ShopContent() {
                 if (aiResultNames) clearAi();
               }}
               placeholder="Search products…"
-              className="w-[220px] h-9 rounded-lg bg-[#F7F9FA] border border-[#E4E9EC] px-3 text-xs box-border"
+              className="flex-1 sm:w-[220px] h-9 rounded-lg bg-[#F7F9FA] border border-[#E4E9EC] px-3 text-xs box-border min-w-0"
             />
             <button
               onClick={runAskAi}
-              className="h-9 px-3.5 rounded-lg bg-[#7A56C8] text-white text-xs font-semibold cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+              className="h-9 px-3.5 rounded-lg bg-[#7A56C8] text-white text-xs font-semibold cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
             >
               ✨ {aiBusy ? "Thinking…" : "Ask AI"}
             </button>

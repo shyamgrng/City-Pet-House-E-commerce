@@ -62,8 +62,8 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <div className="flex-1 flex flex-col gap-3.5">
-          <div className="flex-1 relative rounded-xl overflow-hidden">
+        <div className="flex-1 flex flex-row lg:flex-col gap-3.5">
+          <div className="flex-1 min-h-[140px] lg:min-h-0 relative rounded-xl overflow-hidden">
             <MediaSlot src={content.banner1Image} label="promo — hot sale, shop deals" fit="cover" className="absolute inset-0 w-full h-full" />
             {content.banner1Text && (
               <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
@@ -71,7 +71,7 @@ export default function HomePage() {
               </div>
             )}
           </div>
-          <div className="flex-1 relative rounded-xl overflow-hidden">
+          <div className="flex-1 min-h-[140px] lg:min-h-0 relative rounded-xl overflow-hidden">
             <MediaSlot src={content.banner2Image} label="promo — vet consult booking" fit="cover" className="absolute inset-0 w-full h-full" />
             {content.banner2Text && (
               <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
@@ -88,13 +88,13 @@ export default function HomePage() {
           <Link
             key={cat.slug}
             href={`/pets?species=${encodeURIComponent(cat.name)}`}
-            className="group flex-1 min-w-[110px] flex flex-col items-center gap-2 cursor-pointer transition-transform duration-200 hover:scale-105"
+            className="group flex-1 min-w-[78px] sm:min-w-[110px] flex flex-col items-center gap-2 cursor-pointer transition-transform duration-200 hover:scale-105"
           >
             <MediaSlot
               src={content.categoryImages[cat.name]}
               label={cat.name}
               shape="circle"
-              className="w-[115px] h-[115px] transition-shadow duration-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
+              className="w-[86px] h-[86px] sm:w-[115px] sm:h-[115px] transition-shadow duration-200 group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
             />
             <div className="text-xs font-semibold text-[#1A2027]">{cat.name}</div>
           </Link>
@@ -112,7 +112,7 @@ export default function HomePage() {
         <AvailablePuppiesRail />
 
         {/* Microchip banner */}
-        <div className="mx-4 md:mx-8 mb-7 aspect-[1400/200] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-4 md:px-8 gap-3">
+        <div className="mx-4 md:mx-8 mb-7 min-h-[170px] sm:min-h-0 sm:aspect-[1400/200] rounded-xl relative overflow-hidden flex flex-col items-start justify-center px-4 md:px-8 gap-3">
           <MediaSlot src={content.microchipBannerImage} label="banner — pet microchipping" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="relative text-white font-heading font-bold text-[19px]"
@@ -131,9 +131,9 @@ export default function HomePage() {
 
       {/* Health & Wellness Care */}
       <div className="mx-4 md:mx-8 px-5 pt-5 pb-6 rounded-xl bg-[#E7EFEC]">
-        <div className="flex justify-center items-center mb-[26px] relative">
-          <div className="font-heading font-bold text-lg text-[#1A2027]">City Pet Health &amp; Wellness Care</div>
-          <Link href="/services" className="text-xs text-[#1F7A4D] font-semibold cursor-pointer absolute right-0">
+        <div className="flex items-center justify-between sm:justify-center gap-2 mb-[26px] sm:relative">
+          <div className="font-heading font-bold text-base sm:text-lg text-[#1A2027]">City Pet Health &amp; Wellness Care</div>
+          <Link href="/services" className="text-xs text-[#1F7A4D] font-semibold cursor-pointer shrink-0 sm:absolute sm:right-0">
             See all →
           </Link>
         </div>
@@ -141,7 +141,7 @@ export default function HomePage() {
       </div>
 
       {/* Hot Sales Banner */}
-      <div className="mx-4 md:mx-8 mt-[22px] mb-3.5 aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center px-4 md:px-8">
+      <div className="mx-4 md:mx-8 mt-[22px] mb-3.5 min-h-[120px] sm:min-h-0 sm:aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center px-4 md:px-8">
         <MediaSlot src={content.hotSaleBannerImage} label="banner" fit="cover" className="absolute inset-0 w-full h-full" />
         {hotSaleBannerText && (
           <div className="relative text-white font-heading font-bold text-lg" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
@@ -164,7 +164,7 @@ export default function HomePage() {
       <ProductRail title="Toys for Your Pet" category="Pet Toys" />
 
       {/* Delivery banner */}
-      <div className="mx-4 md:mx-8 mb-8 aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center justify-center">
+      <div className="mx-4 md:mx-8 mb-8 min-h-[110px] sm:min-h-0 sm:aspect-[1400/200] rounded-xl overflow-hidden relative flex items-center justify-center">
         <MediaSlot src={content.deliveryBannerImage} label="delivery banner" fit="cover" className="absolute inset-0 w-full h-full" />
         {deliveryBannerText && (
           <div className="relative text-primary text-sm font-semibold bg-white/85 px-[18px] py-2 rounded-lg">
@@ -183,15 +183,15 @@ export default function HomePage() {
       </div>
 
       {/* Big grooming banner */}
-      <div className="mx-4 md:mx-8 mt-8 mb-8 h-[420px] rounded-xl overflow-hidden relative flex items-center px-4 md:px-8">
+      <div className="mx-4 md:mx-8 mt-8 mb-8 h-[220px] sm:h-[420px] rounded-xl overflow-hidden relative flex items-center px-4 md:px-8">
         <MediaSlot src={content.groomingBannerImage} label="big banner — dog grooming services" fit="cover" className="absolute inset-0 w-full h-full" />
-        <div className="relative flex flex-col items-start gap-4">
-          <div className="text-white font-heading font-bold text-xl" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+        <div className="relative flex flex-col items-start gap-3 sm:gap-4">
+          <div className="text-white font-heading font-bold text-base sm:text-xl" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
             {groomingBannerText}
           </div>
           <Link
             href="/services/pet-grooming"
-            className="bg-[#1F7A4D] text-white px-6 py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer shrink-0 transition-all duration-200 hover:scale-105 hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
+            className="bg-[#1F7A4D] text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-[9px] text-[13px] font-semibold cursor-pointer shrink-0 transition-all duration-200 hover:scale-105 hover:shadow-[0_8px_20px_rgba(0,0,0,0.28)]"
           >
             Book Now
           </Link>
