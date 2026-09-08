@@ -23,6 +23,7 @@ type DoctorAuthValue = {
   signOut: () => void;
   updateAddress: (address: string) => void;
   updatePhoto: (photo: string) => void;
+  updateDocument: (field: "degreeCertificate" | "nvcLicense" | "nationalId", value: string) => void;
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (doctorId: string) => Result;
   resetPassword: (doctorId: string, code: string, newPassword: string) => Result;
@@ -147,6 +148,12 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
     persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, photo } : a)));
   };
 
+  const updateDocument = (field: "degreeCertificate" | "nvcLicense" | "nationalId", value: string) => {
+    if (!state.doctor) return;
+    const doctorId = state.doctor.doctorId;
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, [field]: value } : a)));
+  };
+
   const changePassword = (newPassword: string) => {
     if (!state.doctor) return;
     const doctorId = state.doctor.doctorId;
@@ -168,6 +175,7 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
         signOut,
         updateAddress,
         updatePhoto,
+        updateDocument,
         changePassword,
         requestPasswordReset,
         resetPassword,

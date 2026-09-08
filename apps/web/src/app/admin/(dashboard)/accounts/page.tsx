@@ -60,6 +60,9 @@ export default function AccountsPage() {
       emergencyPhone: reg.emergencyNumber,
       address: reg.address,
       photo: reg.profilePhoto,
+      degreeCertificate: reg.degreeCertificate,
+      nvcLicense: reg.nvcLicense,
+      nationalId: reg.nationalId,
     };
     if (!addDoctorAccount(account)) return;
     const doctor: Doctor = {
