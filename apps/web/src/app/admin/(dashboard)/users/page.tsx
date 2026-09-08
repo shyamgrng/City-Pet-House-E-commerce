@@ -72,74 +72,82 @@ export default function UsersPage() {
       </div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-6 mt-4">
-        <div className="grid grid-cols-4 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
-          <div>User</div>
-          <div>Role</div>
-          <div>Status</div>
-          <div>Actions</div>
-        </div>
         {users.length === 0 ? (
           <div className="text-center text-xs text-[#8A96A3] py-6">No users added yet</div>
         ) : (
-          users.map((u) => (
-            <div key={u.email} className="grid grid-cols-4 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-              <div>
-                <div className="font-bold text-[#1A2027]">{u.name}</div>
-                <div className="text-[#8A96A3]">{u.email}</div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[520px]">
+              <div className="grid grid-cols-4 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+                <div>User</div>
+                <div>Role</div>
+                <div>Status</div>
+                <div>Actions</div>
               </div>
-              <div>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#EAF4F9] text-primary">{u.role}</span>
-              </div>
-              <div className="font-semibold" style={{ color: u.active ? "#1F7A4D" : "#8A96A3" }}>
-                {u.active ? "Active" : "Disabled"}
-              </div>
-              <div className="flex gap-3 font-semibold">
-                <span onClick={() => openEdit(u)} className="text-primary cursor-pointer">
-                  Edit
-                </span>
-                {u.email === currentUser?.email ? (
-                  <span className="text-[#C7CDD3]" title="You can't disable or remove your own account">
-                    (you)
-                  </span>
-                ) : (
-                  <>
-                    <span onClick={() => toggleUserActive(u.email)} className="text-[#C9962B] cursor-pointer">
-                      {u.active ? "Disable" : "Enable"}
+              {users.map((u) => (
+                <div key={u.email} className="grid grid-cols-4 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                  <div>
+                    <div className="font-bold text-[#1A2027]">{u.name}</div>
+                    <div className="text-[#8A96A3]">{u.email}</div>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-[#EAF4F9] text-primary">{u.role}</span>
+                  </div>
+                  <div className="font-semibold" style={{ color: u.active ? "#1F7A4D" : "#8A96A3" }}>
+                    {u.active ? "Active" : "Disabled"}
+                  </div>
+                  <div className="flex gap-3 font-semibold">
+                    <span onClick={() => openEdit(u)} className="text-primary cursor-pointer">
+                      Edit
                     </span>
-                    <span onClick={() => removeUser(u.email)} className="text-[#D64545] cursor-pointer">
-                      Remove
-                    </span>
-                  </>
-                )}
-              </div>
+                    {u.email === currentUser?.email ? (
+                      <span className="text-[#C7CDD3]" title="You can't disable or remove your own account">
+                        (you)
+                      </span>
+                    ) : (
+                      <>
+                        <span onClick={() => toggleUserActive(u.email)} className="text-[#C9962B] cursor-pointer">
+                          {u.active ? "Disable" : "Enable"}
+                        </span>
+                        <span onClick={() => removeUser(u.email)} className="text-[#D64545] cursor-pointer">
+                          Remove
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          ))
+          </div>
         )}
       </div>
 
       <div className="text-[13px] font-bold text-[#1A2027] mb-2">Roles &amp; Permissions</div>
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-        <div className="grid grid-cols-7 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
-          <div>Role</div>
-          {permKeys.map((k) => (
-            <div key={k}>{permLabels[k]}</div>
-          ))}
-        </div>
-        {adminRoles.map((role) => (
-          <div key={role} className="grid grid-cols-7 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-            <div className="font-bold text-[#1A2027]">{role}</div>
-            {permKeys.map((k) => (
-              <div
-                key={k}
-                onClick={() => toggleRolePerm(role, k)}
-                className="cursor-pointer text-sm"
-                style={{ color: rolePerms[role][k] ? "#1F7A4D" : "#D64545" }}
-              >
-                {rolePerms[role][k] ? "✓" : "✕"}
+        <div className="overflow-x-auto">
+          <div className="min-w-[640px]">
+            <div className="grid grid-cols-7 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+              <div>Role</div>
+              {permKeys.map((k) => (
+                <div key={k}>{permLabels[k]}</div>
+              ))}
+            </div>
+            {adminRoles.map((role) => (
+              <div key={role} className="grid grid-cols-7 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                <div className="font-bold text-[#1A2027]">{role}</div>
+                {permKeys.map((k) => (
+                  <div
+                    key={k}
+                    onClick={() => toggleRolePerm(role, k)}
+                    className="cursor-pointer text-sm"
+                    style={{ color: rolePerms[role][k] ? "#1F7A4D" : "#D64545" }}
+                  >
+                    {rolePerms[role][k] ? "✓" : "✕"}
+                  </div>
+                ))}
               </div>
             ))}
           </div>
-        ))}
+        </div>
       </div>
 
       {modalOpen && (

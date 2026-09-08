@@ -273,56 +273,60 @@ export default function AdminPetTagArchivePage() {
       </div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-        <div className="grid grid-cols-[0.6fr_1.4fr_1.4fr_1.6fr_0.6fr_0.8fr_1fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
-          <div>Photo</div>
-          <div>Pet Name</div>
-          <div>Breed / Color</div>
-          <div>Owner / Phone</div>
-          <div>Scans</div>
-          <div>QR</div>
-          <div>Actions</div>
-        </div>
         {filtered.length === 0 ? (
           <div className="text-center text-xs text-[#8A96A3] py-6">No pets found</div>
         ) : (
-          filtered.map((p) => (
-            <div key={p.id} className="grid grid-cols-[0.6fr_1.4fr_1.4fr_1.6fr_0.6fr_0.8fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-              {p.photo ? (
-                <MediaSlot src={p.photo} label="pet photo" shape="circle" className="w-9 h-9" />
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-[#EEF1F3] flex items-center justify-center">🐾</div>
-              )}
-              <div>
-                <div className="font-bold text-[#1A2027]">{p.petName}</div>
-                <div className="text-[#8A96A3]">
-                  {p.sex} · {displayAge(p)}
+          <div className="overflow-x-auto">
+            <div className="min-w-[820px]">
+              <div className="grid grid-cols-[0.6fr_1.4fr_1.4fr_1.6fr_0.6fr_0.8fr_1fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+                <div>Photo</div>
+                <div>Pet Name</div>
+                <div>Breed / Color</div>
+                <div>Owner / Phone</div>
+                <div>Scans</div>
+                <div>QR</div>
+                <div>Actions</div>
+              </div>
+              {filtered.map((p) => (
+                <div key={p.id} className="grid grid-cols-[0.6fr_1.4fr_1.4fr_1.6fr_0.6fr_0.8fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                  {p.photo ? (
+                    <MediaSlot src={p.photo} label="pet photo" shape="circle" className="w-9 h-9" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-[#EEF1F3] flex items-center justify-center">🐾</div>
+                  )}
+                  <div>
+                    <div className="font-bold text-[#1A2027]">{p.petName}</div>
+                    <div className="text-[#8A96A3]">
+                      {p.sex} · {displayAge(p)}
+                    </div>
+                    <div className="text-primary font-semibold">{p.tagId}</div>
+                  </div>
+                  <div>
+                    <div className="text-[#1A2027]">{p.breed}</div>
+                    <div className="text-[#8A96A3]">{p.color}</div>
+                  </div>
+                  <div>
+                    <div className="text-[#1A2027]">{p.ownerName}</div>
+                    <div className="text-[#8A96A3]">{p.phone}</div>
+                  </div>
+                  <div>{p.scans}</div>
+                  <div>
+                    <button onClick={() => downloadPetTagQr(p)} className="border border-primary text-primary text-[11px] font-semibold px-2 py-1 rounded cursor-pointer">
+                      ⬇ PNG
+                    </button>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <button onClick={() => openEdit(p)} className="border border-primary text-primary text-[11px] font-semibold px-2.5 py-1 rounded cursor-pointer">
+                      Edit
+                    </button>
+                    <button onClick={() => removeTag(p.id)} className="border border-[#D64545] text-[#D64545] text-[11px] font-semibold px-2.5 py-1 rounded cursor-pointer">
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="text-primary font-semibold">{p.tagId}</div>
-              </div>
-              <div>
-                <div className="text-[#1A2027]">{p.breed}</div>
-                <div className="text-[#8A96A3]">{p.color}</div>
-              </div>
-              <div>
-                <div className="text-[#1A2027]">{p.ownerName}</div>
-                <div className="text-[#8A96A3]">{p.phone}</div>
-              </div>
-              <div>{p.scans}</div>
-              <div>
-                <button onClick={() => downloadPetTagQr(p)} className="border border-primary text-primary text-[11px] font-semibold px-2 py-1 rounded cursor-pointer">
-                  ⬇ PNG
-                </button>
-              </div>
-              <div className="flex gap-1.5">
-                <button onClick={() => openEdit(p)} className="border border-primary text-primary text-[11px] font-semibold px-2.5 py-1 rounded cursor-pointer">
-                  Edit
-                </button>
-                <button onClick={() => removeTag(p.id)} className="border border-[#D64545] text-[#D64545] text-[11px] font-semibold px-2.5 py-1 rounded cursor-pointer">
-                  Delete
-                </button>
-              </div>
+              ))}
             </div>
-          ))
+          </div>
         )}
       </div>
     </div>

@@ -27,9 +27,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   }
 
   return (
-    <div className="min-h-screen flex bg-[#F7F9FA]">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#F7F9FA]">
       <AdminSidebar />
-      <div className="flex-1 overflow-auto p-6 px-7">
+      <div className="flex-1 overflow-auto p-4 lg:p-6 lg:px-7">
         {storagePercent >= 80 && (
           <div className="bg-[#FDEDEC] border border-[#F3C6C2] text-[#8A2A21] text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
             <span>⚠️</span>

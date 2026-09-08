@@ -258,49 +258,53 @@ export default function MicrochippingRecordsPage() {
       </div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-        <div className="grid grid-cols-[0.6fr_1.6fr_1.4fr_1.6fr_1.4fr_1fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
-          <div>Photo</div>
-          <div>Chip No. / Pet</div>
-          <div>Breed / Color</div>
-          <div>Owner / Phone</div>
-          <div>Location</div>
-          <div>Actions</div>
-        </div>
         {filtered.length === 0 ? (
           <div className="text-center text-xs text-[#8A96A3] py-6">No microchipped animals found</div>
         ) : (
-          filtered.map((m) => (
-            <div key={m.id} className="grid grid-cols-[0.6fr_1.6fr_1.4fr_1.6fr_1.4fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-              {m.photo ? (
-                <MediaSlot src={m.photo} label="pet photo" shape="circle" className="w-9 h-9" />
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-[#EEF1F3] flex items-center justify-center">🐾</div>
-              )}
-              <div>
-                <div className="font-bold text-[#7A56C8]">{m.mcNumber}</div>
-                <div className="text-[#8A96A3]">
-                  {m.petName} · {m.sex}, {m.age}
+          <div className="overflow-x-auto">
+            <div className="min-w-[820px]">
+              <div className="grid grid-cols-[0.6fr_1.6fr_1.4fr_1.6fr_1.4fr_1fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+                <div>Photo</div>
+                <div>Chip No. / Pet</div>
+                <div>Breed / Color</div>
+                <div>Owner / Phone</div>
+                <div>Location</div>
+                <div>Actions</div>
+              </div>
+              {filtered.map((m) => (
+                <div key={m.id} className="grid grid-cols-[0.6fr_1.6fr_1.4fr_1.6fr_1.4fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                  {m.photo ? (
+                    <MediaSlot src={m.photo} label="pet photo" shape="circle" className="w-9 h-9" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-[#EEF1F3] flex items-center justify-center">🐾</div>
+                  )}
+                  <div>
+                    <div className="font-bold text-[#7A56C8]">{m.mcNumber}</div>
+                    <div className="text-[#8A96A3]">
+                      {m.petName} · {m.sex}, {m.age}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[#1A2027]">{m.breed}</div>
+                    <div className="text-[#8A96A3]">{m.color}</div>
+                  </div>
+                  <div>
+                    <div className="text-[#1A2027]">{m.ownerName}</div>
+                    <div className="text-[#8A96A3]">{m.phone}</div>
+                  </div>
+                  <div className="text-[#3A4652] text-[11px]">{microchipAddress(m)}</div>
+                  <div className="flex gap-1.5">
+                    <button onClick={() => openEdit(m)} className="border border-[#7A56C8] text-[#7A56C8] text-[11px] font-semibold px-2.5 py-1 rounded cursor-pointer">
+                      Edit
+                    </button>
+                    <button onClick={() => removeRecord(m.id)} className="border border-[#D64545] text-[#D64545] text-[11px] font-semibold px-2.5 py-1 rounded cursor-pointer">
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-[#1A2027]">{m.breed}</div>
-                <div className="text-[#8A96A3]">{m.color}</div>
-              </div>
-              <div>
-                <div className="text-[#1A2027]">{m.ownerName}</div>
-                <div className="text-[#8A96A3]">{m.phone}</div>
-              </div>
-              <div className="text-[#3A4652] text-[11px]">{microchipAddress(m)}</div>
-              <div className="flex gap-1.5">
-                <button onClick={() => openEdit(m)} className="border border-[#7A56C8] text-[#7A56C8] text-[11px] font-semibold px-2.5 py-1 rounded cursor-pointer">
-                  Edit
-                </button>
-                <button onClick={() => removeRecord(m.id)} className="border border-[#D64545] text-[#D64545] text-[11px] font-semibold px-2.5 py-1 rounded cursor-pointer">
-                  Delete
-                </button>
-              </div>
+              ))}
             </div>
-          ))
+          </div>
         )}
       </div>
     </div>

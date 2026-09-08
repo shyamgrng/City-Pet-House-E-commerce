@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BRegistration } from "@/context/B2BRegistrationContext";
@@ -41,6 +42,7 @@ export default function AdminSidebar() {
   const { registrations: b2bRegistrations } = useB2BRegistration();
   const pathname = usePathname();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const newApplicationsCount = applications.filter((a) => a.status === "New").length;
   // Sums every stage of the Deliveries pipeline that still needs admin action: Payment Queue,
   // Orders ready to forward, and Dispatch awaiting a courier -- matches the Deliveries page's own
@@ -63,13 +65,44 @@ export default function AdminSidebar() {
   const pendingSubmissionsCount = submissions.filter((s) => s.status === "Pending").length;
 
   return (
-    <div className="w-[200px] shrink-0 bg-[#1A2027] text-white p-5 px-3.5 flex flex-col min-h-screen">
-      <div className="font-heading font-bold text-sm mb-5 flex items-center gap-2">
-        <Image src="/assets/cph-logo.jpeg" alt="" width={24} height={24} className="rounded-md object-cover" />
-        CPH Admin
+    <>
+      <div className="lg:hidden sticky top-0 z-30 bg-[#1A2027] text-white px-4 py-3 flex items-center justify-between">
+        <button
+          onClick={() => setOpen(true)}
+          className="w-9 h-9 flex items-center justify-center rounded-md border border-white/20 cursor-pointer text-lg"
+          aria-label="Open menu"
+        >
+          ☰
+        </button>
+        <div className="font-heading font-bold text-sm flex items-center gap-2">
+          <Image src="/assets/cph-logo.jpeg" alt="" width={24} height={24} className="rounded-md object-cover" />
+          CPH Admin
+        </div>
+        <div className="w-9" />
       </div>
-      <div className="flex-1">
-        {(() => {
+
+      {open && <div onClick={() => setOpen(false)} className="lg:hidden fixed inset-0 z-40 bg-black/50" />}
+
+      <div
+        className={`w-[220px] max-w-[80vw] shrink-0 bg-[#1A2027] text-white p-5 px-3.5 flex flex-col fixed inset-y-0 left-0 z-50 overflow-y-auto transition-transform duration-200 lg:static lg:translate-x-0 lg:min-h-screen ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <div className="font-heading font-bold text-sm flex items-center gap-2">
+            <Image src="/assets/cph-logo.jpeg" alt="" width={24} height={24} className="rounded-md object-cover" />
+            CPH Admin
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            className="lg:hidden w-7 h-7 flex items-center justify-center rounded-md border border-white/20 cursor-pointer text-sm shrink-0"
+            aria-label="Close menu"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="flex-1">
+          {(() => {
           const liveBadges: Record<string, { count: number; color: string }> = {
             career: { count: newApplicationsCount, color: "#C9962B" },
             deliveries: { count: pendingDeliveriesCount, color: "#D64545" },
@@ -88,6 +121,7 @@ export default function AdminSidebar() {
               <Link
                 key={s.key}
                 href={href}
+                onClick={() => setOpen(false)}
                 className="relative px-2.5 py-2.5 rounded-md text-xs mb-0.5 flex justify-between items-center"
                 style={{ background: active ? "#1996C8" : "transparent", color: active ? "#fff" : "#C7CDD3" }}
               >
@@ -118,6 +152,7 @@ export default function AdminSidebar() {
           Log Out
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
