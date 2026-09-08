@@ -13,16 +13,16 @@ export default function PortalPage() {
       <div className="font-heading font-bold text-[22px] text-[#1A2027] mb-1.5">How would you like to sign in?</div>
       <div className="text-[13px] text-[#8A96A3] mb-8">Choose your account type to continue</div>
 
-      <div className="grid grid-cols-3 gap-[18px] max-w-[700px] w-full">
+      <div className="grid grid-cols-3 gap-3 sm:gap-[18px] max-w-[700px] w-full">
         {roles.map((r) => (
           <Link key={r.href} href={r.href} className="flex flex-col items-center cursor-pointer">
             <div
-              className="w-[140px] h-[140px] mb-3 rounded-full flex items-center justify-center overflow-hidden"
+              className="w-[84px] h-[84px] sm:w-[140px] sm:h-[140px] mb-3 rounded-full flex items-center justify-center overflow-hidden p-3.5 sm:p-0"
               style={{ background: "#E4E9EC" }}
             >
-              <Image src={r.src} alt={r.label} width={r.size} height={r.size} className="object-contain" />
+              <Image src={r.src} alt={r.label} width={r.size} height={r.size} className="object-contain w-full h-full" />
             </div>
-            <div className="text-center text-sm font-bold text-[#1A2027]">{r.label}</div>
+            <div className="text-center text-xs sm:text-sm font-bold text-[#1A2027]">{r.label}</div>
           </Link>
         ))}
       </div>

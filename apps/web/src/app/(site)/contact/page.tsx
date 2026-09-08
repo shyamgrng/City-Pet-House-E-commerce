@@ -49,11 +49,11 @@ function ContactContent() {
 
   return (
     <div>
-      <div className="px-4 md:px-8 py-10 flex gap-12 flex-wrap max-w-[1300px] mx-auto">
-        <div className="flex-1 min-w-[340px]">
-          <div className="font-heading font-extrabold text-[34px] text-[#1A2027] mb-4">Contact Information</div>
+      <div className="px-4 md:px-8 py-10 flex flex-col lg:flex-row gap-12 max-w-[1300px] mx-auto">
+        <div className="lg:flex-1 lg:min-w-[340px]">
+          <div className="font-heading font-extrabold text-[28px] sm:text-[34px] text-[#1A2027] mb-4">Contact Information</div>
           <div className="text-sm text-[#5B6773] leading-[1.8] mb-7">{content.intro}</div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InfoCard icon="📍" title="Our Address">
               {settings.address}
             </InfoCard>
@@ -69,7 +69,7 @@ function ContactContent() {
           </div>
         </div>
 
-        <div className="flex-1 min-w-[320px] max-w-[460px]">
+        <div className="lg:flex-1 lg:min-w-[320px] lg:max-w-[460px]">
           <div className="font-heading font-extrabold text-2xl text-[#1A2027] mb-5">Send Us a Message</div>
           {submitted ? (
             <div className="bg-white border border-[#E4E9EC] rounded-2xl p-7 text-center">
