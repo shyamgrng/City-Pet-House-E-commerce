@@ -13,7 +13,7 @@ export type DoctorRegistration = {
   accountHolderName: string;
   accountNumber: string;
   profilePhoto: string;
-  cvFileName: string;
+  cv: string;
   degreeCertificate: string;
   nvcLicense: string;
   nationalId: string;

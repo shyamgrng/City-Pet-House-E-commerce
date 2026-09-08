@@ -2,9 +2,45 @@ import type { AvailabilityMap, Doctor, VetBooking } from "@/lib/vet-types";
 import { AVAILABILITY_SLOTS, next14Days } from "@/lib/vet-types";
 
 export const doctorSeed: Doctor[] = [
-  { id: "DR-1042", name: "Dr. Sujata Rai, BVSc & AH", qualification: "BVSc & AH, Tribhuvan University", nvcNumber: "NVC-1042", online: true, verified: true, consults: 4, completed: 3, feeRs: 800 },
-  { id: "DR-0876", name: "Dr. Bikash Shrestha, DVM", qualification: "DVM, Nepal Agriculture & Forestry University", nvcNumber: "NVC-0876", online: false, verified: true, consults: 1, completed: 0, feeRs: 800 },
-  { id: "DR-1213", name: "Dr. Anjali Gurung, BVSc & AH", qualification: "BVSc & AH, Tribhuvan University", nvcNumber: "NVC-1213", online: true, verified: false, consults: 0, completed: 0, feeRs: 750 },
+  {
+    id: "DR-1042",
+    name: "Dr. Sujata Rai, BVSc & AH",
+    qualification: "BVSc & AH, Tribhuvan University",
+    nvcNumber: "NVC-1042",
+    online: true,
+    verified: true,
+    consults: 4,
+    completed: 3,
+    feeRs: 800,
+    commissionType: "percent",
+    commissionValue: 15,
+  },
+  {
+    id: "DR-0876",
+    name: "Dr. Bikash Shrestha, DVM",
+    qualification: "DVM, Nepal Agriculture & Forestry University",
+    nvcNumber: "NVC-0876",
+    online: false,
+    verified: true,
+    consults: 1,
+    completed: 0,
+    feeRs: 800,
+    commissionType: "percent",
+    commissionValue: 15,
+  },
+  {
+    id: "DR-1213",
+    name: "Dr. Anjali Gurung, BVSc & AH",
+    qualification: "BVSc & AH, Tribhuvan University",
+    nvcNumber: "NVC-1213",
+    online: true,
+    verified: false,
+    consults: 0,
+    completed: 0,
+    feeRs: 750,
+    commissionType: "percent",
+    commissionValue: 15,
+  },
 ];
 
 function seedAvailability(): AvailabilityMap {

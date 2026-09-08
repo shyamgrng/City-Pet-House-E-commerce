@@ -2,28 +2,41 @@
 
 import { useRef, useState } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import PhoneInput from "@/components/PhoneInput";
 import PriceInput from "@/components/PriceInput";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
 import { DOCUMENT_UPLOAD_ACCEPT, isAllowedDocumentFile, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
+import { isValidNepalPhone } from "@/lib/phone";
 import type { Doctor } from "@/lib/vet-types";
 
-type DocField = "degreeCertificate" | "nvcLicense" | "nationalId";
+type DocField = "cv" | "degreeCertificate" | "nvcLicense" | "nationalId";
 const REQUIRED_DOCUMENTS: { field: DocField; label: string }[] = [
+  { field: "cv", label: "CV" },
   { field: "degreeCertificate", label: "Primary Degree Certificate" },
   { field: "nvcLicense", label: "NVC License" },
   { field: "nationalId", label: "National Identity Card" },
 ];
 
 export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | undefined }) {
-  const { doctor, updateAddress, updatePhoto, updateDocument, changePassword } = useDoctorAuth();
-  const { setDoctorFee } = useVet();
+  const { doctor, updateAddress, updatePhone, updateEmergencyPhone, updatePhoto, updateDocument, changePassword } = useDoctorAuth();
+  const { setDoctorFee, setDoctorCommission } = useVet();
 
   const [addressDraft, setAddressDraft] = useState(doctor?.address ?? "");
   const [addressSaved, setAddressSaved] = useState(false);
 
+  const [phoneDraft, setPhoneDraft] = useState(doctor?.phone ?? "");
+  const [phoneSaved, setPhoneSaved] = useState(false);
+
+  const [emergencyDraft, setEmergencyDraft] = useState(doctor?.emergencyPhone ?? "");
+  const [emergencySaved, setEmergencySaved] = useState(false);
+
   const [feeDraft, setFeeDraft] = useState(doctorRecord?.feeRs ?? 800);
   const [feeSaved, setFeeSaved] = useState(false);
+
+  const [commissionType, setCommissionType] = useState<"flat" | "percent">(doctorRecord?.commissionType ?? "percent");
+  const [commissionDraft, setCommissionDraft] = useState(doctorRecord?.commissionValue ?? 15);
+  const [commissionSaved, setCommissionSaved] = useState(false);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,11 +54,32 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
     setTimeout(() => setAddressSaved(false), 3000);
   };
 
+  const savePhone = () => {
+    if (!isValidNepalPhone(phoneDraft)) return;
+    updatePhone(phoneDraft);
+    setPhoneSaved(true);
+    setTimeout(() => setPhoneSaved(false), 3000);
+  };
+
+  const saveEmergency = () => {
+    if (!isValidNepalPhone(emergencyDraft)) return;
+    updateEmergencyPhone(emergencyDraft);
+    setEmergencySaved(true);
+    setTimeout(() => setEmergencySaved(false), 3000);
+  };
+
   const saveFee = () => {
     if (!doctorRecord || feeDraft <= 0) return;
     setDoctorFee(doctorRecord.id, feeDraft);
     setFeeSaved(true);
     setTimeout(() => setFeeSaved(false), 3000);
+  };
+
+  const saveCommission = () => {
+    if (!doctorRecord || commissionDraft < 0) return;
+    setDoctorCommission(doctorRecord.id, commissionType, commissionDraft);
+    setCommissionSaved(true);
+    setTimeout(() => setCommissionSaved(false), 3000);
   };
 
   const submitPasswordChange = () => {
@@ -73,7 +107,7 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
         </div>
       </div>
 
-      <div className="bg-white rounded-xl px-2 py-2 max-w-[760px]">
+      <div className="bg-white rounded-xl px-2 py-2">
         <FormRow label="Passport Photo">
           <div className="w-[130px]">
             <ImageUploadField value={doctor.photo} onChange={updatePhoto} label="passport photo" height="h-[100px]" maxWidth={400} maxHeight={520} />
@@ -94,12 +128,24 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
           <StaticField value={doctor.email} />
         </FormRow>
 
-        <FormRow label="Phone">
-          <StaticField value={doctor.phone} />
+        <FormRow label="Phone" required>
+          <PhoneInput value={phoneDraft} onChange={setPhoneDraft} className="mb-0 max-w-[300px]" />
+          <div className="flex items-center gap-2.5 mt-2">
+            <button onClick={savePhone} className="bg-primary text-white px-4 py-2 rounded-md text-xs font-semibold cursor-pointer">
+              Save
+            </button>
+            {phoneSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Phone updated</div>}
+          </div>
         </FormRow>
 
-        <FormRow label="Emergency number">
-          <StaticField value={doctor.emergencyPhone} />
+        <FormRow label="Emergency number" required>
+          <PhoneInput value={emergencyDraft} onChange={setEmergencyDraft} className="mb-0 max-w-[300px]" />
+          <div className="flex items-center gap-2.5 mt-2">
+            <button onClick={saveEmergency} className="bg-primary text-white px-4 py-2 rounded-md text-xs font-semibold cursor-pointer">
+              Save
+            </button>
+            {emergencySaved && <div className="text-[11px] text-[#1F7A4D]">✓ Emergency number updated</div>}
+          </div>
         </FormRow>
 
         <FormRow label="Address" required>
@@ -138,6 +184,50 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
             </button>
             {feeSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Updated</div>}
           </div>
+        </FormRow>
+
+        <FormRow label="Platform commission" required>
+          <div className="flex gap-2 mb-2.5">
+            <button
+              onClick={() => setCommissionType("percent")}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-0"
+              style={{ background: commissionType === "percent" ? "#1996C8" : "#F0F2F4", color: commissionType === "percent" ? "#fff" : "#5B6773" }}
+            >
+              Percentage %
+            </button>
+            <button
+              onClick={() => setCommissionType("flat")}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-0"
+              style={{ background: commissionType === "flat" ? "#1996C8" : "#F0F2F4", color: commissionType === "flat" ? "#fff" : "#5B6773" }}
+            >
+              Flat Rs.
+            </button>
+          </div>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="w-[150px]">
+              {commissionType === "flat" ? (
+                <PriceInput value={commissionDraft} onChange={setCommissionDraft} />
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    value={commissionDraft > 0 ? String(commissionDraft) : ""}
+                    onChange={(e) => setCommissionDraft(Number(e.target.value.replace(/\D/g, "")) || 0)}
+                    inputMode="numeric"
+                    placeholder="0"
+                    className="flex-1 min-w-0 px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+                  />
+                  <div className="px-3 py-2.5 rounded-lg border border-[#E4E9EC] bg-[#F0F2F4] text-[13px] font-semibold text-[#3A4652] select-none shrink-0">
+                    %
+                  </div>
+                </div>
+              )}
+            </div>
+            <button onClick={saveCommission} className="bg-primary text-white px-4 py-2.5 rounded-md text-xs font-semibold cursor-pointer">
+              Update
+            </button>
+            {commissionSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Updated</div>}
+          </div>
+          <div className="text-[11px] text-[#8A96A3] mt-1.5">City Pet House&apos;s share of each consult you complete.</div>
         </FormRow>
 
         <Divider />

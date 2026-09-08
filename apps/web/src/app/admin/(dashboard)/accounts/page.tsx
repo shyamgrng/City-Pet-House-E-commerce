@@ -63,6 +63,7 @@ export default function AccountsPage() {
       degreeCertificate: reg.degreeCertificate,
       nvcLicense: reg.nvcLicense,
       nationalId: reg.nationalId,
+      cv: reg.cv,
     };
     if (!addDoctorAccount(account)) return;
     const doctor: Doctor = {
@@ -75,6 +76,8 @@ export default function AccountsPage() {
       consults: 0,
       completed: 0,
       feeRs: 800,
+      commissionType: "percent",
+      commissionValue: 15,
     };
     addDoctor(doctor);
     setDoctorRegStatus(reg.id, "Approved");

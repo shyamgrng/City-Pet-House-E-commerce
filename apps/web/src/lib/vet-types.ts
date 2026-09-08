@@ -8,6 +8,10 @@ export type Doctor = {
   consults: number;
   completed: number;
   feeRs: number;
+  /** City Pet House's cut of this doctor's consultation fee -- either a flat Rs. amount per
+   * consult, or a percentage of the fee. */
+  commissionType: "flat" | "percent";
+  commissionValue: number;
 };
 
 /** doctorId -> date label -> list of open time slots for that date */

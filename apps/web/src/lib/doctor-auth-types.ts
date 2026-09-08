@@ -9,6 +9,7 @@ export type DoctorAccount = {
   photo: string;
   /** Registration documents -- image data URL, or "DOC:<filename>" for a PDF/Word file that was
    * never decoded to an image. Empty string means the document hasn't been provided yet. */
+  cv: string;
   degreeCertificate: string;
   nvcLicense: string;
   nationalId: string;
@@ -24,6 +25,7 @@ export const doctorAccountSeed: DoctorAccount[] = [
     emergencyPhone: "+977 9841009999",
     address: "Baneshwor, Kathmandu",
     photo: "",
+    cv: "",
     degreeCertificate: "",
     nvcLicense: "",
     nationalId: "",
@@ -37,6 +39,7 @@ export const doctorAccountSeed: DoctorAccount[] = [
     emergencyPhone: "+977 9841008888",
     address: "Patan, Lalitpur",
     photo: "",
+    cv: "",
     degreeCertificate: "",
     nvcLicense: "",
     nationalId: "",
@@ -50,6 +53,7 @@ export const doctorAccountSeed: DoctorAccount[] = [
     emergencyPhone: "+977 9841007777",
     address: "Boudha, Kathmandu",
     photo: "",
+    cv: "",
     degreeCertificate: "",
     nvcLicense: "",
     nationalId: "",

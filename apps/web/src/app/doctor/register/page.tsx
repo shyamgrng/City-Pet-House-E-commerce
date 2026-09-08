@@ -29,7 +29,8 @@ export default function DoctorRegisterPage() {
   const [accountNumber, setAccountNumber] = useState("");
   const [profilePhoto, setProfilePhoto] = useState("");
   const [profilePhotoName, setProfilePhotoName] = useState("");
-  const [cvFileName, setCvFileName] = useState("");
+  const [cv, setCv] = useState("");
+  const [cvName, setCvName] = useState("");
   const [degreeCertificate, setDegreeCertificate] = useState("");
   const [degreeCertificateName, setDegreeCertificateName] = useState("");
   const [nvcLicense, setNvcLicense] = useState("");
@@ -117,6 +118,7 @@ export default function DoctorRegisterPage() {
       !accountHolderName.trim() && "Account Holder Name",
       !accountNumber.trim() && "Account Number",
       !profilePhoto && "Profile Photo",
+      !cv && "CV",
       !degreeCertificate && "Primary Degree Certificate",
       !nvcLicense && "NVC License",
       !nationalId && "National Identity Card",
@@ -149,7 +151,7 @@ export default function DoctorRegisterPage() {
       accountHolderName,
       accountNumber,
       profilePhoto,
-      cvFileName,
+      cv,
       degreeCertificate,
       nvcLicense,
       nationalId,
@@ -226,7 +228,16 @@ export default function DoctorRegisterPage() {
           busy={busyFields.profilePhoto}
           onFile={(f) => handlePhoto(f, "profilePhoto", setProfilePhoto, setProfilePhotoName, 500, 500)}
         />
-        <FileDrop label="Upload CV" fileName={cvFileName} accept={DOCUMENT_UPLOAD_ACCEPT} onFile={(f) => f && setCvFileName(f.name)} />
+        <DocDrop
+          label="CV"
+          dropLabel="CV"
+          required
+          value={cv}
+          fileName={cvName}
+          error={fieldErrors.cv}
+          busy={busyFields.cv}
+          onFile={(f) => handleDoc(f, "cv", setCv, setCvName, 1000, 1400)}
+        />
         <DocDrop
           label="Primary Degree Certificate"
           dropLabel="Certificate"
@@ -420,35 +431,6 @@ function DocDrop({
         </div>
       )}
       {error && <div className="text-[11px] text-[#D64545] mt-1">{error}</div>}
-    </div>
-  );
-}
-
-function FileDrop({
-  label,
-  fileName,
-  accept,
-  onFile,
-  mb = "mb-3",
-}: {
-  label: string;
-  fileName: string;
-  accept: string;
-  onFile: (file: File | undefined) => void;
-  mb?: string;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  return (
-    <div className={mb}>
-      <div className="text-[11px] font-semibold text-[#3A4652] mb-1.5">{label}</div>
-      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
-      <div
-        onClick={() => inputRef.current?.click()}
-        className="w-full h-[90px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer px-2 text-center"
-      >
-        <div className="text-[11px] font-semibold text-[#5B6773] truncate max-w-full">{fileName || label}</div>
-        <div className="text-[10px] text-primary underline">or browse files</div>
-      </div>
     </div>
   );
 }

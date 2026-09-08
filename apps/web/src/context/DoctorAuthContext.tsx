@@ -22,8 +22,10 @@ type DoctorAuthValue = {
   signIn: (doctorId: string, password: string) => Result;
   signOut: () => void;
   updateAddress: (address: string) => void;
+  updatePhone: (phone: string) => void;
+  updateEmergencyPhone: (phone: string) => void;
   updatePhoto: (photo: string) => void;
-  updateDocument: (field: "degreeCertificate" | "nvcLicense" | "nationalId", value: string) => void;
+  updateDocument: (field: "cv" | "degreeCertificate" | "nvcLicense" | "nationalId", value: string) => void;
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (doctorId: string) => Result;
   resetPassword: (doctorId: string, code: string, newPassword: string) => Result;
@@ -142,13 +144,25 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
     persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, address } : a)));
   };
 
+  const updatePhone = (phone: string) => {
+    if (!state.doctor) return;
+    const doctorId = state.doctor.doctorId;
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, phone } : a)));
+  };
+
+  const updateEmergencyPhone = (emergencyPhone: string) => {
+    if (!state.doctor) return;
+    const doctorId = state.doctor.doctorId;
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, emergencyPhone } : a)));
+  };
+
   const updatePhoto = (photo: string) => {
     if (!state.doctor) return;
     const doctorId = state.doctor.doctorId;
     persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, photo } : a)));
   };
 
-  const updateDocument = (field: "degreeCertificate" | "nvcLicense" | "nationalId", value: string) => {
+  const updateDocument = (field: "cv" | "degreeCertificate" | "nvcLicense" | "nationalId", value: string) => {
     if (!state.doctor) return;
     const doctorId = state.doctor.doctorId;
     persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, [field]: value } : a)));
@@ -174,6 +188,8 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
         signIn,
         signOut,
         updateAddress,
+        updatePhone,
+        updateEmergencyPhone,
         updatePhoto,
         updateDocument,
         changePassword,
