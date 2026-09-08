@@ -64,6 +64,7 @@ type NewBookingInput = Omit<
   | "invoiceNumber"
   | "invoiceSent"
   | "createdAt"
+  | "completedAt"
   | "prescription"
 >;
 
@@ -517,6 +518,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       invoiceSent: false,
       prescription: null,
       createdAt: Date.now(),
+      completedAt: null,
     };
 
     if (supabase) {
@@ -618,7 +620,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
   };
 
   const endCall = (bookingId: string) => {
-    updateBooking(bookingId, { status: "Completed" as VetStatus });
+    updateBooking(bookingId, { status: "Completed" as VetStatus, completedAt: Date.now() });
     const booking = state.bookings.find((b) => b.id === bookingId);
     if (booking) {
       logActivity("Call", `Call ended — session with ${booking.ownerName} completed`);

@@ -161,7 +161,7 @@ export default function DoctorPortalPage() {
         {tab === "Bookings" && <BookingList bookings={bookingsListVisible} />}
         {tab === "Upcoming" && <BookingList bookings={upcoming} />}
         {tab === "Availability" && <AvailabilityTab doctorId={doctor.doctorId} />}
-        {tab === "Finance" && <FinanceTab bookings={mine} />}
+        {tab === "Finance" && <FinanceTab bookings={mine} doctorName={doctor.name} />}
         {tab === "Profile" && <ProfileTab doctorRecord={doctorRecord} />}
 
         {tab === "Blog" && !newArticleOpen && (

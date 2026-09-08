@@ -124,6 +124,10 @@ export type VetBooking = {
   invoiceNumber: string;
   invoiceSent: boolean;
   createdAt: number;
+  // Epoch ms for when the consult actually finished (status flipped to Completed) -- null until
+  // then. Used to post the ledger's "received" entry on the date payment was actually earned
+  // out, rather than the booking's original creation date.
+  completedAt: number | null;
   rejectReason?: string;
   prescription: Prescription | null;
 };

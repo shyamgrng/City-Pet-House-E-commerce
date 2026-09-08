@@ -35,7 +35,7 @@ export const vetBookingSeed: VetBooking[] = [
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: true, scheduledDate: "", scheduledTime: "", scheduledAt: null,
     amount: 800, status: "Completed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: true,
     chatMessages: [], clientDocuments: [], doctorDocuments: [],
-    invoiceNumber: "INV-VET-1001", invoiceSent: true, createdAt: Date.now() - 12 * 86400000, prescription: null,
+    invoiceNumber: "INV-VET-1001", invoiceSent: true, createdAt: Date.now() - 12 * 86400000, completedAt: Date.now() - 12 * 86400000 + 30 * 60000, prescription: null,
   },
   {
     id: "VET-1002", ownerId: "", ownerName: "Eva Gurung", ownerPhone: "+977 9841112233", ownerEmail: "eva.gurung@gmail.com",
@@ -43,7 +43,7 @@ export const vetBookingSeed: VetBooking[] = [
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: true, scheduledDate: "", scheduledTime: "", scheduledAt: null,
     amount: 800, status: "Completed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: true,
     chatMessages: [], clientDocuments: [], doctorDocuments: [],
-    invoiceNumber: "INV-VET-1002", invoiceSent: true, createdAt: Date.now() - 9 * 86400000, prescription: null,
+    invoiceNumber: "INV-VET-1002", invoiceSent: true, createdAt: Date.now() - 9 * 86400000, completedAt: Date.now() - 9 * 86400000 + 30 * 60000, prescription: null,
   },
   {
     id: "VET-1003", ownerId: "", ownerName: "Eva Gurung", ownerPhone: "+977 9841112233", ownerEmail: "eva.gurung@gmail.com",
@@ -51,7 +51,7 @@ export const vetBookingSeed: VetBooking[] = [
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: true, scheduledDate: "", scheduledTime: "", scheduledAt: null,
     amount: 800, status: "Completed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: true,
     chatMessages: [], clientDocuments: [], doctorDocuments: [],
-    invoiceNumber: "INV-VET-1003", invoiceSent: true, createdAt: Date.now() - 6 * 86400000, prescription: null,
+    invoiceNumber: "INV-VET-1003", invoiceSent: true, createdAt: Date.now() - 6 * 86400000, completedAt: Date.now() - 6 * 86400000 + 30 * 60000, prescription: null,
   },
   {
     id: "VET-1004", ownerId: "", ownerName: "Eva Gurung", ownerPhone: "+977 9841112233", ownerEmail: "eva.gurung@gmail.com",
@@ -59,7 +59,7 @@ export const vetBookingSeed: VetBooking[] = [
     doctorId: "DR-0876", doctorName: "Dr. Bikash Shrestha, DVM", instant: false, scheduledDate: "Jul 18, 2026", scheduledTime: "11:30 AM", scheduledAt: null,
     amount: 800, status: "Confirmed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: false,
     chatMessages: [], clientDocuments: [], doctorDocuments: [],
-    invoiceNumber: "INV-VET-1004", invoiceSent: false, createdAt: Date.now() - 2 * 86400000, prescription: null,
+    invoiceNumber: "INV-VET-1004", invoiceSent: false, createdAt: Date.now() - 2 * 86400000, completedAt: null, prescription: null,
   },
   {
     id: "VET-1005", ownerId: "", ownerName: "Rojina Shrestha", ownerPhone: "+977 9860011223", ownerEmail: "rojina.s@gmail.com",
@@ -67,7 +67,7 @@ export const vetBookingSeed: VetBooking[] = [
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: true, scheduledDate: "", scheduledTime: "", scheduledAt: null,
     amount: 800, status: "Confirmed", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: false,
     chatMessages: [], clientDocuments: [], doctorDocuments: [],
-    invoiceNumber: "INV-VET-1005", invoiceSent: false, createdAt: Date.now() - 1 * 86400000, prescription: null,
+    invoiceNumber: "INV-VET-1005", invoiceSent: false, createdAt: Date.now() - 1 * 86400000, completedAt: null, prescription: null,
   },
   {
     id: "VET-1006", ownerId: "", ownerName: "Prakash Adhikari", ownerPhone: "+977 9812233445", ownerEmail: "prakash.a@gmail.com",
@@ -75,7 +75,7 @@ export const vetBookingSeed: VetBooking[] = [
     doctorId: "DR-1213", doctorName: "Dr. Anjali Gurung, BVSc & AH", instant: false, scheduledDate: "Jul 19, 2026", scheduledTime: "3:00 PM", scheduledAt: null,
     amount: 750, status: "Payment Review", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: false,
     chatMessages: [], clientDocuments: [], doctorDocuments: [],
-    invoiceNumber: "INV-VET-1006", invoiceSent: false, createdAt: Date.now() - 3 * 3600000, prescription: null,
+    invoiceNumber: "INV-VET-1006", invoiceSent: false, createdAt: Date.now() - 3 * 3600000, completedAt: null, prescription: null,
   },
   {
     id: "VET-1007", ownerId: "", ownerName: "Bimal Shrestha", ownerPhone: "+977 9845566778", ownerEmail: "bimal.s@gmail.com",
@@ -83,6 +83,6 @@ export const vetBookingSeed: VetBooking[] = [
     doctorId: "DR-1042", doctorName: "Dr. Sujata Rai, BVSc & AH", instant: false, scheduledDate: "Jul 20, 2026", scheduledTime: "9:00 AM", scheduledAt: null,
     amount: 800, status: "Awaiting Doctor Reconfirm", paymentReceiptUploaded: true, receiptPhoto: "", callStartedByDoctor: false,
     chatMessages: [], clientDocuments: [], doctorDocuments: [],
-    invoiceNumber: "INV-VET-1007", invoiceSent: false, createdAt: Date.now() - 5 * 3600000, prescription: null,
+    invoiceNumber: "INV-VET-1007", invoiceSent: false, createdAt: Date.now() - 5 * 3600000, completedAt: null, prescription: null,
   },
 ];
