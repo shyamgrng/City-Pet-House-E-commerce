@@ -32,8 +32,8 @@ export default function AdoptionPage() {
         </div>
       </div>
 
-      <div className="px-4 md:px-8 pb-8 flex gap-7 flex-wrap">
-        <div className="flex-[1.4] min-w-[400px]">
+      <div className="px-4 md:px-8 pb-8 flex flex-col lg:flex-row gap-7">
+        <div className="lg:flex-[1.4] lg:min-w-[400px]">
           <div className="font-heading font-bold text-base text-[#1A2027] mb-4">Dogs Looking for a Home</div>
           {posts.length === 0 ? (
             <div className="border border-dashed border-[#E4E9EC] rounded-xl p-10 text-center text-xs text-[#8A96A3]">
@@ -85,7 +85,7 @@ export default function AdoptionPage() {
           )}
         </div>
 
-        <div className="flex-1 min-w-[320px] border border-[#E4E9EC] rounded-2xl p-6 h-fit">
+        <div className="lg:flex-1 lg:min-w-[320px] border border-[#E4E9EC] rounded-2xl p-6 h-fit">
           <div className="font-heading font-bold text-base text-[#1A2027] mb-2">Post an Adoption Notice</div>
           {!ready ? null : user ? (
             <PostAdoptionForm ownerId={user.id} defaultContact={user.phone} />

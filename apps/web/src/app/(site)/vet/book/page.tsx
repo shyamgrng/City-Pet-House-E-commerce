@@ -158,7 +158,7 @@ function BookInner() {
 
       <div className="text-[13px] font-bold text-[#1A2027] mb-3">Owner Details</div>
       <Field label="Full Name" required value={ownerName} onChange={setOwnerName} placeholder="Your full name" />
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-0 sm:gap-3">
         <div className="flex-1">
           <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
             Phone <span className="text-[#D64545]">*</span>
@@ -174,7 +174,7 @@ function BookInner() {
       </div>
 
       <div className="text-[13px] font-bold text-[#1A2027] my-3">Pet Details</div>
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-0 sm:gap-3">
         <div className="flex-1">
           <Field label="Pet Name" required value={petName} onChange={setPetName} placeholder="e.g. Bruno" />
         </div>
