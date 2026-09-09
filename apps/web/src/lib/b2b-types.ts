@@ -33,6 +33,8 @@ export type B2BProductSubmission = {
   productId?: string;
   /** Whether the listing should show on the storefront (Active) or stay hidden (Draft), set by the B2B seller. */
   listingStatus: "active" | "draft";
+  /** Who set status to Rejected — City Pet House removing a listing, or the seller deleting their own. Unset for legacy records (attributed to City Pet House). */
+  removedBy?: "Admin" | "Supplier";
 };
 
 export function netPayout(sub: B2BProductSubmission) {
@@ -46,9 +48,9 @@ export const STATUS_COLORS: Record<SubmissionStatus, string> = {
 };
 
 /** Human-facing label for a submission's listing status, from the seller's point of view. */
-export function listingLabel(s: Pick<B2BProductSubmission, "status" | "listingStatus">) {
+export function listingLabel(s: Pick<B2BProductSubmission, "status" | "listingStatus" | "removedBy">) {
   if (s.status === "Approved") return s.listingStatus === "draft" ? "Draft" : "Live";
-  if (s.status === "Rejected") return "Removed by City Pet House";
+  if (s.status === "Rejected") return s.removedBy === "Supplier" ? "Removed by You" : "Removed by City Pet House";
   return "Pending Review";
 }
 
