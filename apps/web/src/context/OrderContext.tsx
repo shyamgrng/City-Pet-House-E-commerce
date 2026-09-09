@@ -75,6 +75,16 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState({ orders: loadStored(), refunds: loadRefunds(), ready: true });
+
+    // Admin and a B2B supplier typically work in separate tabs of the same browser against this
+    // same localStorage-backed order list — without this, one tab's write (e.g. a supplier marking
+    // stock sent) never reaches an already-open tab until it's manually reloaded.
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) setState((s) => ({ ...s, orders: loadStored() }));
+      if (e.key === REFUNDS_KEY) setState((s) => ({ ...s, refunds: loadRefunds() }));
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const persist = (orders: Order[]) => {
