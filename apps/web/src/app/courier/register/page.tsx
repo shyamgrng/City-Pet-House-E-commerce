@@ -133,7 +133,9 @@ export default function CourierRegisterPage() {
           ← Back to Courier Sign In
         </Link>
         <div className="font-heading font-bold text-sm mb-1 flex items-center gap-2 text-[#1A2027]">
-          <Image src="/assets/cph-logo.jpeg" alt="" width={24} height={24} className="rounded-md object-cover" />
+          <Link href="/" className="shrink-0">
+            <Image src="/assets/cph-logo.jpeg" alt="" width={24} height={24} className="rounded-md object-cover" />
+          </Link>
           Register as a Courier Partner
         </div>
         <div className="text-xs text-[#8A96A3] mb-5">Submit your details and documents — admin reviews and verifies before your account goes active.</div>

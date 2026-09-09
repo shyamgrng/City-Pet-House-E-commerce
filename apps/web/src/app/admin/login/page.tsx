@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import EmailInput from "@/components/EmailInput";
@@ -36,7 +37,9 @@ function AdminLoginInner() {
     <div className="min-h-screen flex items-center justify-center bg-[#F7F9FA]">
       <div className="w-[340px] bg-white border border-[#E4E9EC] rounded-2xl p-[30px]">
         <div className="font-heading font-bold text-sm mb-1 flex items-center gap-2 text-[#1A2027]">
-          <Image src="/assets/cph-logo.jpeg" alt="" width={24} height={24} className="rounded-md object-cover" />
+          <Link href="/" className="shrink-0">
+            <Image src="/assets/cph-logo.jpeg" alt="" width={24} height={24} className="rounded-md object-cover" />
+          </Link>
           CPH Admin
         </div>
         <div className="text-xs text-[#8A96A3] mb-[22px]">Sign in with your staff email and password.</div>
