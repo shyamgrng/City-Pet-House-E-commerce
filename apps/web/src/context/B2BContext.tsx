@@ -10,7 +10,7 @@ type B2BValue = {
   submissions: B2BProductSubmission[];
   ready: boolean;
   addSubmission: (input: Omit<B2BProductSubmission, "id" | "status" | "submittedAt">) => void;
-  approveSubmission: (id: string) => void;
+  approveSubmission: (id: string, productId?: string) => void;
   rejectSubmission: (id: string) => void;
   renameCategoryInSubmissions: (oldName: string, newName: string) => void;
 };
@@ -45,6 +45,7 @@ function normalizeSubmission(s: Partial<B2BProductSubmission> & { id: string; na
     commissionPct: 0,
     status: "Pending",
     submittedAt: Date.now(),
+    listingStatus: "active",
     ...s,
   };
 }
@@ -78,11 +79,13 @@ export function B2BProvider({ children }: { children: React.ReactNode }) {
 
   const addSubmission = (input: Omit<B2BProductSubmission, "id" | "status" | "submittedAt">) => {
     const id = "SUB-" + Math.random().toString(36).slice(2, 8).toUpperCase();
-    persist([{ ...input, id, status: "Pending", submittedAt: Date.now() }, ...state.submissions]);
+    // Listings go live immediately (auto-approved) — City Pet House can still remove a listing
+    // afterwards from the B2B Supply admin page, which sets status back to Rejected.
+    persist([{ ...input, id, status: "Approved", submittedAt: Date.now() }, ...state.submissions]);
   };
 
-  const setStatus = (id: string, status: B2BProductSubmission["status"]) => {
-    persist(state.submissions.map((s) => (s.id === id ? { ...s, status } : s)));
+  const setStatus = (id: string, status: B2BProductSubmission["status"], productId?: string) => {
+    persist(state.submissions.map((s) => (s.id === id ? { ...s, status, ...(productId ? { productId } : {}) } : s)));
   };
 
   const renameCategoryInSubmissions = (oldName: string, newName: string) => {
@@ -95,7 +98,7 @@ export function B2BProvider({ children }: { children: React.ReactNode }) {
         submissions: state.submissions,
         ready: state.ready,
         addSubmission,
-        approveSubmission: (id) => setStatus(id, "Approved"),
+        approveSubmission: (id, productId) => setStatus(id, "Approved", productId),
         rejectSubmission: (id) => setStatus(id, "Rejected"),
         renameCategoryInSubmissions,
       }}
