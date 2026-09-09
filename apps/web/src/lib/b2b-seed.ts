@@ -15,6 +15,7 @@ const defaults = {
   dealStart: "",
   dealEnd: "",
   outOfStock: false,
+  listingStatus: "active" as const,
 };
 
 export const b2bSubmissionSeed: B2BProductSubmission[] = [

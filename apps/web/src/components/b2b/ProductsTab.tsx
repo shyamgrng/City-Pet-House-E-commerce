@@ -6,8 +6,9 @@ import PriceInput from "@/components/PriceInput";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
 import { useBrand } from "@/context/BrandContext";
+import { useCatalog } from "@/context/CatalogContext";
 import { useCategory } from "@/context/CategoryContext";
-import { STATUS_COLORS } from "@/lib/b2b-types";
+import { STATUS_COLORS, listingLabel, submissionToProductInput } from "@/lib/b2b-types";
 import { colourOptions, courierPackageSizes, sizeOptions } from "@/lib/catalog-types";
 
 const EMPTY = {
@@ -37,12 +38,13 @@ const EMPTY = {
 export default function ProductsTab() {
   const { supplier } = useB2BAuth();
   const { submissions, addSubmission } = useB2B();
+  const { addProduct } = useCatalog();
   const { categories } = useCategory();
   const { brands: brandNames } = useBrand();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState<"active" | "draft" | null>(null);
 
   if (!supplier) return null;
 
@@ -66,7 +68,8 @@ export default function ProductsTab() {
       setError("Please fill in name, category, price, and quantity.");
       return;
     }
-    addSubmission({
+    const listingStatus = form.status === "Active" ? "active" : "draft";
+    const submissionInput = {
       b2bId: supplier.b2bId,
       companyName: supplier.companyName,
       name: form.name.trim(),
@@ -93,12 +96,17 @@ export default function ProductsTab() {
       dealEnd: form.dealEnd,
       outOfStock: form.outOfStock,
       commissionPct,
-    });
+      listingStatus: listingStatus as "active" | "draft",
+    };
+    // Listings go live on the storefront immediately — no admin review step — so the catalog
+    // product is created up front and its id is kept on the submission for later removal.
+    const productId = addProduct(submissionToProductInput(submissionInput));
+    addSubmission({ ...submissionInput, productId });
     setForm(EMPTY);
     setError("");
     setOpen(false);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+    setSubmitted(listingStatus);
+    setTimeout(() => setSubmitted(null), 3000);
   };
 
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -342,7 +350,11 @@ export default function ProductsTab() {
           </div>
         </div>
       )}
-      {submitted && <div className="text-[11px] text-[#1F7A4D] mb-4 -mt-2.5">✓ Submitted — City Pet House will review this product shortly</div>}
+      {submitted && (
+        <div className="text-[11px] text-[#1F7A4D] mb-4 -mt-2.5">
+          ✓ Product listed{submitted === "draft" ? " as a draft" : " — now live on the storefront"}
+        </div>
+      )}
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
         {mine.length === 0 ? (
@@ -357,7 +369,7 @@ export default function ProductsTab() {
                 </div>
               </div>
               <div className="text-[11px] font-bold shrink-0 ml-2" style={{ color: STATUS_COLORS[s.status] }}>
-                {s.status}
+                {listingLabel(s)}
               </div>
             </div>
           ))

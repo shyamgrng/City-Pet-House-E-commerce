@@ -9,7 +9,7 @@ import ProfileTab from "@/components/b2b/ProfileTab";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
-import { STATUS_COLORS } from "@/lib/b2b-types";
+import { STATUS_COLORS, listingLabel } from "@/lib/b2b-types";
 
 const TABS = ["Dashboard", "Incoming Orders", "Status", "Products", "Finance", "Profile"] as const;
 type Tab = (typeof TABS)[number];
@@ -28,9 +28,8 @@ export default function B2BPortalPage() {
   if (!ready || !supplier) return null;
 
   const mine = submissions.filter((s) => s.b2bId === supplier.b2bId);
-  const pending = mine.filter((s) => s.status === "Pending");
-  const approved = mine.filter((s) => s.status === "Approved");
-  const rejected = mine.filter((s) => s.status === "Rejected");
+  const live = mine.filter((s) => s.status === "Approved");
+  const removed = mine.filter((s) => s.status === "Rejected");
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
@@ -79,11 +78,10 @@ export default function B2BPortalPage() {
             <div className="font-heading font-bold text-lg text-[#1A2027] mb-1">Welcome, {supplier.companyName}</div>
             <div className="text-[13px] text-[#8A96A3] mb-5">Supplier ID: {supplier.b2bId}</div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mb-6">
               <Stat label="Total Submitted" value={mine.length} color="#1A2027" />
-              <Stat label="Pending Review" value={pending.length} color="#B8860B" />
-              <Stat label="Approved" value={approved.length} color="#1F7A4D" />
-              <Stat label="Rejected" value={rejected.length} color="#D64545" />
+              <Stat label="Live on Storefront" value={live.length} color="#1F7A4D" />
+              <Stat label="Removed" value={removed.length} color="#D64545" />
             </div>
 
             <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Recent Submissions</div>
@@ -101,7 +99,7 @@ export default function B2BPortalPage() {
                     <div key={s.id} className="flex justify-between items-center px-4 py-3 border-b border-[#F0F2F4] last:border-0">
                       <div className="text-[13px] font-semibold text-[#1A2027]">{s.name}</div>
                       <div className="text-[11px] font-bold" style={{ color: STATUS_COLORS[s.status] }}>
-                        {s.status}
+                        {listingLabel(s)}
                       </div>
                     </div>
                   ))
