@@ -11,6 +11,8 @@ import { useCourierRegistration } from "@/context/CourierRegistrationContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { useVet } from "@/context/VetContext";
+import type { AdminUser } from "@/lib/admin-user-types";
+import type { B2BAccount } from "@/lib/b2b-auth-types";
 import type { B2BRegistration } from "@/lib/b2b-registration-types";
 import type { CourierAccount } from "@/lib/courier-auth-types";
 import type { CourierRegistration } from "@/lib/courier-registration-types";
@@ -243,52 +245,213 @@ export default function AccountsPage() {
       )}
 
       {tab === "Client Account" && <ClientAccountTab accounts={accounts} />}
+      {tab === "Doctor Account" && <DoctorAccountTab doctors={doctorAccounts} />}
       {tab === "Courier Account" && <CourierAccountTab couriers={courierAccounts} />}
-
-      {(tab === "Doctor Account" || tab === "B2B Account" || tab === "Staff Account") && (
-        <div className="bg-white border border-dashed border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">
-          {tab} — coming soon
-        </div>
-      )}
+      {tab === "B2B Account" && <B2BAccountTab suppliers={b2bAccounts} />}
+      {tab === "Staff Account" && <StaffAccountTab users={adminUsers} />}
     </div>
   );
 }
 
-function CourierAccountTab({ couriers }: { couriers: CourierAccount[] }) {
+function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
-    <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
-      <div className="grid grid-cols-[1.3fr_1.1fr_1fr_0.6fr_0.6fr_0.6fr_0.6fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[600px]">
-        <div>Company</div>
-        <div>Contact</div>
-        <div>Address</div>
-        <div>Small</div>
-        <div>Medium</div>
-        <div>Large</div>
-        <div>V.Large</div>
-      </div>
-      {couriers.length === 0 ? (
-        <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">
-          No courier accounts registered yet — add one in Shop → Delivery Setting.
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3.5 box-border"
+    />
+  );
+}
+
+function CourierAccountTab({ couriers }: { couriers: CourierAccount[] }) {
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
+  const visible = couriers.filter(
+    (c) => !q || c.companyName.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q) || c.address.toLowerCase().includes(q),
+  );
+
+  return (
+    <div>
+      <SearchBox value={search} onChange={setSearch} placeholder="Search by company, phone, or address..." />
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
+        <div className="grid grid-cols-[1.3fr_1.1fr_1fr_0.6fr_0.6fr_0.6fr_0.6fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[600px]">
+          <div>Company</div>
+          <div>Contact</div>
+          <div>Address</div>
+          <div>Small</div>
+          <div>Medium</div>
+          <div>Large</div>
+          <div>V.Large</div>
         </div>
-      ) : (
-        couriers.map((c) => (
-          <div
-            key={c.courierId}
-            className="grid grid-cols-[1.3fr_1.1fr_1fr_0.6fr_0.6fr_0.6fr_0.6fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[600px]"
-          >
-            <div>
-              <div className="font-semibold text-[#1A2027]">{c.companyName}</div>
-              <div className="text-[10px] text-[#8A96A3] mt-0.5">{c.courierId}</div>
-            </div>
-            <div className="text-[#5B6773]">{c.phone}</div>
-            <div className="text-[#5B6773]">{c.address || "—"}</div>
-            <div>Rs.{c.priceSmall}</div>
-            <div>Rs.{c.priceMedium}</div>
-            <div>Rs.{c.priceLarge}</div>
-            <div>Rs.{c.priceVeryLarge}</div>
+        {couriers.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">
+            No courier accounts registered yet — add one in Shop → Delivery Setting.
           </div>
-        ))
-      )}
+        ) : visible.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No couriers match.</div>
+        ) : (
+          visible.map((c) => (
+            <div
+              key={c.courierId}
+              className="grid grid-cols-[1.3fr_1.1fr_1fr_0.6fr_0.6fr_0.6fr_0.6fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[600px]"
+            >
+              <div>
+                <div className="font-semibold text-[#1A2027]">{c.companyName}</div>
+                <div className="text-[10px] text-[#8A96A3] mt-0.5">{c.courierId}</div>
+              </div>
+              <div className="text-[#5B6773]">{c.phone}</div>
+              <div className="text-[#5B6773]">{c.address || "—"}</div>
+              <div>Rs.{c.priceSmall}</div>
+              <div>Rs.{c.priceMedium}</div>
+              <div>Rs.{c.priceLarge}</div>
+              <div>Rs.{c.priceVeryLarge}</div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
+  const visible = doctors.filter(
+    (d) =>
+      !q ||
+      d.name.toLowerCase().includes(q) ||
+      d.doctorId.toLowerCase().includes(q) ||
+      d.email.toLowerCase().includes(q) ||
+      d.phone.toLowerCase().includes(q),
+  );
+
+  return (
+    <div>
+      <SearchBox value={search} onChange={setSearch} placeholder="Search by name, doctor ID, email, or phone..." />
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
+        <div className="grid grid-cols-[1.4fr_1.2fr_1fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[520px]">
+          <div>Name</div>
+          <div>Contact</div>
+          <div>Address</div>
+        </div>
+        {doctors.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No doctor accounts yet</div>
+        ) : visible.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No doctors match.</div>
+        ) : (
+          visible.map((d) => (
+            <div
+              key={d.doctorId}
+              className="grid grid-cols-[1.4fr_1.2fr_1fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[520px]"
+            >
+              <div>
+                <div className="font-semibold text-[#1A2027]">{d.name}</div>
+                <div className="text-[10px] text-[#8A96A3] mt-0.5">{d.doctorId}</div>
+              </div>
+              <div className="text-[#5B6773]">
+                {d.email}
+                <br />
+                {d.phone}
+              </div>
+              <div className="text-[#5B6773]">{d.address || "—"}</div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function B2BAccountTab({ suppliers }: { suppliers: B2BAccount[] }) {
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
+  const visible = suppliers.filter(
+    (s) =>
+      !q ||
+      s.companyName.toLowerCase().includes(q) ||
+      s.contactPerson.toLowerCase().includes(q) ||
+      s.b2bId.toLowerCase().includes(q) ||
+      s.email.toLowerCase().includes(q) ||
+      s.phone.toLowerCase().includes(q),
+  );
+
+  return (
+    <div>
+      <SearchBox value={search} onChange={setSearch} placeholder="Search by company, contact person, ID, email, or phone..." />
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
+        <div className="grid grid-cols-[1.4fr_1fr_1.2fr_1fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[600px]">
+          <div>Company</div>
+          <div>Contact Person</div>
+          <div>Contact</div>
+          <div>Address</div>
+        </div>
+        {suppliers.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No B2B accounts yet</div>
+        ) : visible.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No B2B accounts match.</div>
+        ) : (
+          visible.map((s) => (
+            <div
+              key={s.b2bId}
+              className="grid grid-cols-[1.4fr_1fr_1.2fr_1fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[600px]"
+            >
+              <div>
+                <div className="font-semibold text-[#1A2027]">{s.companyName}</div>
+                <div className="text-[10px] text-[#8A96A3] mt-0.5">{s.b2bId}</div>
+              </div>
+              <div className="text-[#5B6773]">{s.contactPerson}</div>
+              <div className="text-[#5B6773]">
+                {s.email}
+                <br />
+                {s.phone}
+              </div>
+              <div className="text-[#5B6773]">{s.address || "—"}</div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StaffAccountTab({ users }: { users: AdminUser[] }) {
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
+  const visible = users.filter(
+    (u) => !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q),
+  );
+
+  return (
+    <div>
+      <SearchBox value={search} onChange={setSearch} placeholder="Search by name, email, or role..." />
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
+        <div className="grid grid-cols-[1.2fr_1.4fr_0.8fr_0.7fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[500px]">
+          <div>Name</div>
+          <div>Email</div>
+          <div>Role</div>
+          <div>Status</div>
+        </div>
+        {users.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No staff accounts yet</div>
+        ) : visible.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No staff match.</div>
+        ) : (
+          visible.map((u) => (
+            <div
+              key={u.email}
+              className="grid grid-cols-[1.2fr_1.4fr_0.8fr_0.7fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[500px]"
+            >
+              <div className="font-semibold text-[#1A2027]">{u.name}</div>
+              <div className="text-[#5B6773]">{u.email}</div>
+              <div className="text-[#5B6773]">{u.role}</div>
+              <div className="font-semibold" style={{ color: u.active ? "#1F7A4D" : "#8A96A3" }}>
+                {u.active ? "Active" : "Inactive"}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -297,6 +460,7 @@ function ClientAccountTab({ accounts }: { accounts: Account[] }) {
   const { bookings } = useVet();
   const { posts } = useAdoption();
   const [selected, setSelected] = useState<Account | null>(null);
+  const [search, setSearch] = useState("");
 
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
@@ -357,32 +521,42 @@ function ClientAccountTab({ accounts }: { accounts: Account[] }) {
     );
   }
 
+  const q = search.trim().toLowerCase();
+  const visible = accounts.filter(
+    (a) => !q || a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q) || a.phone.toLowerCase().includes(q),
+  );
+
   return (
-    <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-      <div className="grid grid-cols-4 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
-        <div>Name</div>
-        <div>Contact</div>
-        <div>Joined</div>
-        <div>Actions</div>
+    <div>
+      <SearchBox value={search} onChange={setSearch} placeholder="Search by name, email, or phone..." />
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+        <div className="grid grid-cols-4 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+          <div>Name</div>
+          <div>Contact</div>
+          <div>Joined</div>
+          <div>Actions</div>
+        </div>
+        {accounts.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No client accounts registered yet</div>
+        ) : visible.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No clients match.</div>
+        ) : (
+          visible.map((a) => (
+            <div key={a.id} className="grid grid-cols-4 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+              <div className="font-semibold text-[#1A2027]">{a.name}</div>
+              <div className="text-[#5B6773]">
+                {a.email}
+                <br />
+                {a.phone}
+              </div>
+              <div className="text-[#5B6773]">{fmtDate(a.createdAt)}</div>
+              <div onClick={() => setSelected(a)} className="text-primary font-semibold cursor-pointer">
+                View
+              </div>
+            </div>
+          ))
+        )}
       </div>
-      {accounts.length === 0 ? (
-        <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No client accounts registered yet</div>
-      ) : (
-        accounts.map((a) => (
-          <div key={a.id} className="grid grid-cols-4 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-            <div className="font-semibold text-[#1A2027]">{a.name}</div>
-            <div className="text-[#5B6773]">
-              {a.email}
-              <br />
-              {a.phone}
-            </div>
-            <div className="text-[#5B6773]">{fmtDate(a.createdAt)}</div>
-            <div onClick={() => setSelected(a)} className="text-primary font-semibold cursor-pointer">
-              View
-            </div>
-          </div>
-        ))
-      )}
     </div>
   );
 }
