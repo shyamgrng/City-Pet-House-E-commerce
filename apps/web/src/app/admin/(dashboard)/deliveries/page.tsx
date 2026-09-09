@@ -737,7 +737,17 @@ function OrderDetailModal({
   const allChecked = order.checklist.every((c) => c.checked);
   const itemAvailable = (productId: string) => products.find((p) => p.id === productId)?.outOfStock !== true;
   const allAvailable = order.items.every((it) => itemAvailable(it.productId));
-  const canForward = allChecked && allAvailable && order.status === "Payment Approved" && !alreadyForwarded;
+  // Distinct suppliers behind this order's items — a B2B-sourced item isn't physically at City Pet
+  // House yet, so it can't be forwarded to dispatch until its supplier marks it sent from their portal.
+  const suppliers = new Map<string, string>();
+  for (const it of order.items) {
+    const supplier = supplierForProduct(submissions, it.productId);
+    if (supplier) suppliers.set(supplier.b2bId, supplier.companyName);
+  }
+  const pendingSuppliers = Array.from(suppliers.entries()).filter(
+    ([b2bId]) => !order.supplierFulfillments?.find((f) => f.b2bId === b2bId)?.sentAt,
+  );
+  const canForward = allChecked && allAvailable && pendingSuppliers.length === 0 && order.status === "Payment Approved" && !alreadyForwarded;
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
@@ -835,7 +845,9 @@ function OrderDetailModal({
         ) : (
           <>
             <div className="bg-[#F0F2F4] text-[#8A96A3] text-center py-2.5 rounded-lg text-xs font-semibold mt-2">
-              Complete checklist &amp; confirm stock to forward
+              {pendingSuppliers.length > 0
+                ? `Awaiting ${pendingSuppliers.map(([, name]) => name).join(", ")} to pack & send stock to City Pet House`
+                : "Complete checklist & confirm stock to forward"}
             </div>
             <button
               onClick={onOpenWholeRefund}
