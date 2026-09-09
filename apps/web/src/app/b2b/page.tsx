@@ -34,7 +34,6 @@ export default function B2BPortalPage() {
 
   if (!ready || !supplier) return null;
 
-  const mine = submissions.filter((s) => s.b2bId === supplier.b2bId);
   const awaitingResponse = ordersNeedingFulfillment(customerOrders, submissions, supplier.b2bId).length;
 
   const fmt = (n: number) => "Rs. " + n.toLocaleString("en-IN");
@@ -146,7 +145,9 @@ export default function B2BPortalPage() {
         {tab === "Status" && <StatusTab />}
 
         {tab === "Products" && <ProductsTab />}
-        {tab === "Finance" && <FinanceTab submissions={mine} />}
+        {tab === "Finance" && (
+          <FinanceTab orders={customerOrders} submissions={submissions} b2bId={supplier.b2bId} companyName={supplier.companyName} />
+        )}
         {tab === "Profile" && <ProfileTab />}
       </div>
     </div>
