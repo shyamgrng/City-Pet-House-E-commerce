@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import MediaSlot from "@/components/MediaSlot";
 import PriceInput from "@/components/PriceInput";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
@@ -9,7 +10,14 @@ import { useBrand } from "@/context/BrandContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useCategory } from "@/context/CategoryContext";
 import { STATUS_COLORS, listingLabel, submissionToProductInput } from "@/lib/b2b-types";
-import { colourOptions, courierPackageSizes, sizeOptions } from "@/lib/catalog-types";
+import { colourOptions, courierPackageSizes, sizeOptions, type Product } from "@/lib/catalog-types";
+
+function stockStatus(p: Product) {
+  if (p.status === "draft") return { label: "Draft", color: "#8A96A3" };
+  if (p.outOfStock || p.qty === 0) return { label: "Out of Stock", color: "#D64545" };
+  if (p.qty <= p.lowStockAlert) return { label: "Low Stock", color: "#C9962B" };
+  return { label: "In Stock", color: "#1F7A4D" };
+}
 
 const EMPTY = {
   photos: ["", "", "", ""],
@@ -38,7 +46,7 @@ const EMPTY = {
 export default function ProductsTab() {
   const { supplier } = useB2BAuth();
   const { submissions, addSubmission } = useB2B();
-  const { addProduct } = useCatalog();
+  const { products, addProduct } = useCatalog();
   const { categories } = useCategory();
   const { brands: brandNames } = useBrand();
   const [open, setOpen] = useState(false);
@@ -356,23 +364,57 @@ export default function ProductsTab() {
         </div>
       )}
 
-      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden overflow-x-auto">
         {mine.length === 0 ? (
           <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">You haven&apos;t submitted any products yet</div>
         ) : (
-          mine.map((s) => (
-            <div key={s.id} className="flex justify-between items-center px-4 py-3 border-b border-[#F0F2F4] last:border-0">
-              <div>
-                <div className="text-[13px] font-semibold text-[#1A2027]">{s.name}</div>
-                <div className="text-[11px] text-[#8A96A3] mt-0.5">
-                  {s.category} · Rs. {s.price.toLocaleString("en-IN")} × {s.qty} · {fmtDate(s.submittedAt)}
-                </div>
-              </div>
-              <div className="text-[11px] font-bold shrink-0 ml-2" style={{ color: STATUS_COLORS[s.status] }}>
-                {listingLabel(s)}
-              </div>
+          <div className="min-w-[640px]">
+            <div className="grid grid-cols-[64px_1.7fr_1fr_0.7fr_0.9fr_1fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+              <div />
+              <div>Product</div>
+              <div>Category</div>
+              <div>Qty</div>
+              <div>Price</div>
+              <div>Status</div>
             </div>
-          ))
+            {mine.map((s) => {
+              // Once live, this reflects the actual catalog listing (qty/price/stock can move after
+              // submission — from sales, restocks, or admin edits) rather than the frozen submission data.
+              const product = s.productId ? products.find((p) => p.id === s.productId) : undefined;
+              const qty = product ? product.qty : s.qty;
+              const price = product ? product.price : s.price;
+              const category = product ? product.category : s.category;
+              const photo = product ? product.photo : s.photos[0];
+              const stock = product ? stockStatus(product) : null;
+              return (
+                <div
+                  key={s.id}
+                  className="grid grid-cols-[64px_1.7fr_1fr_0.7fr_0.9fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0"
+                >
+                  <MediaSlot src={photo} label="product photo" className="w-[52px] h-[52px] rounded-lg" />
+                  <div>
+                    <div className="text-[13px] font-semibold text-[#1A2027]">{s.name}</div>
+                    <div className="text-[11px] text-[#8A96A3] mt-0.5">{fmtDate(s.submittedAt)}</div>
+                  </div>
+                  <div className="text-[#5B6773]">{category}</div>
+                  <div className="font-semibold" style={{ color: product && product.qty <= product.lowStockAlert ? "#C9962B" : "#1A2027" }}>
+                    {qty}
+                  </div>
+                  <div className="font-semibold text-[#1A2027]">Rs. {price.toLocaleString("en-IN")}</div>
+                  <div>
+                    <div className="text-[11px] font-bold" style={{ color: STATUS_COLORS[s.status] }}>
+                      {listingLabel(s)}
+                    </div>
+                    {stock && s.status === "Approved" && (
+                      <div className="text-[10px] font-semibold mt-0.5" style={{ color: stock.color }}>
+                        {stock.label}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
