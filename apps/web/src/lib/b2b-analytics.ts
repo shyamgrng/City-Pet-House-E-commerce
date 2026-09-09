@@ -4,7 +4,7 @@ import type { Order } from "./order-types";
 
 export type SupplierActivity = { key: string; text: string; time: number };
 
-function myProductIds(submissions: B2BProductSubmission[], b2bId: string): Set<string> {
+export function myProductIds(submissions: B2BProductSubmission[], b2bId: string): Set<string> {
   return new Set(submissions.filter((s) => s.b2bId === b2bId && s.productId).map((s) => s.productId as string));
 }
 

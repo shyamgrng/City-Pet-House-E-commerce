@@ -12,10 +12,9 @@ import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useOrder } from "@/context/OrderContext";
-import { useRestock } from "@/context/RestockContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { amountDue, lowStockCount, ordersReceivedCount, recentActivity, weeklySales } from "@/lib/b2b-analytics";
-import { awaitsSupplier } from "@/lib/restock-types";
+import { ordersNeedingFulfillment } from "@/lib/order-fulfillment";
 
 const TABS = ["Dashboard", "Incoming Orders", "Status", "Products", "Finance", "Profile"] as const;
 type Tab = (typeof TABS)[number];
@@ -23,7 +22,6 @@ type Tab = (typeof TABS)[number];
 export default function B2BPortalPage() {
   const { supplier, ready, signOut } = useB2BAuth();
   const { submissions } = useB2B();
-  const { orders: restockOrders } = useRestock();
   const { orders: customerOrders } = useOrder();
   const { products } = useCatalog();
   const { settings } = useSiteSettings();
@@ -37,8 +35,7 @@ export default function B2BPortalPage() {
   if (!ready || !supplier) return null;
 
   const mine = submissions.filter((s) => s.b2bId === supplier.b2bId);
-  const myRestockOrders = restockOrders.filter((o) => o.b2bId === supplier.b2bId);
-  const awaitingResponse = myRestockOrders.filter(awaitsSupplier).length;
+  const awaitingResponse = ordersNeedingFulfillment(customerOrders, submissions, supplier.b2bId).length;
 
   const fmt = (n: number) => "Rs. " + n.toLocaleString("en-IN");
   const salesSeries = weeklySales(customerOrders, submissions, supplier.b2bId);

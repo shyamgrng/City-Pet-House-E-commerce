@@ -20,6 +20,20 @@ export function defaultChecklist(): ChecklistItem[] {
   ];
 }
 
+/** Per-B2B-supplier packing checklist for their item(s) within one order, ahead of physically sending stock to CPH. */
+export type SupplierFulfillment = {
+  b2bId: string;
+  checklist: ChecklistItem[];
+  sentAt?: number;
+};
+
+export function defaultSupplierChecklist(): ChecklistItem[] {
+  return [
+    { text: "Items picked from shelf", checked: false },
+    { text: "Packed & labeled", checked: false },
+  ];
+}
+
 export type Order = {
   id: string;
   ownerId: string;
@@ -41,6 +55,8 @@ export type Order = {
   checklist: ChecklistItem[];
   refunded: boolean;
   refundedItems: RefundedItem[];
+  /** Absent for orders with no B2B-supplied items, or before a supplier has interacted with theirs. */
+  supplierFulfillments?: SupplierFulfillment[];
 };
 
 export const STATUS_COLORS: Record<OrderStatus, string> = {
