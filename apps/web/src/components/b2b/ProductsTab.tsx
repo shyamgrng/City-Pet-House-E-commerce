@@ -10,7 +10,7 @@ import { useBrand } from "@/context/BrandContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useCategory } from "@/context/CategoryContext";
 import { STATUS_COLORS, listingLabel, submissionToProductInput } from "@/lib/b2b-types";
-import { colourOptions, courierPackageSizes, sizeOptions, type Product } from "@/lib/catalog-types";
+import { colourOptions, courierPackageSizes, formatRs, salePrice, sizeOptions, type Product } from "@/lib/catalog-types";
 
 function stockStatus(p: Product) {
   if (p.status === "draft") return { label: "Draft", color: "#8A96A3" };
@@ -45,8 +45,8 @@ const EMPTY = {
 
 export default function ProductsTab() {
   const { supplier } = useB2BAuth();
-  const { submissions, addSubmission, updateSubmission } = useB2B();
-  const { products, addProduct, updateProduct } = useCatalog();
+  const { submissions, addSubmission, updateSubmission, rejectSubmission } = useB2B();
+  const { products, addProduct, updateProduct, deleteProduct } = useCatalog();
   const { categories } = useCategory();
   const { brands: brandNames } = useBrand();
   const [open, setOpen] = useState(false);
@@ -168,6 +168,12 @@ export default function ProductsTab() {
     setEditingId(s.id);
     setError("");
     setOpen(true);
+  };
+
+  const handleDelete = (s: (typeof mine)[number]) => {
+    if (!window.confirm(`Remove "${s.name}" from the storefront?`)) return;
+    if (s.productId) deleteProduct(s.productId);
+    rejectSubmission(s.id, "Supplier");
   };
 
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -482,21 +488,29 @@ export default function ProductsTab() {
                   <div className="font-semibold" style={{ color: product && product.qty <= product.lowStockAlert ? "#C9962B" : "#1A2027" }}>
                     {qty}
                   </div>
-                  <div className="font-semibold text-[#1A2027]">Rs. {price.toLocaleString("en-IN")}</div>
                   <div>
-                    <div className="text-[11px] font-bold" style={{ color: STATUS_COLORS[s.status] }}>
-                      {listingLabel(s)}
-                    </div>
-                    {stock && s.status === "Approved" && (
-                      <div className="text-[10px] font-semibold mt-0.5" style={{ color: stock.color }}>
-                        {stock.label}
+                    <div className="font-semibold text-[#1A2027]">{formatRs(price)}</div>
+                    {product?.hotSale && (
+                      <div className="text-[10px] text-[#D64545] font-bold mt-0.5">
+                        🔥 -{product.hotDiscount}% · now {formatRs(salePrice(product))}
                       </div>
                     )}
                   </div>
-                  <div>
+                  <div
+                    className="text-[11px] font-semibold"
+                    style={{ color: stock && s.status === "Approved" ? stock.color : STATUS_COLORS[s.status] }}
+                  >
+                    {stock && s.status === "Approved" ? stock.label : listingLabel(s)}
+                  </div>
+                  <div className="flex gap-2.5 text-[11px] font-semibold">
                     {s.status === "Approved" && (
-                      <span onClick={() => openEdit(s)} className="text-[11px] font-semibold text-primary cursor-pointer">
+                      <span onClick={() => openEdit(s)} className="text-primary cursor-pointer">
                         Edit
+                      </span>
+                    )}
+                    {s.status === "Approved" && (
+                      <span onClick={() => handleDelete(s)} className="text-[#D64545] cursor-pointer">
+                        Delete
                       </span>
                     )}
                   </div>

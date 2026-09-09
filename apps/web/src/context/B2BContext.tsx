@@ -11,7 +11,7 @@ type B2BValue = {
   ready: boolean;
   addSubmission: (input: Omit<B2BProductSubmission, "id" | "status" | "submittedAt">) => void;
   approveSubmission: (id: string, productId?: string) => void;
-  rejectSubmission: (id: string) => void;
+  rejectSubmission: (id: string, removedBy?: "Admin" | "Supplier") => void;
   updateSubmission: (id: string, patch: Partial<B2BProductSubmission>) => void;
   renameCategoryInSubmissions: (oldName: string, newName: string) => void;
 };
@@ -85,8 +85,12 @@ export function B2BProvider({ children }: { children: React.ReactNode }) {
     persist([{ ...input, id, status: "Approved", submittedAt: Date.now() }, ...state.submissions]);
   };
 
-  const setStatus = (id: string, status: B2BProductSubmission["status"], productId?: string) => {
-    persist(state.submissions.map((s) => (s.id === id ? { ...s, status, ...(productId ? { productId } : {}) } : s)));
+  const setStatus = (id: string, status: B2BProductSubmission["status"], productId?: string, removedBy?: "Admin" | "Supplier") => {
+    persist(
+      state.submissions.map((s) =>
+        s.id === id ? { ...s, status, ...(productId ? { productId } : {}), ...(removedBy ? { removedBy } : {}) } : s,
+      ),
+    );
   };
 
   const updateSubmission = (id: string, patch: Partial<B2BProductSubmission>) => {
@@ -104,7 +108,7 @@ export function B2BProvider({ children }: { children: React.ReactNode }) {
         ready: state.ready,
         addSubmission,
         approveSubmission: (id, productId) => setStatus(id, "Approved", productId),
-        rejectSubmission: (id) => setStatus(id, "Rejected"),
+        rejectSubmission: (id, removedBy) => setStatus(id, "Rejected", undefined, removedBy ?? "Admin"),
         updateSubmission,
         renameCategoryInSubmissions,
       }}
