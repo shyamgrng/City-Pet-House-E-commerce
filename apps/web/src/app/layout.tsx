@@ -30,6 +30,7 @@ import { OrderProvider } from "@/context/OrderContext";
 import { PetProvider } from "@/context/PetContext";
 import { PetTagProvider } from "@/context/PetTagContext";
 import { PaymentMethodsProvider } from "@/context/PaymentMethodsContext";
+import { RestockProvider } from "@/context/RestockContext";
 import { ServiceProvider } from "@/context/ServiceContext";
 import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
 import { TestimonialProvider } from "@/context/TestimonialContext";
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <B2BAuthProvider>
             <B2BRegistrationProvider>
               <B2BProvider>
+              <RestockProvider>
                 <CourierAuthProvider>
                 <CourierRegistrationProvider>
                   <DeliveryProvider>
@@ -117,6 +119,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   </DeliveryProvider>
                 </CourierRegistrationProvider>
                 </CourierAuthProvider>
+              </RestockProvider>
               </B2BProvider>
             </B2BRegistrationProvider>
             </B2BAuthProvider>
