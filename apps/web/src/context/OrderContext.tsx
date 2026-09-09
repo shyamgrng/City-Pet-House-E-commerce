@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { EmailEvent } from "@/lib/email-templates";
 import { notifyEvent } from "@/lib/notify-client";
 import { orderSeed } from "@/lib/order-seed";
-import { defaultChecklist, type Order, type OrderItem } from "@/lib/order-types";
+import { defaultChecklist, defaultSupplierChecklist, type Order, type OrderItem } from "@/lib/order-types";
 import { refundSeed } from "@/lib/refund-seed";
 import type { RefundRecord } from "@/lib/refund-types";
 
@@ -37,6 +37,8 @@ type OrderValue = {
   toggleChecklistItem: (orderId: string, index: number) => void;
   refundItem: (orderId: string, itemIndex: number, proofPhoto: string) => void;
   refundWholeOrder: (orderId: string, proofPhoto: string) => void;
+  toggleSupplierChecklistItem: (orderId: string, b2bId: string, index: number) => void;
+  markSentBySupplier: (orderId: string, b2bId: string) => void;
 };
 
 const OrderContext = createContext<OrderValue | null>(null);
@@ -160,6 +162,26 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
             proofPhoto,
             approvedBy: "Admin (You)",
           });
+        },
+        toggleSupplierChecklistItem: (orderId, b2bId, index) => {
+          const order = state.orders.find((o) => o.id === orderId);
+          if (!order) return;
+          const fulfillments = order.supplierFulfillments ?? [];
+          const existing = fulfillments.find((f) => f.b2bId === b2bId);
+          const checklist = (existing ? existing.checklist : defaultSupplierChecklist()).map((c, i) =>
+            i === index ? { ...c, checked: !c.checked } : c,
+          );
+          const supplierFulfillments = existing
+            ? fulfillments.map((f) => (f.b2bId === b2bId ? { ...f, checklist } : f))
+            : [...fulfillments, { b2bId, checklist }];
+          update(orderId, { supplierFulfillments });
+        },
+        markSentBySupplier: (orderId, b2bId) => {
+          const order = state.orders.find((o) => o.id === orderId);
+          if (!order) return;
+          const fulfillments = order.supplierFulfillments ?? [];
+          const supplierFulfillments = fulfillments.map((f) => (f.b2bId === b2bId ? { ...f, sentAt: Date.now() } : f));
+          update(orderId, { supplierFulfillments });
         },
         refundWholeOrder: (orderId, proofPhoto) => {
           const order = state.orders.find((o) => o.id === orderId);

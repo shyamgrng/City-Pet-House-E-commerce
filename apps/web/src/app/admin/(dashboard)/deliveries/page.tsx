@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import { courierAccountSeed } from "@/lib/courier-auth-types";
+import { useB2B } from "@/context/B2BContext";
 import { useCatalog } from "@/context/CatalogContext";
 import { useDelivery } from "@/context/DeliveryContext";
 import { useOrder } from "@/context/OrderContext";
+import type { B2BProductSubmission } from "@/lib/b2b-types";
 import { STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
+import { supplierForProduct } from "@/lib/order-fulfillment";
 import { STATUS_COLORS as ORDER_STATUS_COLORS, type Order } from "@/lib/order-types";
 import type { RefundRecord } from "@/lib/refund-types";
 import MediaSlot from "@/components/MediaSlot";
@@ -57,6 +60,7 @@ export default function DeliveriesPage() {
   const { deliveries, assignCourier, addDelivery } = useDelivery();
   const { orders, refunds, approveOrder, rejectOrder, markOnTheWay, toggleChecklistItem, refundItem, refundWholeOrder } = useOrder();
   const { products, updateProduct } = useCatalog();
+  const { submissions } = useB2B();
 
   const awaitingCourier = deliveries.filter((d) => d.status === "Awaiting Courier");
   const inProgress = deliveries.filter((d) => IN_PROGRESS_STATUSES.includes(d.status));
@@ -435,6 +439,7 @@ export default function DeliveriesPage() {
         <OrderDetailModal
           order={selectedOrder}
           products={products}
+          submissions={submissions}
           alreadyForwarded={deliveries.some((d) => d.id === selectedOrder.id)}
           onClose={() => setSelectedOrderId(null)}
           onToggleChecklist={(index) => toggleChecklistItem(selectedOrder.id, index)}
@@ -710,6 +715,7 @@ function FilterPill({ children, active, onClick }: { children: React.ReactNode; 
 function OrderDetailModal({
   order,
   products,
+  submissions,
   alreadyForwarded,
   onClose,
   onToggleChecklist,
@@ -719,6 +725,7 @@ function OrderDetailModal({
 }: {
   order: Order;
   products: import("@/lib/catalog-types").Product[];
+  submissions: B2BProductSubmission[];
   alreadyForwarded: boolean;
   onClose: () => void;
   onToggleChecklist: (index: number) => void;
@@ -754,22 +761,33 @@ function OrderDetailModal({
         </div>
 
         <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-2">Product List</div>
-        {order.items.map((it, i) => (
-          <div key={i} className="flex justify-between items-center py-1.5 text-xs">
-            <div className="text-[#3A4652]">{it.name}</div>
-            <div className="flex items-center gap-2">
-              {!itemAvailable(it.productId) && (
-                <div className="text-[10px] font-semibold text-[#D64545] bg-[#FDEDEC] px-1.5 py-0.5 rounded">Out of Stock</div>
-              )}
-              <div className="font-semibold text-[#1A2027]">Rs. {(it.price * it.qty).toLocaleString("en-IN")}</div>
-              {order.status === "Payment Approved" && !order.refunded && (
-                <div onClick={() => onOpenItemRefund(i)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
-                  Send for Refund
+        {order.items.map((it, i) => {
+          const supplier = supplierForProduct(submissions, it.productId);
+          const fulfillment = supplier ? order.supplierFulfillments?.find((f) => f.b2bId === supplier.b2bId) : undefined;
+          return (
+            <div key={i} className="py-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <div className="text-[#3A4652]">{it.name}</div>
+                <div className="flex items-center gap-2">
+                  {!itemAvailable(it.productId) && (
+                    <div className="text-[10px] font-semibold text-[#D64545] bg-[#FDEDEC] px-1.5 py-0.5 rounded">Out of Stock</div>
+                  )}
+                  <div className="font-semibold text-[#1A2027]">Rs. {(it.price * it.qty).toLocaleString("en-IN")}</div>
+                  {order.status === "Payment Approved" && !order.refunded && (
+                    <div onClick={() => onOpenItemRefund(i)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
+                      Send for Refund
+                    </div>
+                  )}
+                </div>
+              </div>
+              {supplier && (
+                <div className="text-[11px] mt-0.5" style={{ color: fulfillment?.sentAt ? "#1F7A4D" : "#8A96A3" }}>
+                  {supplier.companyName} · {fulfillment?.sentAt ? "✓ Sent by supplier" : "Awaiting supplier"}
                 </div>
               )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {order.refundedItems.length > 0 && (
           <>

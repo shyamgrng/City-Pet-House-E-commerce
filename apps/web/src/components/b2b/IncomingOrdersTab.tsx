@@ -1,214 +1,204 @@
 "use client";
 
 import { useState } from "react";
-import PriceInput from "@/components/PriceInput";
+import { myProductIds } from "@/lib/b2b-analytics";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
-import { useRestock } from "@/context/RestockContext";
-import { RESTOCK_STATUS_COLORS, awaitsSupplier, restockValue } from "@/lib/restock-types";
+import { useCatalog } from "@/context/CatalogContext";
+import { useOrder } from "@/context/OrderContext";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
+import { getFulfillment, ordersNeedingFulfillment } from "@/lib/order-fulfillment";
+import type { Order } from "@/lib/order-types";
 
 export default function IncomingOrdersTab() {
   const { supplier } = useB2BAuth();
   const { submissions } = useB2B();
-  const { orders, respondToOrder, createOrder } = useRestock();
-  const [open, setOpen] = useState(false);
-  const [productId, setProductId] = useState("");
-  const [qty, setQty] = useState("");
-  const [price, setPrice] = useState(0);
-  const [note, setNote] = useState("");
-  const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const { orders, toggleSupplierChecklistItem, markSentBySupplier } = useOrder();
+  const { products, updateProduct } = useCatalog();
+  const { settings } = useSiteSettings();
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
 
   if (!supplier) return null;
 
-  const myLiveProducts = submissions.filter(
-    (s) => s.b2bId === supplier.b2bId && s.status === "Approved" && s.listingStatus === "active" && s.productId,
-  );
-  const mine = orders.filter((o) => o.b2bId === supplier.b2bId);
-  const incoming = mine.filter(awaitsSupplier).sort((a, b) => a.createdAt - b.createdAt);
-  const myOffers = mine.filter((o) => o.initiatedBy === "Supplier").sort((a, b) => b.createdAt - a.createdAt);
-  const declinedRequests = mine
-    .filter((o) => o.initiatedBy === "Admin" && o.status === "Declined")
-    .sort((a, b) => b.createdAt - a.createdAt);
+  const ids = myProductIds(submissions, supplier.b2bId);
+  const incoming = ordersNeedingFulfillment(orders, submissions, supplier.b2bId);
+  const openOrder = incoming.find((o) => o.id === openOrderId) ?? null;
 
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const fmt = (n: number) => "Rs. " + n.toLocaleString("en-IN");
 
-  const selected = myLiveProducts.find((s) => s.productId === productId);
-
-  const resetForm = () => {
-    setProductId("");
-    setQty("");
-    setPrice(0);
-    setNote("");
-    setError("");
-  };
-
-  const submitOffer = () => {
-    const q = Number(qty) || 0;
-    if (!selected || q <= 0 || price <= 0) {
-      setError("Pick a product and enter a quantity and price.");
-      return;
-    }
-    createOrder({
-      b2bId: supplier.b2bId,
-      companyName: supplier.companyName,
-      productId: selected.productId!,
-      productName: selected.name,
-      qty: q,
-      unitPrice: price,
-      note: note.trim(),
-      initiatedBy: "Supplier",
-    });
-    resetForm();
-    setOpen(false);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+  const markOutOfStock = (productId: string) => {
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
+    const { id, ...rest } = product;
+    updateProduct(id, { ...rest, outOfStock: true });
   };
 
   return (
     <div>
-      <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">New Restock Requests from City Pet House</div>
-      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-6">
-        {incoming.length === 0 ? (
-          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">
-            No incoming stock orders yet — this will show here once City Pet House places a restock order with you.
-          </div>
-        ) : (
-          incoming.map((o) => (
-            <div key={o.id} className="flex justify-between items-center px-4 py-3.5 border-b border-[#F0F2F4] last:border-0">
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-semibold text-[#1A2027]">{o.productName}</div>
-                <div className="text-[11px] text-[#8A96A3] mt-0.5">
-                  {o.qty} units × {fmt(o.unitPrice)} = {fmt(restockValue(o))} · {fmtDate(o.createdAt)}
-                </div>
-                {o.note && <div className="text-[11px] text-[#5B6773] mt-1 italic">&ldquo;{o.note}&rdquo;</div>}
-              </div>
-              <div className="flex gap-2 shrink-0 ml-3">
-                <button
-                  onClick={() => respondToOrder(o.id, true)}
-                  className="bg-[#1F7A4D] text-white px-3.5 py-2 rounded-md text-[11px] font-semibold cursor-pointer"
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={() => respondToOrder(o.id, false)}
-                  className="bg-[#F0F2F4] text-[#D64545] px-3.5 py-2 rounded-md text-[11px] font-semibold cursor-pointer"
-                >
-                  Decline
-                </button>
-              </div>
-            </div>
-          ))
-        )}
+      <div className="text-[13px] font-bold text-[#1A2027] mb-1">Orders Needing Your Products</div>
+      <div className="text-[11px] text-[#8A96A3] mb-2.5">
+        A client&apos;s order was approved and includes your product(s) — collect and send them to City Pet House.
       </div>
-
-      <div className="flex justify-between items-center mb-2.5">
-        <div className="text-[13px] font-bold text-[#1A2027]">Your Restock Offers</div>
-        <button
-          onClick={() => {
-            if (!open && !productId) setProductId(myLiveProducts[0]?.productId ?? "");
-            setOpen((o) => !o);
-          }}
-          className="bg-primary text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-        >
-          {open ? "Cancel" : "+ Offer Restock"}
-        </button>
-      </div>
-
-      {open && (
-        <div className="border border-[#E4E9EC] rounded-xl p-4 mb-4.5">
-          {myLiveProducts.length === 0 ? (
-            <div className="text-xs text-[#8A96A3]">You don&apos;t have any live products to offer a restock for yet.</div>
-          ) : (
-            <>
-              <div className="text-xs font-semibold text-[#1A2027] mb-1.5">Product</div>
-              <select
-                value={productId}
-                onChange={(e) => setProductId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 box-border"
-              >
-                {myLiveProducts.map((s) => (
-                  <option key={s.productId} value={s.productId!}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-
-              <div className="grid grid-cols-2 gap-2.5 mb-3">
-                <div>
-                  <div className="text-xs font-semibold text-[#1A2027] mb-1.5">Qty Available</div>
-                  <input
-                    type="number"
-                    value={qty}
-                    onChange={(e) => setQty(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
-                  />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-[#1A2027] mb-1.5">Unit Price (Rs.)</div>
-                  <PriceInput value={price} onChange={setPrice} />
-                </div>
-              </div>
-
-              <div className="text-xs font-semibold text-[#1A2027] mb-1.5">Note (optional)</div>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 resize-none box-border"
-              />
-
-              {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
-              <button onClick={submitOffer} className="bg-primary text-white px-4 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
-                Send Offer to City Pet House
-              </button>
-            </>
-          )}
-        </div>
-      )}
-      {submitted && <div className="text-[11px] text-[#1F7A4D] mb-4 -mt-2.5">✓ Offer sent — City Pet House will review it shortly</div>}
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-        {myOffers.length === 0 ? (
-          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">You haven&apos;t offered any restocks yet</div>
+        {incoming.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">
+            No incoming orders yet — this will show here once a client&apos;s approved order includes one of your products.
+          </div>
         ) : (
-          myOffers.map((o) => (
-            <div key={o.id} className="flex justify-between items-center px-4 py-3 border-b border-[#F0F2F4] last:border-0">
-              <div>
-                <div className="text-[13px] font-semibold text-[#1A2027]">{o.productName}</div>
-                <div className="text-[11px] text-[#8A96A3] mt-0.5">
-                  {o.qty} units × {fmt(o.unitPrice)} · {fmtDate(o.createdAt)}
+          incoming.map((o) => {
+            const mine = o.items.filter((it) => ids.has(it.productId));
+            const fulfillment = getFulfillment(o, supplier.b2bId);
+            const sent = Boolean(fulfillment.sentAt);
+            return (
+              <div
+                key={o.id}
+                onClick={() => setOpenOrderId(o.id)}
+                className="px-4 py-3.5 border-b border-[#F0F2F4] last:border-0 cursor-pointer"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="text-[13px] font-semibold text-[#1A2027]">{o.id}</div>
+                    <div className="text-[11px] text-[#8A96A3] mt-0.5">
+                      {o.ownerName} · {fmtDate(o.createdAt)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-3">
+                    <div
+                      className="w-4 h-4 rounded border-2 border-primary flex items-center justify-center shrink-0"
+                      style={{ background: sent ? "#EAF4F9" : "#fff" }}
+                    >
+                      {sent && <span className="text-primary text-[11px] font-bold">✓</span>}
+                    </div>
+                    <div className="text-[11px] font-semibold text-primary">Mark as Sent to CPH</div>
+                  </div>
+                </div>
+                <div className="mt-2.5 bg-[#F7F9FA] rounded-lg px-3 py-2">
+                  {mine.map((it, i) => (
+                    <div key={i} className="flex justify-between text-xs">
+                      <div className="text-[#3A4652]">
+                        {it.name} × {it.qty}
+                      </div>
+                      <div className="font-semibold text-[#1A2027]">{fmt(it.price * it.qty)}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[11px] text-[#8A96A3] mt-2">
+                  📦 Dispatch to: <span className="font-semibold text-[#3A4652]">{settings.address}</span>
                 </div>
               </div>
-              <div className="text-[11px] font-bold shrink-0 ml-2" style={{ color: RESTOCK_STATUS_COLORS[o.status] }}>
-                {o.status === "Pending" ? "Awaiting City Pet House" : o.status}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
-      {declinedRequests.length > 0 && (
-        <>
-          <div className="text-[13px] font-bold text-[#1A2027] mb-2.5 mt-6">Declined Requests</div>
-          <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-            {declinedRequests.map((o) => (
-              <div key={o.id} className="flex justify-between items-center px-4 py-3 border-b border-[#F0F2F4] last:border-0">
-                <div>
-                  <div className="text-[13px] font-semibold text-[#1A2027]">{o.productName}</div>
-                  <div className="text-[11px] text-[#8A96A3] mt-0.5">
-                    {o.qty} units × {fmt(o.unitPrice)} · {fmtDate(o.createdAt)}
-                  </div>
-                </div>
-                <div className="text-[11px] font-bold shrink-0 ml-2" style={{ color: RESTOCK_STATUS_COLORS.Declined }}>
-                  Declined
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
+      {openOrder && (
+        <SupplierOrderModal
+          order={openOrder}
+          b2bId={supplier.b2bId}
+          productIds={ids}
+          onClose={() => setOpenOrderId(null)}
+          onToggleChecklist={(index) => toggleSupplierChecklistItem(openOrder.id, supplier.b2bId, index)}
+          onMarkSent={() => {
+            markSentBySupplier(openOrder.id, supplier.b2bId);
+            setOpenOrderId(null);
+          }}
+          onMarkOutOfStock={markOutOfStock}
+        />
       )}
+    </div>
+  );
+}
+
+function SupplierOrderModal({
+  order,
+  b2bId,
+  productIds,
+  onClose,
+  onToggleChecklist,
+  onMarkSent,
+  onMarkOutOfStock,
+}: {
+  order: Order;
+  b2bId: string;
+  productIds: Set<string>;
+  onClose: () => void;
+  onToggleChecklist: (index: number) => void;
+  onMarkSent: () => void;
+  onMarkOutOfStock: (productId: string) => void;
+}) {
+  const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const fmt = (n: number) => "Rs. " + n.toLocaleString("en-IN");
+  const mine = order.items.filter((it) => productIds.has(it.productId));
+  const mineTotal = mine.reduce((sum, it) => sum + it.price * it.qty, 0);
+  const fulfillment = getFulfillment(order, b2bId);
+  const allChecked = fulfillment.checklist.every((c) => c.checked);
+
+  return (
+    <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-[420px] max-h-[88vh] overflow-auto">
+        <div className="flex justify-between items-center mb-1">
+          <div className="text-base font-bold text-[#1A2027]">{order.id}</div>
+          <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">
+            ✕
+          </div>
+        </div>
+        <div className="text-xs text-[#8A96A3] mb-4">{fmtDate(order.createdAt)}</div>
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-1.5">Client Details</div>
+        <div className="text-[13px] font-semibold text-[#1A2027] mb-0.5">{order.ownerName}</div>
+        <div className="text-xs text-[#5B6773] mb-0.5">📞 {order.ownerPhone}</div>
+        <div className="text-xs text-[#5B6773] mb-3.5">📍 {order.address}</div>
+
+        <div className="flex justify-between items-center py-2.5 border-t border-b border-[#EEF1F3] mb-3.5">
+          <div className="text-xs text-[#5B6773]">Payment</div>
+          <div className="text-xs font-semibold text-[#1F7A4D]">{order.status}</div>
+        </div>
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-2">Product List</div>
+        {mine.map((it, i) => (
+          <div key={i} className="py-1.5">
+            <div className="flex justify-between items-center text-xs">
+              <div className="text-[#3A4652]">
+                {it.name} × {it.qty}
+              </div>
+              <div className="font-semibold text-[#1A2027]">{fmt(it.price * it.qty)}</div>
+            </div>
+            <div onClick={() => onMarkOutOfStock(it.productId)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer mt-0.5">
+              Mark Out of Stock
+            </div>
+          </div>
+        ))}
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mt-3.5 mb-2">Order Checklist</div>
+        {fulfillment.checklist.map((c, i) => (
+          <div key={i} onClick={() => onToggleChecklist(i)} className="flex items-center gap-2 py-1 cursor-pointer">
+            <div
+              className="w-4 h-4 rounded border-2 border-primary flex items-center justify-center shrink-0"
+              style={{ background: c.checked ? "#EAF4F9" : "#fff" }}
+            >
+              {c.checked && <span className="text-primary text-[11px] font-bold">✓</span>}
+            </div>
+            <div className="text-xs text-[#3A4652]">{c.text}</div>
+          </div>
+        ))}
+
+        <div className="flex justify-between items-center py-3 mt-2.5 border-t border-[#EEF1F3]">
+          <div className="text-xs text-[#8A96A3]">Total</div>
+          <div className="text-sm font-bold text-[#1A2027]">{fmt(mineTotal)}</div>
+        </div>
+
+        {allChecked ? (
+          <button onClick={onMarkSent} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer mt-2">
+            Mark as Sent to CPH
+          </button>
+        ) : (
+          <div className="bg-[#F0F2F4] text-[#8A96A3] text-center py-2.5 rounded-lg text-xs font-semibold mt-2">
+            Complete checklist to mark as sent
+          </div>
+        )}
+      </div>
     </div>
   );
 }
