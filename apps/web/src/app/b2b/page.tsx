@@ -8,6 +8,7 @@ import ProductsTab from "@/components/b2b/ProductsTab";
 import ProfileTab from "@/components/b2b/ProfileTab";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { STATUS_COLORS } from "@/lib/b2b-types";
 
 const TABS = ["Dashboard", "Incoming Orders", "Status", "Products", "Finance", "Profile"] as const;
@@ -16,6 +17,7 @@ type Tab = (typeof TABS)[number];
 export default function B2BPortalPage() {
   const { supplier, ready, signOut } = useB2BAuth();
   const { submissions } = useB2B();
+  const { settings } = useSiteSettings();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("Dashboard");
 
@@ -32,23 +34,33 @@ export default function B2BPortalPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
-      <div className="bg-white border-b border-[#E4E9EC] px-4 md:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Image src="/assets/cph-logo.jpeg" alt="" width={28} height={28} className="rounded-md object-cover" />
-          <span className="font-heading font-bold text-sm text-[#1A2027]">CPH B2B Portal</span>
+      <div className="bg-[#F7F9FA] border-b border-[#E4E9EC]">
+        <div className="flex items-center justify-center gap-4 max-w-7xl mx-auto px-4 md:px-8 py-1.5 text-[11px] text-[#5B6773]">
+          <div>📞 {settings.phone}</div>
+          <div>📍 {settings.address}</div>
+          <div>{settings.hours}</div>
         </div>
-        <button
-          onClick={() => {
-            signOut();
-            router.push("/b2b/login");
-          }}
-          className="text-xs font-semibold text-[#D64545] cursor-pointer"
-        >
-          Sign Out
-        </button>
       </div>
 
-      <div className="px-4 md:px-8 py-7 max-w-[900px]">
+      <div className="bg-white border-b border-[#E4E9EC]">
+        <div className="flex items-center justify-between max-w-7xl mx-auto px-4 md:px-8 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <Image src="/assets/cph-logo.jpeg" alt="" width={34} height={34} className="rounded-md object-contain" />
+            <span className="font-heading font-bold text-[15px] text-[#1A2027]">CPH B2B Portal</span>
+          </div>
+          <button
+            onClick={() => {
+              signOut();
+              router.push("/b2b/login");
+            }}
+            className="text-[13px] font-semibold text-[#D64545] cursor-pointer"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-7">
         <div className="flex gap-2 flex-wrap mb-[22px]">
           {TABS.map((t) => (
             <button
