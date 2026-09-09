@@ -45,18 +45,24 @@ const EMPTY = {
 
 export default function ProductsTab() {
   const { supplier } = useB2BAuth();
-  const { submissions, addSubmission } = useB2B();
-  const { products, addProduct } = useCatalog();
+  const { submissions, addSubmission, updateSubmission } = useB2B();
+  const { products, addProduct, updateProduct } = useCatalog();
   const { categories } = useCategory();
   const { brands: brandNames } = useBrand();
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState<"active" | "draft" | null>(null);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
 
   if (!supplier) return null;
 
   const mine = submissions.filter((s) => s.b2bId === supplier.b2bId).sort((a, b) => b.submittedAt - a.submittedAt);
+  const visible = mine.filter(
+    (s) => (categoryFilter === "All" || s.category === categoryFilter) && s.name.toLowerCase().includes(search.trim().toLowerCase()),
+  );
   const sku = "SKU-" + supplier.b2bId.replace(/\D/g, "").slice(-4) + "-" + (mine.length + 1);
 
   const price = Number(form.price) || 0;
@@ -106,6 +112,23 @@ export default function ProductsTab() {
       commissionPct,
       listingStatus: listingStatus as "active" | "draft",
     };
+
+    if (editingId) {
+      const editing = mine.find((s) => s.id === editingId);
+      const productInput = submissionToProductInput(submissionInput);
+      if (editing?.productId) {
+        updateProduct(editing.productId, productInput);
+      }
+      updateSubmission(editingId, submissionInput);
+      setForm(EMPTY);
+      setError("");
+      setOpen(false);
+      setEditingId(null);
+      setSubmitted(listingStatus);
+      setTimeout(() => setSubmitted(null), 3000);
+      return;
+    }
+
     // Listings go live on the storefront immediately — no admin review step — so the catalog
     // product is created up front and its id is kept on the submission for later removal.
     const productId = addProduct(submissionToProductInput(submissionInput));
@@ -117,6 +140,36 @@ export default function ProductsTab() {
     setTimeout(() => setSubmitted(null), 3000);
   };
 
+  const openEdit = (s: (typeof mine)[number]) => {
+    const product = s.productId ? products.find((p) => p.id === s.productId) : undefined;
+    setForm({
+      photos: [product?.photos[0] ?? s.photos[0] ?? "", product?.photos[1] ?? s.photos[1] ?? "", product?.photos[2] ?? s.photos[2] ?? "", product?.photos[3] ?? s.photos[3] ?? ""],
+      name: product?.name ?? s.name,
+      desc: product?.desc ?? s.desc,
+      category: product?.category ?? s.category,
+      price: String(product?.price ?? s.price),
+      qty: String(product?.qty ?? s.qty),
+      lowStockAlert: String(product?.lowStockAlert ?? s.lowStockAlert),
+      sizes: product?.sizes ?? s.sizes,
+      colours: product?.colours ?? s.colours,
+      brand: product?.brand ?? s.brand,
+      courierPackageSize: product?.courierPackageSize ?? s.courierPackageSize,
+      tags: (product?.tags ?? s.tags).join(", "),
+      commissionPct: String(product?.commissionPercent ?? s.commissionPct),
+      newArrival: product?.newArrival ?? s.newArrival,
+      hotSale: product?.hotSale ?? s.hotSale,
+      hotDiscount: String(product?.hotDiscount ?? s.hotDiscount),
+      todaysDeal: product?.todaysDeal ?? s.todaysDeal,
+      dealStart: product?.dealStart ?? s.dealStart,
+      dealEnd: product?.dealEnd ?? s.dealEnd,
+      outOfStock: product?.outOfStock ?? s.outOfStock,
+      status: (product?.status ?? s.listingStatus) === "draft" ? "Draft" : "Active",
+    });
+    setEditingId(s.id);
+    setError("");
+    setOpen(true);
+  };
+
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
   return (
@@ -125,8 +178,15 @@ export default function ProductsTab() {
         <div className="text-[13px] font-bold text-[#1A2027]">Your Products ({mine.length})</div>
         <button
           onClick={() => {
-            if (!open && !form.category) set({ category: categories[0] || "" });
-            setOpen((o) => !o);
+            if (open) {
+              setOpen(false);
+              setEditingId(null);
+              setForm(EMPTY);
+              setError("");
+            } else {
+              set({ category: categories[0] || "" });
+              setOpen(true);
+            }
           }}
           className="bg-primary text-white px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer"
         >
@@ -343,11 +403,12 @@ export default function ProductsTab() {
           {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
           <div className="flex gap-2.5">
             <button onClick={submit} className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
-              Submit for Review
+              {editingId ? "Save Changes" : "Submit for Review"}
             </button>
             <button
               onClick={() => {
                 setOpen(false);
+                setEditingId(null);
                 setForm(EMPTY);
                 setError("");
               }}
@@ -360,24 +421,45 @@ export default function ProductsTab() {
       )}
       {submitted && (
         <div className="text-[11px] text-[#1F7A4D] mb-4 -mt-2.5">
-          ✓ Product listed{submitted === "draft" ? " as a draft" : " — now live on the storefront"}
+          {submitted === "draft" ? "✓ Saved as a draft" : "✓ Saved — live on the storefront"}
         </div>
+      )}
+
+      {mine.length > 0 && (
+        <>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search your products..."
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5 box-border"
+          />
+          <div className="flex gap-2 flex-wrap mb-3.5">
+            {["All", ...categories].map((c) => (
+              <Chip key={c} active={categoryFilter === c} onClick={() => setCategoryFilter(c)}>
+                {c}
+              </Chip>
+            ))}
+          </div>
+        </>
       )}
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden overflow-x-auto">
         {mine.length === 0 ? (
           <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">You haven&apos;t submitted any products yet</div>
+        ) : visible.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No products match.</div>
         ) : (
-          <div className="min-w-[640px]">
-            <div className="grid grid-cols-[64px_1.7fr_1fr_0.7fr_0.9fr_1fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+          <div className="min-w-[700px]">
+            <div className="grid grid-cols-[64px_1.6fr_1fr_0.7fr_0.9fr_1fr_0.6fr] px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
               <div />
               <div>Product</div>
               <div>Category</div>
               <div>Qty</div>
               <div>Price</div>
               <div>Status</div>
+              <div>Actions</div>
             </div>
-            {mine.map((s) => {
+            {visible.map((s) => {
               // Once live, this reflects the actual catalog listing (qty/price/stock can move after
               // submission — from sales, restocks, or admin edits) rather than the frozen submission data.
               const product = s.productId ? products.find((p) => p.id === s.productId) : undefined;
@@ -389,7 +471,7 @@ export default function ProductsTab() {
               return (
                 <div
                   key={s.id}
-                  className="grid grid-cols-[64px_1.7fr_1fr_0.7fr_0.9fr_1fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0"
+                  className="grid grid-cols-[64px_1.6fr_1fr_0.7fr_0.9fr_1fr_0.6fr] px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0"
                 >
                   <MediaSlot src={photo} label="product photo" className="w-[52px] h-[52px] rounded-lg" />
                   <div>
@@ -409,6 +491,13 @@ export default function ProductsTab() {
                       <div className="text-[10px] font-semibold mt-0.5" style={{ color: stock.color }}>
                         {stock.label}
                       </div>
+                    )}
+                  </div>
+                  <div>
+                    {s.status === "Approved" && (
+                      <span onClick={() => openEdit(s)} className="text-[11px] font-semibold text-primary cursor-pointer">
+                        Edit
+                      </span>
                     )}
                   </div>
                 </div>
