@@ -12,6 +12,7 @@ export type EmailEvent =
   | "vet_prescription"
   | "account_created"
   | "forgot_password"
+  | "admin_password_reset"
   | "doctor_registration_received"
   | "doctor_registration_approved"
   | "partner_registration_received"
@@ -221,6 +222,18 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
           `Hi ${name}, use this code to reset your password:<br /><br />
           <div style="font-size:28px;font-weight:700;letter-spacing:4px;color:#1996C8;">${code}</div><br />
           This code expires in 15 minutes. If you didn't request this, you can safely ignore this email.`
+        ),
+      };
+    }
+    case "admin_password_reset": {
+      const { name, tempPassword } = data as { name: string; tempPassword: string };
+      return {
+        subject: `Your ${siteSettings.shortName} password has been reset`,
+        html: shell(
+          "Password reset by admin",
+          `Hi ${name}, an admin has reset your account password. Use this temporary password to sign in, then update it from your profile right away:<br /><br />
+          <div style="font-size:22px;font-weight:700;letter-spacing:2px;color:#1996C8;">${tempPassword}</div><br />
+          If you didn't expect this, please contact us at ${siteSettings.email}.`
         ),
       };
     }

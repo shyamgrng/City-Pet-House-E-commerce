@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import EmailInput from "@/components/EmailInput";
+import PhoneInput from "@/components/PhoneInput";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { useAuth } from "@/context/AuthContext";
@@ -10,17 +12,23 @@ import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useCourierRegistration } from "@/context/CourierRegistrationContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
+import { useOrder } from "@/context/OrderContext";
 import { useVet } from "@/context/VetContext";
 import type { AdminUser } from "@/lib/admin-user-types";
+import type { AdoptionPost } from "@/lib/adoption-types";
 import type { B2BAccount } from "@/lib/b2b-auth-types";
 import type { B2BRegistration } from "@/lib/b2b-registration-types";
 import type { CourierAccount } from "@/lib/courier-auth-types";
 import type { CourierRegistration } from "@/lib/courier-registration-types";
 import type { DoctorAccount } from "@/lib/doctor-auth-types";
 import { generateDoctorId, generateTempPassword, type DoctorRegistration } from "@/lib/doctor-registration-types";
+import { isValidEmail } from "@/lib/email-format";
 import { notifyEvent } from "@/lib/notify-client";
-import type { Doctor } from "@/lib/vet-types";
-import type { Account } from "@/lib/auth-types";
+import type { Order } from "@/lib/order-types";
+import { isValidNepalPhone } from "@/lib/phone";
+import type { RefundRecord } from "@/lib/refund-types";
+import type { Doctor, VetBooking } from "@/lib/vet-types";
+import type { Account, Sex } from "@/lib/auth-types";
 
 const subTabs = ["Overview", "Client Account", "Doctor Account", "Courier Account", "B2B Account", "Staff Account"];
 
@@ -456,63 +464,190 @@ function StaffAccountTab({ users }: { users: AdminUser[] }) {
   );
 }
 
+type ActivityEntry = { key: string; text: string; time: number };
+
+/** A single chronological feed of everything this client has done — order lifecycle, vet
+ * consults, adoption posts, and refunds — instead of separate lists per feature area. Only
+ * emits events for timestamps the underlying records actually carry (no fabricated dates for
+ * status transitions this app doesn't separately timestamp, like a booking being confirmed). */
+function buildClientActivity(ownerId: string, orders: Order[], refunds: RefundRecord[], bookings: VetBooking[], posts: AdoptionPost[]): ActivityEntry[] {
+  const entries: ActivityEntry[] = [];
+  const fmt = (n: number) => "Rs. " + n.toLocaleString("en-IN");
+
+  const myOrders = orders.filter((o) => o.ownerId === ownerId);
+  for (const o of myOrders) {
+    entries.push({ key: `${o.id}-placed`, text: `Placed order ${o.id} — ${fmt(o.total)}`, time: o.createdAt });
+    if (o.status === "Payment Rejected") {
+      entries.push({ key: `${o.id}-rejected`, text: `Order ${o.id} payment rejected${o.rejectReason ? ` — ${o.rejectReason}` : ""}`, time: o.createdAt });
+    } else if (o.approvedAt) {
+      entries.push({ key: `${o.id}-approved`, text: `Order ${o.id} payment approved`, time: o.approvedAt });
+    }
+    if (o.deliveredAt) {
+      entries.push({ key: `${o.id}-delivered`, text: `Order ${o.id} delivered`, time: o.deliveredAt });
+    }
+  }
+
+  const myOrderIds = new Set(myOrders.map((o) => o.id));
+  for (const r of refunds.filter((r) => myOrderIds.has(r.orderId))) {
+    entries.push({ key: `refund-${r.id}`, text: `Refund issued for order ${r.orderId} — ${r.type} — ${fmt(r.amount)}`, time: r.createdAt });
+  }
+
+  const myBookings = bookings.filter((b) => b.ownerId === ownerId);
+  for (const b of myBookings) {
+    entries.push({ key: `${b.id}-booked`, text: `Booked vet consult with ${b.doctorName} for ${b.petName}`, time: b.createdAt });
+    if (b.status === "Payment Rejected") {
+      entries.push({ key: `${b.id}-rejected`, text: `Vet consult ${b.id} payment rejected${b.rejectReason ? ` — ${b.rejectReason}` : ""}`, time: b.createdAt });
+    }
+    if (b.completedAt) {
+      entries.push({ key: `${b.id}-completed`, text: `Vet consult with ${b.doctorName} completed`, time: b.completedAt });
+    }
+  }
+
+  const myPosts = posts.filter((p) => p.ownerId === ownerId);
+  for (const p of myPosts) {
+    entries.push({ key: `${p.id}-posted`, text: `Posted ${p.name} (${p.breed}) for adoption${p.adopted ? " — now adopted" : ""}`, time: p.postedAt });
+  }
+
+  return entries.sort((a, b) => b.time - a.time);
+}
+
 function ClientAccountTab({ accounts }: { accounts: Account[] }) {
   const { bookings } = useVet();
   const { posts } = useAdoption();
+  const { orders, refunds } = useOrder();
+  const { adminUpdateAccount, adminResetPassword } = useAuth();
   const [selected, setSelected] = useState<Account | null>(null);
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<{ name: string; email: string; phone: string; sex: Sex; dob: string; address: string } | null>(null);
+  const [resetMsg, setResetMsg] = useState("");
 
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const fmtDateTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   if (selected) {
     const mine = accounts.find((a) => a.id === selected.id) ?? selected;
-    const myBookings = bookings.filter((b) => b.ownerId === mine.id);
-    const myPosts = posts.filter((p) => p.ownerId === mine.id);
+    const activity = buildClientActivity(mine.id, orders, refunds, bookings, posts);
+
+    const startEdit = () => {
+      setDraft({ name: mine.name, email: mine.email, phone: mine.phone, sex: mine.sex, dob: mine.dob, address: mine.address });
+      setEditing(true);
+    };
+    const save = () => {
+      if (!draft) return;
+      adminUpdateAccount(mine.id, draft);
+      setEditing(false);
+    };
+    const doResetPassword = async () => {
+      const res = await adminResetPassword(mine.id);
+      setResetMsg(res.ok ? "✓ A temporary password has been emailed to the client." : res.error);
+      setTimeout(() => setResetMsg(""), 4000);
+    };
 
     return (
       <div>
-        <div onClick={() => setSelected(null)} className="text-xs text-primary font-semibold cursor-pointer mb-4">
+        <div
+          onClick={() => {
+            setSelected(null);
+            setEditing(false);
+          }}
+          className="text-xs text-primary font-semibold cursor-pointer mb-4"
+        >
           ← Back to Client Accounts
         </div>
-        <div className="border border-[#E4E9EC] rounded-xl p-5 max-w-[560px] mb-5">
-          <div className="text-[15px] font-bold text-[#1A2027] mb-3.5">{mine.name}</div>
-          <div className="grid grid-cols-2 gap-3.5 text-xs">
-            <Field label="Email" value={mine.email} />
-            <Field label="Phone" value={mine.phone} />
-            <Field label="Sex" value={mine.sex} />
-            <Field label="Date of Birth" value={mine.dob} />
-            <Field label="Address" value={mine.address} />
-            <Field label="Joined" value={fmtDate(mine.createdAt)} />
-          </div>
-        </div>
 
-        <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Vet Consults ({myBookings.length})</div>
-        <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-5">
-          {myBookings.length === 0 ? (
-            <div className="px-4 py-4 text-xs text-[#8A96A3] text-center">No vet consult bookings</div>
+        <div className="border border-[#E4E9EC] rounded-xl p-5 max-w-[560px] mb-3.5">
+          <div className="flex justify-between items-center mb-3.5">
+            <div className="text-[15px] font-bold text-[#1A2027]">{mine.name}</div>
+            {!editing && (
+              <button onClick={startEdit} className="text-xs font-semibold text-primary cursor-pointer">
+                Edit
+              </button>
+            )}
+          </div>
+          {!editing ? (
+            <div className="grid grid-cols-2 gap-3.5 text-xs">
+              <Field label="Email" value={mine.email} />
+              <Field label="Phone" value={mine.phone} />
+              <Field label="Sex" value={mine.sex} />
+              <Field label="Date of Birth" value={mine.dob} />
+              <Field label="Address" value={mine.address} />
+              <Field label="Joined" value={fmtDate(mine.createdAt)} />
+            </div>
           ) : (
-            myBookings.map((b) => (
-              <div key={b.id} className="flex justify-between items-center px-4 py-3 border-b border-[#F0F2F4] last:border-0 text-xs">
-                <div>
-                  <span className="font-semibold text-[#1A2027]">{b.doctorName}</span> · {b.petName}
+            draft && (
+              <div className="text-xs">
+                <EditField label="Full Name" value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} />
+                <div className="mb-3">
+                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Email</div>
+                  <EmailInput value={draft.email} onChange={(v) => setDraft({ ...draft, email: v })} />
                 </div>
-                <div className="text-[#8A96A3]">{b.status}</div>
+                <div className="mb-3">
+                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone</div>
+                  <PhoneInput value={draft.phone} onChange={(v) => setDraft({ ...draft, phone: v })} />
+                </div>
+                <div className="mb-3">
+                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Sex</div>
+                  <div className="flex gap-2">
+                    {(["Male", "Female", "Other"] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setDraft({ ...draft, sex: s })}
+                        className="flex-1 py-2 px-3 rounded-lg text-xs cursor-pointer"
+                        style={{ border: `1px solid ${draft.sex === s ? "#1996C8" : "#E4E9EC"}`, color: "#3A4652" }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <EditField label="Date of Birth" value={draft.dob} onChange={(v) => setDraft({ ...draft, dob: v })} />
+                <EditField label="Address" value={draft.address} onChange={(v) => setDraft({ ...draft, address: v })} />
+                <div className="flex gap-2.5 mt-1">
+                  <button
+                    onClick={save}
+                    disabled={!isValidNepalPhone(draft.phone) || !isValidEmail(draft.email) || !draft.name.trim()}
+                    className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditing(false)}
+                    className="px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-            ))
+            )
           )}
         </div>
 
-        <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Adoption Posts ({myPosts.length})</div>
+        <div className="border border-[#E4E9EC] rounded-xl p-4 max-w-[560px] mb-5 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[13px] font-bold text-[#1A2027]">Password</div>
+            <div className="text-[11px] text-[#8A96A3] mt-0.5">
+              Send the client a temporary password by email — they&apos;ll be prompted to set their own on next sign-in.
+            </div>
+          </div>
+          <button
+            onClick={doResetPassword}
+            className="shrink-0 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[#E4E9EC] text-[#3A4652] cursor-pointer"
+          >
+            Reset Password
+          </button>
+        </div>
+        {resetMsg && <div className="text-[11px] text-[#1F7A4D] mb-4 -mt-3 max-w-[560px]">{resetMsg}</div>}
+
+        <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Activity ({activity.length})</div>
         <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-          {myPosts.length === 0 ? (
-            <div className="px-4 py-4 text-xs text-[#8A96A3] text-center">No adoption posts</div>
+          {activity.length === 0 ? (
+            <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No activity yet</div>
           ) : (
-            myPosts.map((p) => (
-              <div key={p.id} className="flex justify-between items-center px-4 py-3 border-b border-[#F0F2F4] last:border-0 text-xs">
-                <div>
-                  <span className="font-semibold text-[#1A2027]">{p.name}</span> · {p.breed}
-                </div>
-                <div className="text-[#8A96A3]">{p.adopted ? "Adopted" : "Active"}</div>
+            activity.map((a) => (
+              <div key={a.key} className="px-4 py-3 border-b border-[#F0F2F4] last:border-0">
+                <div className="text-xs font-semibold text-[#3A4652]">{a.text}</div>
+                <div className="text-[10px] text-[#8A96A3] mt-0.5">{fmtDateTime(a.time)}</div>
               </div>
             ))
           )}
@@ -566,6 +701,19 @@ function Field({ label, value }: { label: string; value: string }) {
     <div>
       <div className="text-[#8A96A3] mb-0.5">{label}</div>
       <div className="font-semibold text-[#1A2027]">{value}</div>
+    </div>
+  );
+}
+
+function EditField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="mb-3">
+      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">{label}</div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+      />
     </div>
   );
 }

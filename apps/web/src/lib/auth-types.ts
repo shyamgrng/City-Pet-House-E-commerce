@@ -19,6 +19,9 @@ export type Account = {
   primaryAddressId: string;
   password: string;
   createdAt: number;
+  /** Set when an admin resets this account's password to a temporary one — cleared the next time
+   * the client sets their own password from their profile. */
+  mustChangePassword?: boolean;
 };
 
 export type RegisterInput = Omit<Account, "id" | "createdAt" | "addresses" | "primaryAddressId">;
