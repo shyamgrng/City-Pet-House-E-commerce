@@ -15,7 +15,6 @@ import { useOrder } from "@/context/OrderContext";
 import { useRestock } from "@/context/RestockContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { amountDue, lowStockCount, ordersReceivedCount, recentActivity, weeklySales } from "@/lib/b2b-analytics";
-import { STATUS_COLORS, listingLabel } from "@/lib/b2b-types";
 import { awaitsSupplier } from "@/lib/restock-types";
 
 const TABS = ["Dashboard", "Incoming Orders", "Status", "Products", "Finance", "Profile"] as const;
@@ -38,8 +37,6 @@ export default function B2BPortalPage() {
   if (!ready || !supplier) return null;
 
   const mine = submissions.filter((s) => s.b2bId === supplier.b2bId);
-  const live = mine.filter((s) => s.status === "Approved");
-  const removed = mine.filter((s) => s.status === "Rejected");
   const myRestockOrders = restockOrders.filter((o) => o.b2bId === supplier.b2bId);
   const awaitingResponse = myRestockOrders.filter(awaitsSupplier).length;
 
@@ -142,34 +139,6 @@ export default function B2BPortalPage() {
                     <div className="text-[10px] text-[#8A96A3] mt-0.5">{fmtDateTime(a.time)}</div>
                   </div>
                 ))
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mb-6">
-              <Stat label="Total Submitted" value={mine.length} color="#1A2027" />
-              <Stat label="Live on Storefront" value={live.length} color="#1F7A4D" />
-              <Stat label="Removed" value={removed.length} color="#D64545" />
-            </div>
-
-            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Recent Submissions</div>
-            <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-              {mine.length === 0 ? (
-                <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">
-                  No submissions yet — head to the Products tab to submit your first product
-                </div>
-              ) : (
-                mine
-                  .slice()
-                  .sort((a, b) => b.submittedAt - a.submittedAt)
-                  .slice(0, 5)
-                  .map((s) => (
-                    <div key={s.id} className="flex justify-between items-center px-4 py-3 border-b border-[#F0F2F4] last:border-0">
-                      <div className="text-[13px] font-semibold text-[#1A2027]">{s.name}</div>
-                      <div className="text-[11px] font-bold" style={{ color: STATUS_COLORS[s.status] }}>
-                        {listingLabel(s)}
-                      </div>
-                    </div>
-                  ))
               )}
             </div>
           </>
