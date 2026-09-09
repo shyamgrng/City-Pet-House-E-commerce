@@ -4,12 +4,16 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import FinanceTab from "@/components/b2b/FinanceTab";
+import IncomingOrdersTab from "@/components/b2b/IncomingOrdersTab";
 import ProductsTab from "@/components/b2b/ProductsTab";
 import ProfileTab from "@/components/b2b/ProfileTab";
+import StatusTab from "@/components/b2b/StatusTab";
 import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
+import { useRestock } from "@/context/RestockContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { STATUS_COLORS, listingLabel } from "@/lib/b2b-types";
+import { awaitsSupplier } from "@/lib/restock-types";
 
 const TABS = ["Dashboard", "Incoming Orders", "Status", "Products", "Finance", "Profile"] as const;
 type Tab = (typeof TABS)[number];
@@ -17,6 +21,7 @@ type Tab = (typeof TABS)[number];
 export default function B2BPortalPage() {
   const { supplier, ready, signOut } = useB2BAuth();
   const { submissions } = useB2B();
+  const { orders } = useRestock();
   const { settings } = useSiteSettings();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("Dashboard");
@@ -30,6 +35,8 @@ export default function B2BPortalPage() {
   const mine = submissions.filter((s) => s.b2bId === supplier.b2bId);
   const live = mine.filter((s) => s.status === "Approved");
   const removed = mine.filter((s) => s.status === "Rejected");
+  const myOrders = orders.filter((o) => o.b2bId === supplier.b2bId);
+  const awaitingResponse = myOrders.filter(awaitsSupplier).length;
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
@@ -65,10 +72,18 @@ export default function B2BPortalPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="px-4 py-2.5 rounded-full text-xs font-semibold cursor-pointer border border-[#E4E9EC]"
+              className="px-4 py-2.5 rounded-full text-xs font-semibold cursor-pointer border border-[#E4E9EC] flex items-center gap-1.5"
               style={{ background: tab === t ? "#1996C8" : "#fff", color: tab === t ? "#fff" : "#3A4652" }}
             >
               {t}
+              {t === "Incoming Orders" && awaitingResponse > 0 && (
+                <span
+                  className="min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+                  style={{ background: tab === t ? "#fff" : "#D64545", color: tab === t ? "#1996C8" : "#fff" }}
+                >
+                  {awaitingResponse}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -108,13 +123,9 @@ export default function B2BPortalPage() {
           </>
         )}
 
-        {tab === "Incoming Orders" && (
-          <EmptyState text="No incoming stock orders yet — this will show here once City Pet House places a restock order with you." />
-        )}
+        {tab === "Incoming Orders" && <IncomingOrdersTab />}
 
-        {tab === "Status" && (
-          <EmptyState text="No shipments in transit — dispatch and delivery status will appear here once you ship stock against an order." />
-        )}
+        {tab === "Status" && <StatusTab />}
 
         {tab === "Products" && <ProductsTab />}
         {tab === "Finance" && <FinanceTab submissions={mine} />}
@@ -133,8 +144,4 @@ function Stat({ label, value, color }: { label: string; value: string | number; 
       </div>
     </div>
   );
-}
-
-function EmptyState({ text }: { text: string }) {
-  return <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-8 text-center text-xs text-[#8A96A3]">{text}</div>;
 }

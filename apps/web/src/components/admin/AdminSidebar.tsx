@@ -14,8 +14,10 @@ import { useDelivery } from "@/context/DeliveryContext";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { useOrder } from "@/context/OrderContext";
 import { usePets } from "@/context/PetContext";
+import { useRestock } from "@/context/RestockContext";
 import { useVet } from "@/context/VetContext";
 import { sidebarBadges, sidebarDefs } from "@/lib/admin-data";
+import { awaitsAdmin } from "@/lib/restock-types";
 
 function slugFor(key: string) {
   const map: Record<string, string> = {
@@ -37,6 +39,7 @@ export default function AdminSidebar() {
   const { pets } = usePets();
   const { products } = useCatalog();
   const { submissions } = useB2B();
+  const { orders: restockOrders } = useRestock();
   const { registrations: doctorRegistrations } = useDoctorRegistration();
   const { registrations: courierRegistrations } = useCourierRegistration();
   const { registrations: b2bRegistrations } = useB2BRegistration();
@@ -61,8 +64,9 @@ export default function AdminSidebar() {
     doctorRegistrations.filter((r) => r.status === "Pending").length +
     courierRegistrations.filter((r) => r.status === "Pending").length +
     b2bRegistrations.filter((r) => r.status === "Pending").length;
-  // Matches the B2B Supply page's own "Pending Review" list of product submissions.
-  const pendingSubmissionsCount = submissions.filter((s) => s.status === "Pending").length;
+  // Matches the B2B Supply page's own "Pending Review" list of product submissions, plus any
+  // restock offers from suppliers awaiting a response, so the badge covers both sections.
+  const pendingSubmissionsCount = submissions.filter((s) => s.status === "Pending").length + restockOrders.filter(awaitsAdmin).length;
 
   return (
     <>
