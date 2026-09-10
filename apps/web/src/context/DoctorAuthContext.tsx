@@ -33,7 +33,12 @@ type DoctorAuthValue = {
   requestPasswordReset: (doctorId: string) => Result;
   resetPassword: (doctorId: string, code: string, newPassword: string) => Result;
   addAccount: (account: DoctorAccount) => boolean;
-  adminUpdateAccount: (doctorId: string, patch: Partial<Pick<DoctorAccount, "name" | "email" | "phone" | "emergencyPhone" | "address">>) => void;
+  adminUpdateAccount: (
+    doctorId: string,
+    patch: Partial<
+      Pick<DoctorAccount, "name" | "email" | "phone" | "emergencyPhone" | "address" | "photo" | "cv" | "degreeCertificate" | "nvcLicense" | "nationalId">
+    >,
+  ) => void;
   adminResetPassword: (doctorId: string) => Result;
   adminSetPassword: (doctorId: string, newPassword: string) => Result;
 };
@@ -198,7 +203,9 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
 
   const adminUpdateAccount = (
     doctorId: string,
-    patch: Partial<Pick<DoctorAccount, "name" | "email" | "phone" | "emergencyPhone" | "address">>,
+    patch: Partial<
+      Pick<DoctorAccount, "name" | "email" | "phone" | "emergencyPhone" | "address" | "photo" | "cv" | "degreeCertificate" | "nvcLicense" | "nationalId">
+    >,
   ) => {
     persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, ...patch } : a)));
   };

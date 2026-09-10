@@ -7,7 +7,7 @@ import EmailInput from "@/components/EmailInput";
 import PhoneInput from "@/components/PhoneInput";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { isValidEmail } from "@/lib/email-format";
-import { DOCUMENT_UPLOAD_ACCEPT, IMAGE_ACCEPT, isAllowedDocumentFile, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
+import { DOCUMENT_UPLOAD_ACCEPT, IMAGE_ACCEPT, isAllowedDocumentFile, isAllowedImageFile, readDocumentFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
 const STORAGE_FULL_MESSAGE =
@@ -58,9 +58,17 @@ export default function DoctorRegisterPage() {
   ) => {
     if (!file) return;
     setFieldError(key, "");
-    if (isAllowedDocumentFile(file)) {
-      setValue(`DOC:${file.name}`);
-      setName(file.name);
+    if (isAllowedDocumentFile(file) && !isAllowedImageFile(file)) {
+      setFieldBusy(key, true);
+      try {
+        const dataUrl = await readDocumentFile(file);
+        setValue(dataUrl);
+        setName(file.name);
+      } catch (err) {
+        setFieldError(key, err instanceof Error ? err.message : "Could not process that file — try a different one.");
+      } finally {
+        setFieldBusy(key, false);
+      }
       return;
     }
     if (!isAllowedImageFile(file)) {
@@ -392,8 +400,11 @@ function DocDrop({
   mb?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const isDoc = value.startsWith("DOC:");
-  const docExt = isDoc ? (value.slice(4).split(".").pop() ?? "").slice(0, 4).toUpperCase() : "";
+  const isImage = value.startsWith("data:image/");
+  const isDoc = Boolean(value) && !isImage;
+  const legacyName = value.startsWith("DOC:") ? value.slice(4) : "";
+  const displayName = fileName || legacyName || "Document attached";
+  const docExt = isDoc ? (displayName.split(".").pop() ?? "").slice(0, 4).toUpperCase() : "";
   return (
     <div className={mb}>
       <div className="text-[11px] font-semibold text-[#3A4652] mb-1.5">
@@ -419,7 +430,7 @@ function DocDrop({
             {docExt}
           </div>
           <div className="min-w-0">
-            <div className="text-[11px] font-semibold text-[#1A2027] truncate">{value.slice(4)}</div>
+            <div className="text-[11px] font-semibold text-[#1A2027] truncate">{displayName}</div>
             <div className="text-[10px] text-primary underline mt-0.5">Replace</div>
           </div>
         </div>

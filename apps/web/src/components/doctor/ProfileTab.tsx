@@ -6,7 +6,7 @@ import PhoneInput from "@/components/PhoneInput";
 import PriceInput from "@/components/PriceInput";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
-import { DOCUMENT_UPLOAD_ACCEPT, isAllowedDocumentFile, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
+import { DOCUMENT_UPLOAD_ACCEPT, isAllowedDocumentFile, isAllowedImageFile, readDocumentFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 import type { Doctor } from "@/lib/vet-types";
 
@@ -371,7 +371,15 @@ function DocumentRow({ label, value, onUpload }: { label: string; value: string;
     if (!file) return;
     setError("");
     if (isAllowedDocumentFile(file) && !isAllowedImageFile(file)) {
-      onUpload(`DOC:${file.name}`);
+      setBusy(true);
+      try {
+        const dataUrl = await readDocumentFile(file);
+        onUpload(dataUrl);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not process that file — try a different one.");
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     if (!isAllowedImageFile(file)) {
