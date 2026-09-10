@@ -40,12 +40,15 @@ type PendingRow = {
   subtitle: string;
   contact: string;
   submittedAt: number;
+  details: { label: string; value: string }[];
+  documents: { label: string; value: string }[];
   onApprove: () => void;
   onReject: () => void;
 };
 
 export default function AccountsPage() {
   const [tab, setTab] = useState("Overview");
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
   const { accounts } = useAuth();
   const { users: adminUsers } = useAdminAuth();
   const { accounts: courierAccounts, addCourier } = useCourierAuth();
@@ -75,6 +78,9 @@ export default function AccountsPage() {
       nvcLicense: reg.nvcLicense,
       nationalId: reg.nationalId,
       cv: reg.cv,
+      bankName: reg.bankName,
+      bankAccountHolder: reg.accountHolderName,
+      bankAccountNumber: reg.accountNumber,
     };
     if (!addDoctorAccount(account)) return;
     const doctor: Doctor = {
@@ -149,6 +155,18 @@ export default function AccountsPage() {
         subtitle: `${r.qualification} · ${r.nvcNumber}`,
         contact: `${r.email} · ${r.phone}`,
         submittedAt: r.submittedAt,
+        details: [
+          { label: "Address", value: r.address },
+          { label: "Emergency Number", value: r.emergencyNumber },
+          { label: "Bank", value: [r.bankName, r.accountHolderName, r.accountNumber].filter(Boolean).join(" · ") },
+        ],
+        documents: [
+          { label: "Profile Photo", value: r.profilePhoto },
+          { label: "CV", value: r.cv },
+          { label: "Primary Degree Certificate", value: r.degreeCertificate },
+          { label: "NVC License", value: r.nvcLicense },
+          { label: "National Identity Card", value: r.nationalId },
+        ],
         onApprove: () => approveDoctor(r),
         onReject: () => setDoctorRegStatus(r.id, "Rejected"),
       })),
@@ -161,6 +179,14 @@ export default function AccountsPage() {
         subtitle: r.contactPerson,
         contact: `${r.email} · ${r.phone}`,
         submittedAt: r.submittedAt,
+        details: [
+          { label: "Address", value: r.address },
+          { label: "Alt Phone", value: r.altPhone },
+        ],
+        documents: [
+          { label: "Business Document", value: r.businessDocument },
+          { label: "Owner ID Document", value: r.ownerIdDocument },
+        ],
         onApprove: () => approveCourier(r),
         onReject: () => setCourierRegStatus(r.id, "Rejected"),
       })),
@@ -173,12 +199,21 @@ export default function AccountsPage() {
         subtitle: r.contactPerson,
         contact: `${r.email} · ${r.phone}`,
         submittedAt: r.submittedAt,
+        details: [
+          { label: "Address", value: r.address },
+          { label: "Alt Phone", value: r.altPhone },
+        ],
+        documents: [
+          { label: "Business Document", value: r.businessDocument },
+          { label: "Owner ID Document", value: r.ownerIdDocument },
+        ],
         onApprove: () => approveB2B(r),
         onReject: () => setB2bRegStatus(r.id, "Rejected"),
       })),
   ].sort((a, b) => a.submittedAt - b.submittedAt);
 
   const registrationSaveError = doctorRegSaveError || courierRegSaveError || b2bRegSaveError;
+  const reviewingRow = reviewingId ? (pendingRows.find((r) => r.id === reviewingId) ?? null) : null;
 
   return (
     <div>
@@ -234,16 +269,10 @@ export default function AccountsPage() {
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button
-                      onClick={r.onReject}
-                      className="px-3 py-1.5 rounded-md text-[11px] font-semibold border border-[#E4E9EC] text-[#5B6773] cursor-pointer"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={r.onApprove}
+                      onClick={() => setReviewingId(r.id)}
                       className="px-3 py-1.5 rounded-md text-[11px] font-semibold bg-primary text-white cursor-pointer"
                     >
-                      Approve
+                      Review
                     </button>
                   </div>
                 </div>
@@ -258,6 +287,95 @@ export default function AccountsPage() {
       {tab === "Courier Account" && <CourierAccountTab couriers={courierAccounts} />}
       {tab === "B2B Account" && <B2BAccountTab suppliers={b2bAccounts} />}
       {tab === "Staff Account" && <StaffAccountTab users={adminUsers} />}
+
+      {reviewingRow && (
+        <PendingRegistrationModal
+          row={reviewingRow}
+          onClose={() => setReviewingId(null)}
+          onApprove={() => {
+            reviewingRow.onApprove();
+            setReviewingId(null);
+          }}
+          onReject={() => {
+            reviewingRow.onReject();
+            setReviewingId(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function PendingRegistrationModal({
+  row,
+  onClose,
+  onApprove,
+  onReject,
+}: {
+  row: PendingRow;
+  onClose: () => void;
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  const [rejecting, setRejecting] = useState(false);
+
+  return (
+    <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-[460px] max-h-[88vh] overflow-auto">
+        <div className="flex justify-between items-center mb-1">
+          <div className="text-[15px] font-bold text-[#1A2027]">{row.title}</div>
+          <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">
+            ✕
+          </div>
+        </div>
+        <div className="text-[10px] font-bold text-[#8A96A3] uppercase mb-3.5">{row.kind} Registration</div>
+
+        <div className="text-xs text-[#5B6773] mb-1">{row.subtitle}</div>
+        <div className="text-xs text-[#5B6773] mb-3.5">{row.contact}</div>
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-2">Details</div>
+        <div className="flex flex-col gap-1.5 text-xs mb-3.5">
+          {row.details.map((d) => (
+            <div key={d.label} className="flex justify-between gap-3">
+              <span className="text-[#8A96A3] shrink-0">{d.label}</span>
+              <span className="font-semibold text-[#1A2027] text-right">{d.value || "—"}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-2">Documents</div>
+        <div className="bg-[#F7F9FA] border border-[#E4E9EC] rounded-[10px] px-3.5 mb-4">
+          {row.documents.map((d) => (
+            <DocumentPreviewRow key={d.label} label={d.label} value={d.value} />
+          ))}
+        </div>
+
+        {!rejecting ? (
+          <div className="flex gap-2.5">
+            <button onClick={onApprove} className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+              Approve
+            </button>
+            <button
+              onClick={() => setRejecting(true)}
+              className="px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer border border-[#E4E9EC] text-[#5B6773]"
+            >
+              Reject
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2.5">
+            <button onClick={onReject} className="flex-1 bg-[#D64545] text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+              Confirm Reject
+            </button>
+            <button
+              onClick={() => setRejecting(false)}
+              className="px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
