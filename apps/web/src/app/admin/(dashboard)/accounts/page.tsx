@@ -481,19 +481,66 @@ function CourierAccountTab({ couriers }: { couriers: CourierAccount[] }) {
   );
 }
 
-/** Chronological feed of a doctor's consult history — booked, payment-rejected, and completed —
- * built only from timestamps VetBooking actually carries. */
-function buildDoctorActivity(doctorId: string, bookings: VetBooking[]): ActivityEntry[] {
+const ACTIVITY_CATEGORY_COLORS: Record<"Financial" | "Login" | "Client", string> = {
+  Client: "#1996C8",
+  Financial: "#C9962B",
+  Login: "#7A56C8",
+};
+
+/** Chronological feed of everything tied to this doctor — consult bookings and outcomes
+ * (Client), the doctor's earnings net of platform commission on each completed consult
+ * (Financial), and sign-ins/password changes (Login) — built only from timestamps the
+ * underlying records actually carry. */
+function buildDoctorActivity(
+  doctorId: string,
+  bookings: VetBooking[],
+  doctorRecord: Doctor | undefined,
+  securityLog: { text: string; time: number }[] | undefined,
+): ActivityEntry[] {
   const entries: ActivityEntry[] = [];
+  const fmtMoney = (n: number) => "Rs. " + n.toLocaleString("en-IN");
+  const commissionType = doctorRecord?.commissionType ?? "percent";
+  const commissionValue = doctorRecord?.commissionValue ?? 0;
+
   for (const b of bookings.filter((b) => b.doctorId === doctorId)) {
-    entries.push({ key: `${b.id}-booked`, text: `Consult booked by ${b.ownerName} for ${b.petName}`, time: b.createdAt });
+    entries.push({
+      key: `${b.id}-booked`,
+      text: `Consult booked by ${b.ownerName} for ${b.petName} — ${fmtMoney(b.amount)}`,
+      time: b.createdAt,
+      category: "Client",
+    });
     if (b.status === "Payment Rejected") {
-      entries.push({ key: `${b.id}-rejected`, text: `Consult ${b.id} payment rejected${b.rejectReason ? ` — ${b.rejectReason}` : ""}`, time: b.createdAt });
+      entries.push({
+        key: `${b.id}-rejected`,
+        text: `Consult ${b.id} payment rejected${b.rejectReason ? ` — ${b.rejectReason}` : ""}`,
+        time: b.createdAt,
+        category: "Client",
+      });
     }
     if (b.completedAt) {
-      entries.push({ key: `${b.id}-completed`, text: `Completed consult for ${b.petName} (${b.ownerName})`, time: b.completedAt });
+      const commission = commissionType === "percent" ? Math.round((b.amount * commissionValue) / 100) : commissionValue;
+      const earning = Math.max(0, b.amount - commission);
+      entries.push({
+        key: `${b.id}-completed`,
+        text: `Completed consult for ${b.petName} (${b.ownerName}) — earned ${fmtMoney(earning)} (${fmtMoney(b.amount)} fee − ${fmtMoney(commission)} commission)`,
+        time: b.completedAt,
+        category: "Financial",
+      });
+    }
+    if (b.prescription?.sentAt) {
+      entries.push({
+        key: `${b.id}-prescription`,
+        text: `Sent prescription to ${b.ownerName} for ${b.petName}`,
+        time: b.prescription.sentAt,
+        category: "Client",
+      });
     }
   }
+
+  for (const e of securityLog ?? []) {
+    entries.push({ key: `sec-${e.time}-${e.text}`, text: e.text, time: e.time, category: "Login" });
+  }
+
   return entries.sort((a, b) => b.time - a.time);
 }
 
@@ -616,8 +663,20 @@ function AdminDocumentRow({ label, value, onUpload }: { label: string; value: st
   );
 }
 
-/** Lets admin replace a doctor's profile photo directly, next to their name in the detail header. */
-function AdminPhotoUpload({ value, onUpload }: { value: string; onUpload: (dataUrl: string) => void }) {
+/** Lets admin replace a doctor's profile photo (or bank QR) directly from the detail page. */
+function AdminPhotoUpload({
+  value,
+  onUpload,
+  label = "photo",
+  maxWidth = 400,
+  maxHeight = 520,
+}: {
+  value: string;
+  onUpload: (dataUrl: string) => void;
+  label?: string;
+  maxWidth?: number;
+  maxHeight?: number;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -631,7 +690,7 @@ function AdminPhotoUpload({ value, onUpload }: { value: string; onUpload: (dataU
     }
     setBusy(true);
     try {
-      onUpload(await resizeImageFile(file, 400, 520));
+      onUpload(await resizeImageFile(file, maxWidth, maxHeight));
     } catch {
       setError("Could not process that image — try a different one.");
     } finally {
@@ -648,7 +707,7 @@ function AdminPhotoUpload({ value, onUpload }: { value: string; onUpload: (dataU
         disabled={busy}
         className="text-[10px] font-semibold text-primary cursor-pointer disabled:opacity-40"
       >
-        {busy ? "Uploading…" : value ? "Replace photo" : "Upload photo"}
+        {busy ? "Uploading…" : value ? `Replace ${label}` : `Upload ${label}`}
       </button>
       {error && <div className="text-[10px] text-[#D64545] mt-0.5">{error}</div>}
     </div>
@@ -661,12 +720,20 @@ function buildDoctorChats(doctorId: string, bookings: VetBooking[]): VetBooking[
 }
 
 function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
-  const { bookings } = useVet();
+  const { bookings, doctors: vetDoctors, adminUpdateDoctorProfile } = useVet();
   const { adminUpdateAccount, adminResetPassword, adminSetPassword } = useDoctorAuth();
   const [selected, setSelected] = useState<DoctorAccount | null>(null);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<{ name: string; email: string; phone: string; emergencyPhone: string; address: string } | null>(null);
+  const [draft, setDraft] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    emergencyPhone: string;
+    address: string;
+    qualification: string;
+    nvcNumber: string;
+  } | null>(null);
   const [resetMsg, setResetMsg] = useState("");
   const [setPwDraft, setSetPwDraft] = useState("");
   const [setPwMsg, setSetPwMsg] = useState("");
@@ -674,23 +741,75 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
   const [emailBody, setEmailBody] = useState("");
   const [emailSending, setEmailSending] = useState(false);
   const [emailMsg, setEmailMsg] = useState("");
+  const [editingBank, setEditingBank] = useState(false);
+  const [bankDraft, setBankDraft] = useState<{
+    bankName: string;
+    bankAccountHolder: string;
+    bankAccountNumber: string;
+    bankBranch: string;
+  } | null>(null);
+  const [bankMsg, setBankMsg] = useState("");
+  const [activityQuery, setActivityQuery] = useState("");
+  const [activityFrom, setActivityFrom] = useState("");
+  const [activityTo, setActivityTo] = useState("");
 
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const fmtDateTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   if (selected) {
     const mine = doctors.find((d) => d.doctorId === selected.doctorId) ?? selected;
-    const activity = buildDoctorActivity(mine.doctorId, bookings);
+    const doctorRecord = vetDoctors.find((d) => d.id === mine.doctorId);
+    const activity = buildDoctorActivity(mine.doctorId, bookings, doctorRecord, mine.securityLog);
     const chats = buildDoctorChats(mine.doctorId, bookings);
 
+    const activityQ = activityQuery.trim().toLowerCase();
+    const filteredActivity = activity.filter((a) => {
+      if (activityQ && !a.text.toLowerCase().includes(activityQ)) return false;
+      if (activityFrom && a.time < new Date(activityFrom).setHours(0, 0, 0, 0)) return false;
+      if (activityTo && a.time > new Date(activityTo).setHours(23, 59, 59, 999)) return false;
+      return true;
+    });
+    const activityFiltersActive = Boolean(activityQuery || activityFrom || activityTo);
+    const clearActivityFilters = () => {
+      setActivityQuery("");
+      setActivityFrom("");
+      setActivityTo("");
+    };
+
     const startEdit = () => {
-      setDraft({ name: mine.name, email: mine.email, phone: mine.phone, emergencyPhone: mine.emergencyPhone, address: mine.address });
+      setDraft({
+        name: mine.name,
+        email: mine.email,
+        phone: mine.phone,
+        emergencyPhone: mine.emergencyPhone,
+        address: mine.address,
+        qualification: doctorRecord?.qualification ?? "",
+        nvcNumber: doctorRecord?.nvcNumber ?? "",
+      });
       setEditing(true);
     };
     const save = () => {
       if (!draft) return;
-      adminUpdateAccount(mine.doctorId, draft);
+      const { qualification, nvcNumber, ...accountPatch } = draft;
+      adminUpdateAccount(mine.doctorId, accountPatch);
+      adminUpdateDoctorProfile(mine.doctorId, { qualification, nvcNumber });
       setEditing(false);
+    };
+    const startEditBank = () => {
+      setBankDraft({
+        bankName: mine.bankName ?? "",
+        bankAccountHolder: mine.bankAccountHolder ?? "",
+        bankAccountNumber: mine.bankAccountNumber ?? "",
+        bankBranch: mine.bankBranch ?? "",
+      });
+      setEditingBank(true);
+    };
+    const saveBank = () => {
+      if (!bankDraft) return;
+      adminUpdateAccount(mine.doctorId, bankDraft);
+      setEditingBank(false);
+      setBankMsg("✓ Bank details updated");
+      setTimeout(() => setBankMsg(""), 3000);
     };
     const doResetPassword = async () => {
       const res = await adminResetPassword(mine.doctorId);
@@ -732,8 +851,8 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
           <div className="min-w-0">
             <div className="border border-[#E4E9EC] rounded-xl p-5 mb-3.5">
               <div className="flex justify-between items-start mb-3.5">
-                <div className="flex items-center gap-3">
-                  <MediaSlot src={mine.photo} label="profile photo" shape="circle" className="w-[52px] h-[52px] shrink-0" />
+                <div className="flex items-center gap-4">
+                  <MediaSlot src={mine.photo} label="profile photo" shape="circle" className="w-[96px] h-[96px] shrink-0" />
                   <div>
                     <div className="text-[15px] font-bold text-[#1A2027]">{mine.name}</div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">{mine.doctorId}</div>
@@ -752,6 +871,8 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
                   <Field label="Phone" value={mine.phone} />
                   <Field label="Emergency Number" value={mine.emergencyPhone} />
                   <Field label="Address" value={mine.address} />
+                  <Field label="Qualification" value={doctorRecord?.qualification || "—"} />
+                  <Field label="NVC Number" value={doctorRecord?.nvcNumber || "—"} />
                 </div>
               ) : (
                 draft && (
@@ -770,6 +891,8 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
                       <PhoneInput value={draft.emergencyPhone} onChange={(v) => setDraft({ ...draft, emergencyPhone: v })} />
                     </div>
                     <EditField label="Address" value={draft.address} onChange={(v) => setDraft({ ...draft, address: v })} />
+                    <EditField label="Qualification" value={draft.qualification} onChange={(v) => setDraft({ ...draft, qualification: v })} />
+                    <EditField label="NVC Number" value={draft.nvcNumber} onChange={(v) => setDraft({ ...draft, nvcNumber: v })} />
                     <div className="flex gap-2.5 mt-1">
                       <button
                         onClick={save}
@@ -861,32 +984,119 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
               ))}
             </div>
 
-            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Bank Details</div>
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="text-[13px] font-bold text-[#1A2027]">Bank Details</div>
+              {!editingBank && (
+                <button onClick={startEditBank} className="text-xs font-semibold text-primary cursor-pointer">
+                  Edit
+                </button>
+              )}
+            </div>
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-4 mb-5">
-              <div className="grid grid-cols-2 gap-3.5 text-xs mb-3.5">
-                <Field label="Bank Name" value={mine.bankName || "—"} />
-                <Field label="Account Holder" value={mine.bankAccountHolder || "—"} />
-                <Field label="Account Number" value={mine.bankAccountNumber || "—"} />
-                <Field label="Branch" value={mine.bankBranch || "—"} />
-              </div>
+              {!editingBank ? (
+                <div className="grid grid-cols-2 gap-3.5 text-xs mb-3.5">
+                  <Field label="Bank Name" value={mine.bankName || "—"} />
+                  <Field label="Account Holder" value={mine.bankAccountHolder || "—"} />
+                  <Field label="Account Number" value={mine.bankAccountNumber || "—"} />
+                  <Field label="Branch" value={mine.bankBranch || "—"} />
+                </div>
+              ) : (
+                bankDraft && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3.5 mb-1">
+                      <EditField label="Bank Name" value={bankDraft.bankName} onChange={(v) => setBankDraft({ ...bankDraft, bankName: v })} />
+                      <EditField
+                        label="Account Holder"
+                        value={bankDraft.bankAccountHolder}
+                        onChange={(v) => setBankDraft({ ...bankDraft, bankAccountHolder: v })}
+                      />
+                      <EditField
+                        label="Account Number"
+                        value={bankDraft.bankAccountNumber}
+                        onChange={(v) => setBankDraft({ ...bankDraft, bankAccountNumber: v })}
+                      />
+                      <EditField label="Branch" value={bankDraft.bankBranch} onChange={(v) => setBankDraft({ ...bankDraft, bankBranch: v })} />
+                    </div>
+                    <div className="flex gap-2.5 mb-3.5">
+                      <button
+                        onClick={saveBank}
+                        className="flex-1 bg-primary text-white text-center py-2 rounded-lg text-xs font-semibold cursor-pointer"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingBank(false)}
+                        className="px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                )
+              )}
+              {bankMsg && <div className="text-[11px] text-[#1F7A4D] mb-3.5">{bankMsg}</div>}
               <div className="text-[#8A96A3] text-xs mb-1.5">Bank QR</div>
               {mine.bankQr ? (
-                <a href={mine.bankQr} target="_blank" rel="noreferrer">
+                <a href={mine.bankQr} target="_blank" rel="noreferrer" className="block w-fit mb-2">
                   <MediaSlot src={mine.bankQr} label="bank QR" className="w-[140px] h-[140px] rounded-lg border border-[#E4E9EC]" />
                 </a>
               ) : (
-                <div className="text-xs text-[#8A96A3]">Not uploaded</div>
+                <div className="text-xs text-[#8A96A3] mb-2">Not uploaded</div>
               )}
+              <AdminPhotoUpload
+                value={mine.bankQr ?? ""}
+                onUpload={(bankQr) => adminUpdateAccount(mine.doctorId, { bankQr })}
+                label="QR"
+                maxWidth={600}
+                maxHeight={600}
+              />
             </div>
 
-            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Activity ({activity.length})</div>
+            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Activity ({filteredActivity.length})</div>
+            <div className="flex flex-col sm:flex-row gap-2 mb-2.5">
+              <input
+                value={activityQuery}
+                onChange={(e) => setActivityQuery(e.target.value)}
+                placeholder="Search activity..."
+                className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#E4E9EC] text-xs box-border"
+              />
+              <input
+                type="date"
+                value={activityFrom}
+                onChange={(e) => setActivityFrom(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-[#E4E9EC] text-xs box-border"
+              />
+              <input
+                type="date"
+                value={activityTo}
+                onChange={(e) => setActivityTo(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-[#E4E9EC] text-xs box-border"
+              />
+              {activityFiltersActive && (
+                <button onClick={clearActivityFilters} className="text-xs font-semibold text-primary cursor-pointer shrink-0 px-1">
+                  Clear
+                </button>
+              )}
+            </div>
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-              {activity.length === 0 ? (
-                <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No activity yet</div>
+              {filteredActivity.length === 0 ? (
+                <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">
+                  {activity.length === 0 ? "No activity yet" : "No activity matches your filters."}
+                </div>
               ) : (
-                activity.map((a) => (
+                filteredActivity.map((a) => (
                   <div key={a.key} className="px-4 py-3 border-b border-[#F0F2F4] last:border-0">
-                    <div className="text-xs font-semibold text-[#3A4652]">{a.text}</div>
+                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                      {a.category && (
+                        <span
+                          className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0"
+                          style={{ background: `${ACTIVITY_CATEGORY_COLORS[a.category]}1A`, color: ACTIVITY_CATEGORY_COLORS[a.category] }}
+                        >
+                          {a.category}
+                        </span>
+                      )}
+                      <div className="text-xs font-semibold text-[#3A4652]">{a.text}</div>
+                    </div>
                     <div className="text-[10px] text-[#8A96A3] mt-0.5">{fmtDateTime(a.time)}</div>
                   </div>
                 ))
@@ -1074,7 +1284,7 @@ function StaffAccountTab({ users }: { users: AdminUser[] }) {
   );
 }
 
-type ActivityEntry = { key: string; text: string; time: number };
+type ActivityEntry = { key: string; text: string; time: number; category?: "Financial" | "Login" | "Client" };
 
 /** A single chronological feed of everything this client has done — order lifecycle, vet
  * consults, adoption posts, and refunds — instead of separate lists per feature area. Only

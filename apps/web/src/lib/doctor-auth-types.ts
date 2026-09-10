@@ -16,13 +16,17 @@ export type DoctorAccount = {
   /** Set when an admin resets this account's password to a temporary one — cleared the next time
    * the doctor sets their own password from their profile. */
   mustChangePassword?: boolean;
-  /** Bank payout details -- entered by the doctor themselves from their own profile, admin only views. */
+  /** Bank payout details -- entered by the doctor themselves from their own profile, or by admin
+   * from the account's admin detail page. */
   bankName?: string;
   bankAccountHolder?: string;
   bankAccountNumber?: string;
   bankBranch?: string;
   /** QR code image (data URL) for scan-to-pay, e.g. a Fonepay/eSewa QR. */
   bankQr?: string;
+  /** Append-only log of sign-ins and password changes (self-service and admin-initiated), shown
+   * as "Login" entries in the admin Activity feed. Capped to the most recent entries. */
+  securityLog?: { text: string; time: number }[];
 };
 
 export const doctorAccountSeed: DoctorAccount[] = [
