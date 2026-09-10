@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import EmailInput from "@/components/EmailInput";
 import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
@@ -24,6 +24,14 @@ import type { CourierRegistration } from "@/lib/courier-registration-types";
 import type { DoctorAccount } from "@/lib/doctor-auth-types";
 import { generateDoctorId, generateTempPassword, type DoctorRegistration } from "@/lib/doctor-registration-types";
 import { isValidEmail } from "@/lib/email-format";
+import {
+  DOCUMENT_UPLOAD_ACCEPT,
+  IMAGE_ACCEPT,
+  isAllowedDocumentFile,
+  isAllowedImageFile,
+  readDocumentFile,
+  resizeImageFile,
+} from "@/lib/image-upload";
 import { notifyEvent } from "@/lib/notify-client";
 import type { Order } from "@/lib/order-types";
 import { isValidNepalPhone } from "@/lib/phone";
@@ -49,6 +57,7 @@ type PendingRow = {
 export default function AccountsPage() {
   const [tab, setTab] = useState("Overview");
   const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [approvedCreds, setApprovedCreds] = useState<{ name: string; role: string; loginId: string; password: string } | null>(null);
   const { accounts } = useAuth();
   const { users: adminUsers } = useAdminAuth();
   const { accounts: courierAccounts, addCourier } = useCourierAuth();
@@ -99,6 +108,7 @@ export default function AccountsPage() {
     addDoctor(doctor);
     setDoctorRegStatus(reg.id, "Approved");
     notifyEvent("doctor_registration_approved", reg.email, reg.fullName, { name: reg.fullName, doctorId, password });
+    setApprovedCreds({ name: reg.fullName, role: "Doctor", loginId: doctorId, password });
   };
 
   const approveCourier = (reg: CourierRegistration) => {
@@ -125,6 +135,7 @@ export default function AccountsPage() {
       loginId: courierId,
       password,
     });
+    setApprovedCreds({ name: reg.contactPerson || reg.companyName, role: "Courier", loginId: courierId, password });
   };
 
   const approveB2B = (reg: B2BRegistration) => {
@@ -143,6 +154,7 @@ export default function AccountsPage() {
       loginId: b2bId,
       password,
     });
+    setApprovedCreds({ name: reg.contactPerson || reg.companyName, role: "B2B Supplier", loginId: b2bId, password });
   };
 
   const pendingRows: PendingRow[] = [
@@ -301,6 +313,34 @@ export default function AccountsPage() {
             setReviewingId(null);
           }}
         />
+      )}
+
+      {approvedCreds && (
+        <div onClick={() => setApprovedCreds(null)} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-[400px]">
+            <div className="text-[15px] font-bold text-[#1A2027] mb-1">✓ {approvedCreds.role} approved</div>
+            <div className="text-xs text-[#5B6773] mb-4">
+              We&apos;ve emailed these sign-in details to {approvedCreds.name}. Email delivery isn&apos;t always guaranteed to arrive — save these now
+              in case you need to share them directly.
+            </div>
+            <div className="bg-[#F7F9FA] border border-[#E4E9EC] rounded-lg p-3.5 text-xs mb-4">
+              <div className="flex justify-between gap-3 mb-1.5">
+                <span className="text-[#8A96A3]">Login ID</span>
+                <span className="font-bold text-[#1A2027]">{approvedCreds.loginId}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-[#8A96A3]">Password</span>
+                <span className="font-bold text-[#1A2027]">{approvedCreds.password}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setApprovedCreds(null)}
+              className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -465,7 +505,7 @@ const DOCTOR_DOCUMENTS: { field: "cv" | "degreeCertificate" | "nvcLicense" | "na
 ];
 
 function DocumentPreviewRow({ label, value }: { label: string; value: string }) {
-  const isDoc = value.startsWith("DOC:");
+  const isLegacyPlaceholder = value.startsWith("DOC:");
   return (
     <div className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
       <div className="flex items-center gap-2.5">
@@ -479,13 +519,138 @@ function DocumentPreviewRow({ label, value }: { label: string; value: string }) 
       </div>
       {!value ? (
         <span className="text-[11px] text-[#8A96A3]">Not uploaded</span>
-      ) : isDoc ? (
-        <span className="text-[11px] text-[#5B6773]">{value.slice(4)}</span>
+      ) : isLegacyPlaceholder ? (
+        <span className="text-[11px] text-[#8A96A3]" title="Uploaded before file downloads were supported — ask them to re-upload it.">
+          {value.slice(4)} (not downloadable)
+        </span>
       ) : (
-        <a href={value} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
-          Preview
-        </a>
+        <div className="flex items-center gap-3">
+          <a href={value} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
+            Preview
+          </a>
+          <a href={value} download={label.replace(/\s+/g, "_")} className="text-[11px] font-semibold text-primary cursor-pointer">
+            Download
+          </a>
+        </div>
       )}
+    </div>
+  );
+}
+
+/** Same as DocumentPreviewRow but lets admin upload/replace the file directly — used on the
+ * Doctor Account detail page, where admin manages the account rather than just reviewing it. */
+function AdminDocumentRow({ label, value, onUpload }: { label: string; value: string; onUpload: (dataUrl: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const isLegacyPlaceholder = value.startsWith("DOC:");
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (isAllowedDocumentFile(file) && !isAllowedImageFile(file)) {
+      setBusy(true);
+      try {
+        onUpload(await readDocumentFile(file));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not process that file — try a different one.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    if (!isAllowedImageFile(file)) {
+      setError("Please choose a PNG or JPG photo, a PDF, or a Word document.");
+      return;
+    }
+    setBusy(true);
+    try {
+      onUpload(await resizeImageFile(file, 1000, 1400));
+    } catch {
+      setError("Could not process that file — try a different one.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
+      <div className="flex items-center justify-between gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <span
+            className="w-[16px] h-[16px] rounded-[4px] shrink-0 flex items-center justify-center text-[10px] font-bold"
+            style={{ background: value ? "#1F7A4D" : "#fff", border: `1.5px solid ${value ? "#1F7A4D" : "#C7CDD3"}`, color: "#fff" }}
+          >
+            {value && "✓"}
+          </span>
+          <div className="text-[#3A4652]">{label}</div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {!value ? (
+            <span className="text-[11px] text-[#8A96A3]">Not uploaded</span>
+          ) : isLegacyPlaceholder ? (
+            <span className="text-[11px] text-[#8A96A3]">{value.slice(4)} (not downloadable)</span>
+          ) : (
+            <>
+              <a href={value} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
+                Preview
+              </a>
+              <a href={value} download={label.replace(/\s+/g, "_")} className="text-[11px] font-semibold text-primary cursor-pointer">
+                Download
+              </a>
+            </>
+          )}
+          <input ref={inputRef} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={busy}
+            className="text-[11px] font-semibold text-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {busy ? "Uploading…" : value ? "Replace" : "Upload"}
+          </button>
+        </div>
+      </div>
+      {error && <div className="text-[11px] text-[#D64545] mt-1">{error}</div>}
+    </div>
+  );
+}
+
+/** Lets admin replace a doctor's profile photo directly, next to their name in the detail header. */
+function AdminPhotoUpload({ value, onUpload }: { value: string; onUpload: (dataUrl: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (!isAllowedImageFile(file)) {
+      setError("Please choose an image file.");
+      return;
+    }
+    setBusy(true);
+    try {
+      onUpload(await resizeImageFile(file, 400, 520));
+    } catch {
+      setError("Could not process that image — try a different one.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div>
+      <input ref={inputRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="text-[10px] font-semibold text-primary cursor-pointer disabled:opacity-40"
+      >
+        {busy ? "Uploading…" : value ? "Replace photo" : "Upload photo"}
+      </button>
+      {error && <div className="text-[10px] text-[#D64545] mt-0.5">{error}</div>}
     </div>
   );
 }
@@ -572,6 +737,7 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
                   <div>
                     <div className="text-[15px] font-bold text-[#1A2027]">{mine.name}</div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">{mine.doctorId}</div>
+                    <AdminPhotoUpload value={mine.photo} onUpload={(photo) => adminUpdateAccount(mine.doctorId, { photo })} />
                   </div>
                 </div>
                 {!editing && (
@@ -686,7 +852,12 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
             <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Documents</div>
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] px-4 mb-5">
               {DOCTOR_DOCUMENTS.map((d) => (
-                <DocumentPreviewRow key={d.field} label={d.label} value={mine[d.field]} />
+                <AdminDocumentRow
+                  key={d.field}
+                  label={d.label}
+                  value={mine[d.field]}
+                  onUpload={(v) => adminUpdateAccount(mine.doctorId, { [d.field]: v })}
+                />
               ))}
             </div>
 
