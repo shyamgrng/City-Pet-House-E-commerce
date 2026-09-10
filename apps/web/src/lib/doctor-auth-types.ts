@@ -13,6 +13,9 @@ export type DoctorAccount = {
   degreeCertificate: string;
   nvcLicense: string;
   nationalId: string;
+  /** Set when an admin resets this account's password to a temporary one — cleared the next time
+   * the doctor sets their own password from their profile. */
+  mustChangePassword?: boolean;
 };
 
 export const doctorAccountSeed: DoctorAccount[] = [

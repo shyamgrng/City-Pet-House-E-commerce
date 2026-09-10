@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { generateTempPassword } from "@/lib/doctor-registration-types";
 import { notifyEvent } from "@/lib/notify-client";
 import { doctorAccountSeed, type DoctorAccount } from "@/lib/doctor-auth-types";
 
@@ -30,6 +31,8 @@ type DoctorAuthValue = {
   requestPasswordReset: (doctorId: string) => Result;
   resetPassword: (doctorId: string, code: string, newPassword: string) => Result;
   addAccount: (account: DoctorAccount) => boolean;
+  adminUpdateAccount: (doctorId: string, patch: Partial<Pick<DoctorAccount, "name" | "email" | "phone" | "emergencyPhone" | "address">>) => void;
+  adminResetPassword: (doctorId: string) => Result;
 };
 
 const DoctorAuthContext = createContext<DoctorAuthValue | null>(null);
@@ -171,11 +174,30 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
   const changePassword = (newPassword: string) => {
     if (!state.doctor) return;
     const doctorId = state.doctor.doctorId;
-    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, password: newPassword } : a)));
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, password: newPassword, mustChangePassword: false } : a)));
   };
 
   const addAccount = (account: DoctorAccount): boolean => {
     return persistAccounts([...state.accounts, account]);
+  };
+
+  const adminUpdateAccount = (
+    doctorId: string,
+    patch: Partial<Pick<DoctorAccount, "name" | "email" | "phone" | "emergencyPhone" | "address">>,
+  ) => {
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, ...patch } : a)));
+  };
+
+  const adminResetPassword = (doctorId: string): Result => {
+    const account = state.accounts.find((a) => a.doctorId === doctorId);
+    if (!account) return { ok: false, error: "Doctor account not found." };
+    const tempPassword = generateTempPassword();
+    const ok = persistAccounts(
+      state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, password: tempPassword, mustChangePassword: true } : a)),
+    );
+    if (!ok) return { ok: false, error: STORAGE_FULL_MESSAGE };
+    notifyEvent("admin_password_reset", account.email, account.name, { name: account.name, tempPassword });
+    return { ok: true };
   };
 
   return (
@@ -196,6 +218,8 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
         requestPasswordReset,
         resetPassword,
         addAccount,
+        adminUpdateAccount,
+        adminResetPassword,
       }}
     >
       {children}

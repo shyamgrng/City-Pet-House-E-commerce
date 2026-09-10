@@ -322,8 +322,153 @@ function CourierAccountTab({ couriers }: { couriers: CourierAccount[] }) {
   );
 }
 
+/** Chronological feed of a doctor's consult history — booked, payment-rejected, and completed —
+ * built only from timestamps VetBooking actually carries. */
+function buildDoctorActivity(doctorId: string, bookings: VetBooking[]): ActivityEntry[] {
+  const entries: ActivityEntry[] = [];
+  for (const b of bookings.filter((b) => b.doctorId === doctorId)) {
+    entries.push({ key: `${b.id}-booked`, text: `Consult booked by ${b.ownerName} for ${b.petName}`, time: b.createdAt });
+    if (b.status === "Payment Rejected") {
+      entries.push({ key: `${b.id}-rejected`, text: `Consult ${b.id} payment rejected${b.rejectReason ? ` — ${b.rejectReason}` : ""}`, time: b.createdAt });
+    }
+    if (b.completedAt) {
+      entries.push({ key: `${b.id}-completed`, text: `Completed consult for ${b.petName} (${b.ownerName})`, time: b.completedAt });
+    }
+  }
+  return entries.sort((a, b) => b.time - a.time);
+}
+
 function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
+  const { bookings } = useVet();
+  const { adminUpdateAccount, adminResetPassword } = useDoctorAuth();
+  const [selected, setSelected] = useState<DoctorAccount | null>(null);
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<{ name: string; email: string; phone: string; emergencyPhone: string; address: string } | null>(null);
+  const [resetMsg, setResetMsg] = useState("");
+
+  const fmtDateTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+  if (selected) {
+    const mine = doctors.find((d) => d.doctorId === selected.doctorId) ?? selected;
+    const activity = buildDoctorActivity(mine.doctorId, bookings);
+
+    const startEdit = () => {
+      setDraft({ name: mine.name, email: mine.email, phone: mine.phone, emergencyPhone: mine.emergencyPhone, address: mine.address });
+      setEditing(true);
+    };
+    const save = () => {
+      if (!draft) return;
+      adminUpdateAccount(mine.doctorId, draft);
+      setEditing(false);
+    };
+    const doResetPassword = async () => {
+      const res = await adminResetPassword(mine.doctorId);
+      setResetMsg(res.ok ? "✓ A temporary password has been emailed to the doctor." : res.error);
+      setTimeout(() => setResetMsg(""), 4000);
+    };
+
+    return (
+      <div>
+        <div
+          onClick={() => {
+            setSelected(null);
+            setEditing(false);
+          }}
+          className="text-xs text-primary font-semibold cursor-pointer mb-4"
+        >
+          ← Back to Doctor Accounts
+        </div>
+
+        <div className="border border-[#E4E9EC] rounded-xl p-5 max-w-[560px] mb-3.5">
+          <div className="flex justify-between items-center mb-3.5">
+            <div>
+              <div className="text-[15px] font-bold text-[#1A2027]">{mine.name}</div>
+              <div className="text-[11px] text-[#8A96A3] mt-0.5">{mine.doctorId}</div>
+            </div>
+            {!editing && (
+              <button onClick={startEdit} className="text-xs font-semibold text-primary cursor-pointer">
+                Edit
+              </button>
+            )}
+          </div>
+          {!editing ? (
+            <div className="grid grid-cols-2 gap-3.5 text-xs">
+              <Field label="Email" value={mine.email} />
+              <Field label="Phone" value={mine.phone} />
+              <Field label="Emergency Number" value={mine.emergencyPhone} />
+              <Field label="Address" value={mine.address} />
+            </div>
+          ) : (
+            draft && (
+              <div className="text-xs">
+                <EditField label="Full Name" value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} />
+                <div className="mb-3">
+                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Email</div>
+                  <EmailInput value={draft.email} onChange={(v) => setDraft({ ...draft, email: v })} />
+                </div>
+                <div className="mb-3">
+                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone</div>
+                  <PhoneInput value={draft.phone} onChange={(v) => setDraft({ ...draft, phone: v })} />
+                </div>
+                <div className="mb-3">
+                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Emergency Number</div>
+                  <PhoneInput value={draft.emergencyPhone} onChange={(v) => setDraft({ ...draft, emergencyPhone: v })} />
+                </div>
+                <EditField label="Address" value={draft.address} onChange={(v) => setDraft({ ...draft, address: v })} />
+                <div className="flex gap-2.5 mt-1">
+                  <button
+                    onClick={save}
+                    disabled={!isValidNepalPhone(draft.phone) || !isValidEmail(draft.email) || !draft.name.trim()}
+                    className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditing(false)}
+                    className="px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+        </div>
+
+        <div className="border border-[#E4E9EC] rounded-xl p-4 max-w-[560px] mb-5 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[13px] font-bold text-[#1A2027]">Password</div>
+            <div className="text-[11px] text-[#8A96A3] mt-0.5">
+              Send the doctor a temporary password by email — they&apos;ll be prompted to set their own on next sign-in.
+            </div>
+          </div>
+          <button
+            onClick={doResetPassword}
+            className="shrink-0 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[#E4E9EC] text-[#3A4652] cursor-pointer"
+          >
+            Reset Password
+          </button>
+        </div>
+        {resetMsg && <div className="text-[11px] text-[#1F7A4D] mb-4 -mt-3 max-w-[560px]">{resetMsg}</div>}
+
+        <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Activity ({activity.length})</div>
+        <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+          {activity.length === 0 ? (
+            <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No activity yet</div>
+          ) : (
+            activity.map((a) => (
+              <div key={a.key} className="px-4 py-3 border-b border-[#F0F2F4] last:border-0">
+                <div className="text-xs font-semibold text-[#3A4652]">{a.text}</div>
+                <div className="text-[10px] text-[#8A96A3] mt-0.5">{fmtDateTime(a.time)}</div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const q = search.trim().toLowerCase();
   const visible = doctors.filter(
     (d) =>
@@ -338,10 +483,11 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
     <div>
       <SearchBox value={search} onChange={setSearch} placeholder="Search by name, doctor ID, email, or phone..." />
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
-        <div className="grid grid-cols-[1.4fr_1.2fr_1fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[520px]">
+        <div className="grid grid-cols-[1.4fr_1.2fr_1fr_0.6fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[600px]">
           <div>Name</div>
           <div>Contact</div>
           <div>Address</div>
+          <div>Actions</div>
         </div>
         {doctors.length === 0 ? (
           <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No doctor accounts yet</div>
@@ -351,7 +497,7 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
           visible.map((d) => (
             <div
               key={d.doctorId}
-              className="grid grid-cols-[1.4fr_1.2fr_1fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[520px]"
+              className="grid grid-cols-[1.4fr_1.2fr_1fr_0.6fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[600px]"
             >
               <div>
                 <div className="font-semibold text-[#1A2027]">{d.name}</div>
@@ -363,6 +509,9 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
                 {d.phone}
               </div>
               <div className="text-[#5B6773]">{d.address || "—"}</div>
+              <div onClick={() => setSelected(d)} className="text-primary font-semibold cursor-pointer">
+                View
+              </div>
             </div>
           ))
         )}

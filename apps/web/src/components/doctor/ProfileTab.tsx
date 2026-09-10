@@ -93,6 +93,12 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
 
   return (
     <div>
+      {doctor.mustChangePassword && (
+        <div className="px-4 py-3 rounded-[10px] mb-4 bg-[#FDF3E7] border border-[#F0DCB8] text-[#8A5A00]">
+          <div className="text-xs font-bold mb-0.5">Please set a new password</div>
+          <div className="text-[11px]">An admin reset your password to a temporary one — set your own below to keep your account secure.</div>
+        </div>
+      )}
       <div
         className="px-4 py-3 rounded-[10px] mb-6"
         style={{ background: verified ? "#EAF6EE" : "#FFF8EA", border: `1px solid ${verified ? "#CFE9D8" : "#F0DFAE"}` }}
