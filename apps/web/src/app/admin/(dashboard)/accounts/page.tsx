@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import EmailInput from "@/components/EmailInput";
+import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAdminAuth } from "@/context/AdminAuthContext";
@@ -338,20 +339,66 @@ function buildDoctorActivity(doctorId: string, bookings: VetBooking[]): Activity
   return entries.sort((a, b) => b.time - a.time);
 }
 
+const DOCTOR_DOCUMENTS: { field: "cv" | "degreeCertificate" | "nvcLicense" | "nationalId"; label: string }[] = [
+  { field: "cv", label: "CV" },
+  { field: "degreeCertificate", label: "Primary Degree Certificate" },
+  { field: "nvcLicense", label: "NVC License" },
+  { field: "nationalId", label: "National Identity Card" },
+];
+
+function DocumentPreviewRow({ label, value }: { label: string; value: string }) {
+  const isDoc = value.startsWith("DOC:");
+  return (
+    <div className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
+      <div className="flex items-center gap-2.5">
+        <span
+          className="w-[16px] h-[16px] rounded-[4px] shrink-0 flex items-center justify-center text-[10px] font-bold"
+          style={{ background: value ? "#1F7A4D" : "#fff", border: `1.5px solid ${value ? "#1F7A4D" : "#C7CDD3"}`, color: "#fff" }}
+        >
+          {value && "✓"}
+        </span>
+        <div className="text-[#3A4652]">{label}</div>
+      </div>
+      {!value ? (
+        <span className="text-[11px] text-[#8A96A3]">Not uploaded</span>
+      ) : isDoc ? (
+        <span className="text-[11px] text-[#5B6773]">{value.slice(4)}</span>
+      ) : (
+        <a href={value} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
+          Preview
+        </a>
+      )}
+    </div>
+  );
+}
+
+/** This doctor's booking conversations with clients, newest booking first — read-only, admin never replies from here. */
+function buildDoctorChats(doctorId: string, bookings: VetBooking[]): VetBooking[] {
+  return bookings.filter((b) => b.doctorId === doctorId && b.chatMessages.length > 0).sort((a, b) => b.createdAt - a.createdAt);
+}
+
 function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
   const { bookings } = useVet();
-  const { adminUpdateAccount, adminResetPassword } = useDoctorAuth();
+  const { adminUpdateAccount, adminResetPassword, adminSetPassword } = useDoctorAuth();
   const [selected, setSelected] = useState<DoctorAccount | null>(null);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<{ name: string; email: string; phone: string; emergencyPhone: string; address: string } | null>(null);
   const [resetMsg, setResetMsg] = useState("");
+  const [setPwDraft, setSetPwDraft] = useState("");
+  const [setPwMsg, setSetPwMsg] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailMsg, setEmailMsg] = useState("");
 
+  const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const fmtDateTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   if (selected) {
     const mine = doctors.find((d) => d.doctorId === selected.doctorId) ?? selected;
     const activity = buildDoctorActivity(mine.doctorId, bookings);
+    const chats = buildDoctorChats(mine.doctorId, bookings);
 
     const startEdit = () => {
       setDraft({ name: mine.name, email: mine.email, phone: mine.phone, emergencyPhone: mine.emergencyPhone, address: mine.address });
@@ -367,6 +414,24 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
       setResetMsg(res.ok ? "✓ A temporary password has been emailed to the doctor." : res.error);
       setTimeout(() => setResetMsg(""), 4000);
     };
+    const doSetPassword = () => {
+      const res = adminSetPassword(mine.doctorId, setPwDraft);
+      setSetPwMsg(res.ok ? "✓ Password updated — the doctor will be prompted to change it on next sign-in." : res.error);
+      if (res.ok) setSetPwDraft("");
+      setTimeout(() => setSetPwMsg(""), 4000);
+    };
+    const doSendEmail = async () => {
+      if (!emailBody.trim()) return;
+      setEmailSending(true);
+      const res = await notifyEvent("admin_custom_message", mine.email, mine.name, { name: mine.name, subject: emailSubject, message: emailBody });
+      setEmailSending(false);
+      setEmailMsg(res.ok ? "✓ Email sent." : `Failed to send: ${res.error}`);
+      if (res.ok) {
+        setEmailSubject("");
+        setEmailBody("");
+      }
+      setTimeout(() => setEmailMsg(""), 4000);
+    };
 
     return (
       <div>
@@ -380,90 +445,197 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
           ← Back to Doctor Accounts
         </div>
 
-        <div className="border border-[#E4E9EC] rounded-xl p-5 max-w-[560px] mb-3.5">
-          <div className="flex justify-between items-center mb-3.5">
-            <div>
-              <div className="text-[15px] font-bold text-[#1A2027]">{mine.name}</div>
-              <div className="text-[11px] text-[#8A96A3] mt-0.5">{mine.doctorId}</div>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
+          <div className="min-w-0">
+            <div className="border border-[#E4E9EC] rounded-xl p-5 mb-3.5">
+              <div className="flex justify-between items-start mb-3.5">
+                <div className="flex items-center gap-3">
+                  <MediaSlot src={mine.photo} label="profile photo" shape="circle" className="w-[52px] h-[52px] shrink-0" />
+                  <div>
+                    <div className="text-[15px] font-bold text-[#1A2027]">{mine.name}</div>
+                    <div className="text-[11px] text-[#8A96A3] mt-0.5">{mine.doctorId}</div>
+                  </div>
+                </div>
+                {!editing && (
+                  <button onClick={startEdit} className="text-xs font-semibold text-primary cursor-pointer shrink-0">
+                    Edit
+                  </button>
+                )}
+              </div>
+              {!editing ? (
+                <div className="grid grid-cols-2 gap-3.5 text-xs">
+                  <Field label="Email" value={mine.email} />
+                  <Field label="Phone" value={mine.phone} />
+                  <Field label="Emergency Number" value={mine.emergencyPhone} />
+                  <Field label="Address" value={mine.address} />
+                </div>
+              ) : (
+                draft && (
+                  <div className="text-xs">
+                    <EditField label="Full Name" value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} />
+                    <div className="mb-3">
+                      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Email</div>
+                      <EmailInput value={draft.email} onChange={(v) => setDraft({ ...draft, email: v })} />
+                    </div>
+                    <div className="mb-3">
+                      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone</div>
+                      <PhoneInput value={draft.phone} onChange={(v) => setDraft({ ...draft, phone: v })} />
+                    </div>
+                    <div className="mb-3">
+                      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Emergency Number</div>
+                      <PhoneInput value={draft.emergencyPhone} onChange={(v) => setDraft({ ...draft, emergencyPhone: v })} />
+                    </div>
+                    <EditField label="Address" value={draft.address} onChange={(v) => setDraft({ ...draft, address: v })} />
+                    <div className="flex gap-2.5 mt-1">
+                      <button
+                        onClick={save}
+                        disabled={!isValidNepalPhone(draft.phone) || !isValidEmail(draft.email) || !draft.name.trim()}
+                        className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditing(false)}
+                        className="px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )
+              )}
             </div>
-            {!editing && (
-              <button onClick={startEdit} className="text-xs font-semibold text-primary cursor-pointer">
-                Edit
+
+            <div className="border border-[#E4E9EC] rounded-xl p-4 mb-3.5">
+              <div className="text-[13px] font-bold text-[#1A2027] mb-3">Password</div>
+              <div className="flex items-center justify-between gap-3 mb-3.5 pb-3.5 border-b border-[#F0F2F4]">
+                <div className="text-[11px] text-[#8A96A3]">Email the doctor a random temporary password.</div>
+                <button
+                  onClick={doResetPassword}
+                  className="shrink-0 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[#E4E9EC] text-[#3A4652] cursor-pointer"
+                >
+                  Reset Password
+                </button>
+              </div>
+              {resetMsg && <div className="text-[11px] text-[#1F7A4D] mb-3.5">{resetMsg}</div>}
+
+              <div className="text-[11px] text-[#8A96A3] mb-2">Or set a specific password directly (e.g. to tell the doctor yourself).</div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={setPwDraft}
+                  onChange={(e) => setSetPwDraft(e.target.value)}
+                  placeholder="New password"
+                  className="flex-1 min-w-0 px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+                />
+                <button
+                  onClick={doSetPassword}
+                  disabled={!setPwDraft.trim()}
+                  className="shrink-0 bg-primary text-white px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Set Password
+                </button>
+              </div>
+              {setPwMsg && <div className="text-[11px] text-[#1F7A4D] mt-2">{setPwMsg}</div>}
+            </div>
+
+            <div className="border border-[#E4E9EC] rounded-xl p-4 mb-3.5">
+              <div className="text-[13px] font-bold text-[#1A2027] mb-1">Send Email</div>
+              <div className="text-[11px] text-[#8A96A3] mb-3">Send a one-off message to this doctor&apos;s inbox.</div>
+              <input
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                placeholder="Subject"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5 box-border"
+              />
+              <textarea
+                value={emailBody}
+                onChange={(e) => setEmailBody(e.target.value)}
+                placeholder="Message"
+                rows={4}
+                className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5 box-border resize-none"
+              />
+              <button
+                onClick={doSendEmail}
+                disabled={!emailBody.trim() || emailSending}
+                className="bg-primary text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {emailSending ? "Sending…" : "Send Email"}
               </button>
-            )}
-          </div>
-          {!editing ? (
-            <div className="grid grid-cols-2 gap-3.5 text-xs">
-              <Field label="Email" value={mine.email} />
-              <Field label="Phone" value={mine.phone} />
-              <Field label="Emergency Number" value={mine.emergencyPhone} />
-              <Field label="Address" value={mine.address} />
+              {emailMsg && <div className="text-[11px] text-[#1F7A4D] mt-2">{emailMsg}</div>}
             </div>
-          ) : (
-            draft && (
-              <div className="text-xs">
-                <EditField label="Full Name" value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} />
-                <div className="mb-3">
-                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Email</div>
-                  <EmailInput value={draft.email} onChange={(v) => setDraft({ ...draft, email: v })} />
-                </div>
-                <div className="mb-3">
-                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone</div>
-                  <PhoneInput value={draft.phone} onChange={(v) => setDraft({ ...draft, phone: v })} />
-                </div>
-                <div className="mb-3">
-                  <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Emergency Number</div>
-                  <PhoneInput value={draft.emergencyPhone} onChange={(v) => setDraft({ ...draft, emergencyPhone: v })} />
-                </div>
-                <EditField label="Address" value={draft.address} onChange={(v) => setDraft({ ...draft, address: v })} />
-                <div className="flex gap-2.5 mt-1">
-                  <button
-                    onClick={save}
-                    disabled={!isValidNepalPhone(draft.phone) || !isValidEmail(draft.email) || !draft.name.trim()}
-                    className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditing(false)}
-                    className="px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )
-          )}
-        </div>
 
-        <div className="border border-[#E4E9EC] rounded-xl p-4 max-w-[560px] mb-5 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[13px] font-bold text-[#1A2027]">Password</div>
-            <div className="text-[11px] text-[#8A96A3] mt-0.5">
-              Send the doctor a temporary password by email — they&apos;ll be prompted to set their own on next sign-in.
+            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Documents</div>
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] px-4 mb-5">
+              {DOCTOR_DOCUMENTS.map((d) => (
+                <DocumentPreviewRow key={d.field} label={d.label} value={mine[d.field]} />
+              ))}
+            </div>
+
+            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Bank Details</div>
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-4 mb-5">
+              <div className="grid grid-cols-2 gap-3.5 text-xs mb-3.5">
+                <Field label="Bank Name" value={mine.bankName || "—"} />
+                <Field label="Account Holder" value={mine.bankAccountHolder || "—"} />
+                <Field label="Account Number" value={mine.bankAccountNumber || "—"} />
+                <Field label="Branch" value={mine.bankBranch || "—"} />
+              </div>
+              <div className="text-[#8A96A3] text-xs mb-1.5">Bank QR</div>
+              {mine.bankQr ? (
+                <a href={mine.bankQr} target="_blank" rel="noreferrer">
+                  <MediaSlot src={mine.bankQr} label="bank QR" className="w-[140px] h-[140px] rounded-lg border border-[#E4E9EC]" />
+                </a>
+              ) : (
+                <div className="text-xs text-[#8A96A3]">Not uploaded</div>
+              )}
+            </div>
+
+            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Activity ({activity.length})</div>
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+              {activity.length === 0 ? (
+                <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No activity yet</div>
+              ) : (
+                activity.map((a) => (
+                  <div key={a.key} className="px-4 py-3 border-b border-[#F0F2F4] last:border-0">
+                    <div className="text-xs font-semibold text-[#3A4652]">{a.text}</div>
+                    <div className="text-[10px] text-[#8A96A3] mt-0.5">{fmtDateTime(a.time)}</div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-          <button
-            onClick={doResetPassword}
-            className="shrink-0 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[#E4E9EC] text-[#3A4652] cursor-pointer"
-          >
-            Reset Password
-          </button>
-        </div>
-        {resetMsg && <div className="text-[11px] text-[#1F7A4D] mb-4 -mt-3 max-w-[560px]">{resetMsg}</div>}
 
-        <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Activity ({activity.length})</div>
-        <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-          {activity.length === 0 ? (
-            <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No activity yet</div>
-          ) : (
-            activity.map((a) => (
-              <div key={a.key} className="px-4 py-3 border-b border-[#F0F2F4] last:border-0">
-                <div className="text-xs font-semibold text-[#3A4652]">{a.text}</div>
-                <div className="text-[10px] text-[#8A96A3] mt-0.5">{fmtDateTime(a.time)}</div>
-              </div>
-            ))
-          )}
+          <div className="lg:sticky lg:top-4">
+            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Chat History (read-only)</div>
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden max-h-[80vh] overflow-y-auto">
+              {chats.length === 0 ? (
+                <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No chat messages yet</div>
+              ) : (
+                chats.map((b) => (
+                  <div key={b.id} className="border-b border-[#F0F2F4] last:border-0 p-3.5">
+                    <div className="text-xs font-semibold text-[#1A2027] mb-0.5">
+                      {b.ownerName} · {b.petName}
+                    </div>
+                    <div className="text-[10px] text-[#8A96A3] mb-2">{fmtDate(b.createdAt)}</div>
+                    <div className="flex flex-col gap-1.5">
+                      {b.chatMessages.map((msg, i) => {
+                        const fromDoctor = msg.from === "doctor";
+                        return (
+                          <div
+                            key={i}
+                            className="max-w-[85%] px-2.5 py-1.5 text-[11px] leading-relaxed rounded-lg"
+                            style={{ alignSelf: fromDoctor ? "flex-end" : "flex-start", background: fromDoctor ? "#1996C8" : "#F0F2F4", color: fromDoctor ? "#fff" : "#1A2027" }}
+                          >
+                            {msg.text}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );

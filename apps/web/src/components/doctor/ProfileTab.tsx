@@ -19,8 +19,17 @@ const REQUIRED_DOCUMENTS: { field: DocField; label: string }[] = [
 ];
 
 export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | undefined }) {
-  const { doctor, updateAddress, updatePhone, updateEmergencyPhone, updatePhoto, updateDocument, changePassword } = useDoctorAuth();
+  const { doctor, updateAddress, updatePhone, updateEmergencyPhone, updatePhoto, updateDocument, updateBankDetails, updateBankQr, changePassword } =
+    useDoctorAuth();
   const { setDoctorFee, setDoctorCommission } = useVet();
+
+  const [bankDraft, setBankDraft] = useState({
+    bankName: doctor?.bankName ?? "",
+    bankAccountHolder: doctor?.bankAccountHolder ?? "",
+    bankAccountNumber: doctor?.bankAccountNumber ?? "",
+    bankBranch: doctor?.bankBranch ?? "",
+  });
+  const [bankSaved, setBankSaved] = useState(false);
 
   const [addressDraft, setAddressDraft] = useState(doctor?.address ?? "");
   const [addressSaved, setAddressSaved] = useState(false);
@@ -80,6 +89,12 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
     setDoctorCommission(doctorRecord.id, commissionType, commissionDraft);
     setCommissionSaved(true);
     setTimeout(() => setCommissionSaved(false), 3000);
+  };
+
+  const saveBankDetails = () => {
+    updateBankDetails(bankDraft);
+    setBankSaved(true);
+    setTimeout(() => setBankSaved(false), 3000);
   };
 
   const submitPasswordChange = () => {
@@ -234,6 +249,52 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
             {commissionSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Updated</div>}
           </div>
           <div className="text-[11px] text-[#8A96A3] mt-1.5">City Pet House&apos;s share of each consult you complete.</div>
+        </FormRow>
+
+        <Divider />
+
+        <FormRow label="Bank Name">
+          <input
+            value={bankDraft.bankName}
+            onChange={(e) => setBankDraft((d) => ({ ...d, bankName: e.target.value }))}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+        </FormRow>
+
+        <FormRow label="Account Holder Name">
+          <input
+            value={bankDraft.bankAccountHolder}
+            onChange={(e) => setBankDraft((d) => ({ ...d, bankAccountHolder: e.target.value }))}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+        </FormRow>
+
+        <FormRow label="Account Number">
+          <input
+            value={bankDraft.bankAccountNumber}
+            onChange={(e) => setBankDraft((d) => ({ ...d, bankAccountNumber: e.target.value }))}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+        </FormRow>
+
+        <FormRow label="Branch">
+          <input
+            value={bankDraft.bankBranch}
+            onChange={(e) => setBankDraft((d) => ({ ...d, bankBranch: e.target.value }))}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+          <div className="flex items-center gap-2.5 mt-2">
+            <button onClick={saveBankDetails} className="bg-primary text-white px-4 py-2 rounded-md text-xs font-semibold cursor-pointer">
+              Save
+            </button>
+            {bankSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Bank details updated</div>}
+          </div>
+        </FormRow>
+
+        <FormRow label="Bank QR (scan to pay)">
+          <div className="w-[160px]">
+            <ImageUploadField value={doctor.bankQr ?? ""} onChange={updateBankQr} label="bank QR code" height="h-[160px]" maxWidth={600} maxHeight={600} />
+          </div>
         </FormRow>
 
         <Divider />

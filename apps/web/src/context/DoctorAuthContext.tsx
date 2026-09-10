@@ -27,12 +27,15 @@ type DoctorAuthValue = {
   updateEmergencyPhone: (phone: string) => void;
   updatePhoto: (photo: string) => void;
   updateDocument: (field: "cv" | "degreeCertificate" | "nvcLicense" | "nationalId", value: string) => void;
+  updateBankDetails: (patch: Partial<Pick<DoctorAccount, "bankName" | "bankAccountHolder" | "bankAccountNumber" | "bankBranch">>) => void;
+  updateBankQr: (bankQr: string) => void;
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (doctorId: string) => Result;
   resetPassword: (doctorId: string, code: string, newPassword: string) => Result;
   addAccount: (account: DoctorAccount) => boolean;
   adminUpdateAccount: (doctorId: string, patch: Partial<Pick<DoctorAccount, "name" | "email" | "phone" | "emergencyPhone" | "address">>) => void;
   adminResetPassword: (doctorId: string) => Result;
+  adminSetPassword: (doctorId: string, newPassword: string) => Result;
 };
 
 const DoctorAuthContext = createContext<DoctorAuthValue | null>(null);
@@ -171,6 +174,18 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
     persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, [field]: value } : a)));
   };
 
+  const updateBankDetails = (patch: Partial<Pick<DoctorAccount, "bankName" | "bankAccountHolder" | "bankAccountNumber" | "bankBranch">>) => {
+    if (!state.doctor) return;
+    const doctorId = state.doctor.doctorId;
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, ...patch } : a)));
+  };
+
+  const updateBankQr = (bankQr: string) => {
+    if (!state.doctor) return;
+    const doctorId = state.doctor.doctorId;
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, bankQr } : a)));
+  };
+
   const changePassword = (newPassword: string) => {
     if (!state.doctor) return;
     const doctorId = state.doctor.doctorId;
@@ -200,6 +215,17 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
     return { ok: true };
   };
 
+  const adminSetPassword = (doctorId: string, newPassword: string): Result => {
+    const account = state.accounts.find((a) => a.doctorId === doctorId);
+    if (!account) return { ok: false, error: "Doctor account not found." };
+    if (!newPassword.trim()) return { ok: false, error: "Enter a password." };
+    const ok = persistAccounts(
+      state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, password: newPassword, mustChangePassword: true } : a)),
+    );
+    if (!ok) return { ok: false, error: STORAGE_FULL_MESSAGE };
+    return { ok: true };
+  };
+
   return (
     <DoctorAuthContext.Provider
       value={{
@@ -214,12 +240,15 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
         updateEmergencyPhone,
         updatePhoto,
         updateDocument,
+        updateBankDetails,
+        updateBankQr,
         changePassword,
         requestPasswordReset,
         resetPassword,
         addAccount,
         adminUpdateAccount,
         adminResetPassword,
+        adminSetPassword,
       }}
     >
       {children}
