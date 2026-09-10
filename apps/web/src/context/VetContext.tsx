@@ -80,6 +80,7 @@ type VetValue = {
   toggleDoctorOnline: (doctorId: string) => void;
   setDoctorFee: (doctorId: string, feeRs: number) => void;
   setDoctorCommission: (doctorId: string, commissionType: "flat" | "percent", commissionValue: number) => void;
+  adminUpdateDoctorProfile: (doctorId: string, patch: Partial<Pick<Doctor, "qualification" | "nvcNumber">>) => void;
   toggleAvailabilitySlot: (doctorId: string, date: string, time: string) => void;
   toggleWebVetActive: () => void;
   bookConsult: (input: NewBookingInput) => VetBooking | null;
@@ -471,6 +472,10 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     updateDoctor(doctorId, { commissionType, commissionValue });
   };
 
+  const adminUpdateDoctorProfile = (doctorId: string, patch: Partial<Pick<Doctor, "qualification" | "nvcNumber">>) => {
+    updateDoctor(doctorId, patch);
+  };
+
   const toggleAvailabilitySlot = (doctorId: string, date: string, time: string) => {
     const forDoctor = state.availability[doctorId] ?? {};
     const openTimes = forDoctor[date] ?? [];
@@ -764,6 +769,7 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
         toggleDoctorOnline,
         setDoctorFee,
         setDoctorCommission,
+        adminUpdateDoctorProfile,
         toggleAvailabilitySlot,
         toggleWebVetActive,
         bookConsult,
