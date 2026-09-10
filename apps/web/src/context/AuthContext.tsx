@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { accountSeed } from "@/lib/account-seed";
+import { generateTempPassword } from "@/lib/doctor-registration-types";
 import { notifyEvent } from "@/lib/notify-client";
 import type { Account, RegisterInput, SavedAddress } from "@/lib/auth-types";
 
@@ -24,6 +25,8 @@ type AuthValue = {
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (email: string) => Result;
   resetPassword: (email: string, code: string, newPassword: string) => Result;
+  adminUpdateAccount: (id: string, patch: Partial<Pick<Account, "name" | "email" | "phone" | "sex" | "dob" | "address">>) => void;
+  adminResetPassword: (id: string) => Result;
   addAddress: (label: string, line: string) => void;
   updateAddress: (id: string, patch: Partial<Pick<SavedAddress, "label" | "line">>) => void;
   removeAddress: (id: string) => void;
@@ -164,11 +167,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const changePassword = (newPassword: string) => {
     setState((s) => {
       if (!s.user) return s;
-      const updated = { ...s.user, password: newPassword };
+      const updated = { ...s.user, password: newPassword, mustChangePassword: false };
       const accounts = s.accounts.map((a) => (a.id === updated.id ? updated : a));
       persistAccounts(accounts);
       return { accounts, user: updated, ready: true };
     });
+  };
+
+  const adminUpdateAccount = (id: string, patch: Partial<Pick<Account, "name" | "email" | "phone" | "sex" | "dob" | "address">>) => {
+    setState((s) => {
+      const accounts = s.accounts.map((a) => (a.id === id ? { ...a, ...patch } : a));
+      persistAccounts(accounts);
+      const user = s.user && s.user.id === id ? { ...s.user, ...patch } : s.user;
+      return { ...s, accounts, user };
+    });
+  };
+
+  const adminResetPassword = (id: string): Result => {
+    const account = state.accounts.find((a) => a.id === id);
+    if (!account) return { ok: false, error: "Account not found." };
+    const tempPassword = generateTempPassword();
+    const accounts = state.accounts.map((a) => (a.id === id ? { ...a, password: tempPassword, mustChangePassword: true } : a));
+    persistAccounts(accounts);
+    setState((s) => ({
+      ...s,
+      accounts,
+      user: s.user && s.user.id === id ? { ...s.user, password: tempPassword, mustChangePassword: true } : s.user,
+    }));
+    notifyEvent("admin_password_reset", account.email, account.name, { name: account.name, tempPassword });
+    return { ok: true };
   };
 
   const addAddress = (label: string, line: string) => {
@@ -236,6 +263,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         changePassword,
         requestPasswordReset,
         resetPassword,
+        adminUpdateAccount,
+        adminResetPassword,
         addAddress,
         updateAddress,
         removeAddress,

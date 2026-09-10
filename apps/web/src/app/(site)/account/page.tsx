@@ -312,6 +312,12 @@ function ProfileTab() {
 
   return (
     <div>
+      {user.mustChangePassword && (
+        <div className="max-w-[500px] mb-4 bg-[#FDF3E7] border border-[#F0DCB8] text-[#8A5A00] rounded-xl p-4 text-xs">
+          <div className="font-bold mb-0.5">Please set a new password</div>
+          An admin reset your password to a temporary one — set your own below to keep your account secure.
+        </div>
+      )}
       {!editing ? (
         <div className="border border-[#E4E9EC] rounded-xl p-5 max-w-[500px]">
           <div className="text-[13px] font-bold text-[#1A2027] mb-3.5 pb-2 border-b border-[#EEF1F3]">Personal Details</div>
