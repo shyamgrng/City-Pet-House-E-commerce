@@ -18,7 +18,7 @@ export default function SiteFooter() {
         <span className="text-[22px] font-heading font-bold text-white">City Pet House</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1.3fr] gap-7 mb-7">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row lg:justify-between gap-7 mb-7">
         <div>
           <div className="text-[15px] font-bold text-white mb-3">General</div>
           <div className="text-sm leading-[2.2]">
