@@ -13,5 +13,5 @@ export default function AdminIndexPage() {
     router.replace(user ? "/admin/dashboard" : "/admin/login");
   }, [ready, user, router]);
 
-  return <div className="min-h-screen bg-[#F7F9FA]" />;
+  return <div className="min-h-screen bg-white" />;
 }
