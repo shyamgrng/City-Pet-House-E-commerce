@@ -6,9 +6,22 @@ import { useServices } from "@/context/ServiceContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { footerCustomerCareLinks, footerGeneralLinks, footerQuickLinks } from "@/lib/home-data";
 
+/** Splits a comma-separated address into a street/area line and a ward/city line (the last two
+ * segments), so the footer's Contact Us column shows a stable two-line address instead of
+ * wrapping wherever the column happens to be narrow. */
+function splitAddress(address: string): [string, string] {
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length <= 2) return [address, ""];
+  return [parts.slice(0, -2).join(", "), parts.slice(-2).join(", ")];
+}
+
 export default function SiteFooter() {
   const { services } = useServices();
   const { settings } = useSiteSettings();
+  const [addressLine1, addressLine2] = splitAddress(settings.address);
 
   return (
     <div className="bg-[#1A2027] text-[#C9CFD4] pt-11 pb-20 sm:pb-6">
@@ -18,7 +31,7 @@ export default function SiteFooter() {
         <span className="text-[22px] font-heading font-bold text-white">City Pet House</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1.3fr] gap-7 mb-7">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row lg:justify-between gap-7 mb-7">
         <div>
           <div className="text-[15px] font-bold text-white mb-3">General</div>
           <div className="text-sm leading-[2.2]">
@@ -70,8 +83,14 @@ export default function SiteFooter() {
             Contact Us
           </Link>
           <div className="text-sm leading-[2.2]">
-            {settings.address}
+            {addressLine1}
             <br />
+            {addressLine2 && (
+              <>
+                {addressLine2}
+                <br />
+              </>
+            )}
             {settings.phone}
             <br />
             {settings.email}
