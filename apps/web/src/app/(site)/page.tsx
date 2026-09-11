@@ -29,7 +29,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <div className="flex flex-col lg:flex-row gap-3.5 px-4 md:px-8 pt-5 pb-2">
-        <div className="lg:flex-[2.2] relative h-[210px] lg:h-[300px] rounded-xl overflow-hidden">
+        <div className="lg:flex-[2.2] relative h-[165px] lg:h-[300px] rounded-xl overflow-hidden">
           <MediaSlot src={content.heroImage} label="cover photo — shop & clinic" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="absolute inset-0 pointer-events-none"
@@ -38,7 +38,18 @@ export default function HomePage() {
                 "linear-gradient(90deg, rgba(26,32,39,0.55) 0%, rgba(26,32,39,0.15) 55%, rgba(26,32,39,0) 100%)",
             }}
           />
-          <div className="relative px-7 max-w-[460px] h-full flex flex-col justify-center pointer-events-none">
+          {/* Mobile: centered text pinned to the bottom, no buttons */}
+          <div className="lg:hidden absolute left-0 right-0 bottom-0 text-center px-4 pb-3 pointer-events-none">
+            <div className="font-heading font-bold text-sm text-white leading-snug" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+              {heroHeadline}
+            </div>
+            <div className="text-[11px] text-white mt-1 leading-snug" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+              {heroSubtext}
+            </div>
+          </div>
+
+          {/* Desktop: left-aligned, vertically centered, with CTA buttons */}
+          <div className="hidden lg:flex relative px-7 max-w-[460px] h-full flex-col justify-center pointer-events-none">
             <div
               className="font-heading font-bold text-[26px] text-white leading-tight"
               style={{ textShadow: "0 2px 8px rgba(0,0,0,0.45)" }}
