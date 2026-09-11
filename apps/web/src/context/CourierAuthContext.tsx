@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { generateTempPassword } from "@/lib/doctor-registration-types";
 import { notifyEvent } from "@/lib/notify-client";
 import { courierAccountSeed, type CourierAccount } from "@/lib/courier-auth-types";
 
@@ -10,6 +11,7 @@ const RESETS_KEY = "cph_courier_password_resets";
 const ADDED_KEY = "cph_courier_added_accounts";
 const REMOVED_KEY = "cph_courier_removed_ids";
 const RESET_CODE_TTL_MS = 15 * 60 * 1000;
+const SECURITY_LOG_LIMIT = 200;
 
 type Result = { ok: true } | { ok: false; error: string };
 type Overrides = Record<
@@ -30,6 +32,13 @@ type Overrides = Record<
       | "ratePerKm"
       | "defaultFlatPrice"
       | "isActive"
+      | "companyName"
+      | "contactPerson"
+      | "email"
+      | "businessDocument"
+      | "ownerIdDocument"
+      | "mustChangePassword"
+      | "securityLog"
     >
   >
 >;
@@ -69,6 +78,14 @@ type CourierAuthValue = {
   ) => { courierId: string; password: string };
   removeCourier: (courierId: string) => void;
   setActiveCourier: (courierId: string) => void;
+  adminUpdateAccount: (
+    courierId: string,
+    patch: Partial<
+      Pick<CourierAccount, "companyName" | "contactPerson" | "email" | "phone" | "altPhone" | "address" | "businessDocument" | "ownerIdDocument">
+    >,
+  ) => void;
+  adminResetPassword: (courierId: string) => Result;
+  adminSetPassword: (courierId: string, newPassword: string) => Result;
 };
 
 const CourierAuthContext = createContext<CourierAuthValue | null>(null);
@@ -224,7 +241,10 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
       return { ok: false, error: "Incorrect Courier ID or password." };
     }
     window.localStorage.setItem(SESSION_KEY, account.courierId);
-    setState((s) => ({ ...s, courier: account }));
+    const securityLog = [...(account.securityLog ?? []), { text: "Signed in", time: Date.now() }].slice(-SECURITY_LOG_LIMIT);
+    persistOverride(account.courierId, { securityLog });
+    const updated = { ...account, securityLog };
+    setState((s) => ({ ...s, courier: updated, accounts: s.accounts.map((a) => (a.courierId === updated.courierId ? updated : a)) }));
     return { ok: true };
   };
 
@@ -246,11 +266,51 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
   const changePassword = (newPassword: string) => {
     setState((s) => {
       if (!s.courier) return s;
-      persistOverride(s.courier.courierId, { password: newPassword });
-      const updated = { ...s.courier, password: newPassword };
+      const securityLog = [...(s.courier.securityLog ?? []), { text: "Changed password", time: Date.now() }].slice(-SECURITY_LOG_LIMIT);
+      persistOverride(s.courier.courierId, { password: newPassword, mustChangePassword: false, securityLog });
+      const updated = { ...s.courier, password: newPassword, mustChangePassword: false, securityLog };
       const accounts = s.accounts.map((a) => (a.courierId === updated.courierId ? updated : a));
       return { accounts, courier: updated, ready: true };
     });
+  };
+
+  const adminUpdateAccount = (
+    courierId: string,
+    patch: Partial<
+      Pick<CourierAccount, "companyName" | "contactPerson" | "email" | "phone" | "altPhone" | "address" | "businessDocument" | "ownerIdDocument">
+    >,
+  ) => {
+    persistOverride(courierId, patch);
+    setState((s) => ({ ...s, accounts: s.accounts.map((a) => (a.courierId === courierId ? { ...a, ...patch } : a)) }));
+  };
+
+  const adminResetPassword = (courierId: string): Result => {
+    const account = state.accounts.find((a) => a.courierId === courierId);
+    if (!account) return { ok: false, error: "Courier account not found." };
+    const tempPassword = generateTempPassword();
+    const securityLog = [...(account.securityLog ?? []), { text: "Admin reset password (temporary password emailed)", time: Date.now() }].slice(
+      -SECURITY_LOG_LIMIT,
+    );
+    persistOverride(courierId, { password: tempPassword, mustChangePassword: true, securityLog });
+    setState((s) => ({
+      ...s,
+      accounts: s.accounts.map((a) => (a.courierId === courierId ? { ...a, password: tempPassword, mustChangePassword: true, securityLog } : a)),
+    }));
+    notifyEvent("admin_password_reset", account.email, account.companyName, { name: account.companyName, tempPassword });
+    return { ok: true };
+  };
+
+  const adminSetPassword = (courierId: string, newPassword: string): Result => {
+    const account = state.accounts.find((a) => a.courierId === courierId);
+    if (!account) return { ok: false, error: "Courier account not found." };
+    if (!newPassword.trim()) return { ok: false, error: "Enter a password." };
+    const securityLog = [...(account.securityLog ?? []), { text: "Admin set a new password directly", time: Date.now() }].slice(-SECURITY_LOG_LIMIT);
+    persistOverride(courierId, { password: newPassword, mustChangePassword: true, securityLog });
+    setState((s) => ({
+      ...s,
+      accounts: s.accounts.map((a) => (a.courierId === courierId ? { ...a, password: newPassword, mustChangePassword: true, securityLog } : a)),
+    }));
+    return { ok: true };
   };
 
   return (
@@ -268,6 +328,9 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
         addCourier,
         removeCourier,
         setActiveCourier,
+        adminUpdateAccount,
+        adminResetPassword,
+        adminSetPassword,
       }}
     >
       {children}
