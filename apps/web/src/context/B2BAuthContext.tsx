@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { generateTempPassword } from "@/lib/doctor-registration-types";
 import { notifyEvent } from "@/lib/notify-client";
 import { b2bAccountSeed, type B2BAccount } from "@/lib/b2b-auth-types";
 
@@ -9,9 +10,18 @@ const OVERRIDES_KEY = "cph_b2b_account_overrides";
 const RESETS_KEY = "cph_b2b_password_resets";
 const ADDED_KEY = "cph_b2b_added_accounts";
 const RESET_CODE_TTL_MS = 15 * 60 * 1000;
+const SECURITY_LOG_LIMIT = 200;
 
 type Result = { ok: true } | { ok: false; error: string };
-type Overrides = Record<string, Partial<Pick<B2BAccount, "password" | "phone" | "altPhone" | "address">>>;
+type Overrides = Record<
+  string,
+  Partial<
+    Pick<
+      B2BAccount,
+      "password" | "phone" | "altPhone" | "address" | "companyName" | "contactPerson" | "email" | "businessDocument" | "ownerIdDocument" | "mustChangePassword" | "securityLog"
+    >
+  >
+>;
 type ResetRecord = { code: string; expiresAt: number };
 
 type B2BAuthValue = {
@@ -25,6 +35,14 @@ type B2BAuthValue = {
   requestPasswordReset: (b2bId: string) => Result;
   resetPassword: (b2bId: string, code: string, newPassword: string) => Result;
   addSupplier: (input: Omit<B2BAccount, "b2bId" | "password">) => { b2bId: string; password: string };
+  adminUpdateAccount: (
+    b2bId: string,
+    patch: Partial<
+      Pick<B2BAccount, "companyName" | "contactPerson" | "email" | "phone" | "altPhone" | "address" | "businessDocument" | "ownerIdDocument">
+    >,
+  ) => void;
+  adminResetPassword: (b2bId: string) => Result;
+  adminSetPassword: (b2bId: string, newPassword: string) => Result;
 };
 
 const B2BAuthContext = createContext<B2BAuthValue | null>(null);
@@ -88,7 +106,7 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
     setState({ accounts, supplier: loadSession(accounts), ready: true });
   }, []);
 
-  const persistOverride = (b2bId: string, patch: Partial<Pick<B2BAccount, "password" | "phone" | "altPhone" | "address">>) => {
+  const persistOverride = (b2bId: string, patch: Overrides[string]) => {
     const overrides = loadOverrides();
     overrides[b2bId] = { ...overrides[b2bId], ...patch };
     window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
@@ -137,7 +155,10 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
       return { ok: false, error: "Incorrect B2B ID or password." };
     }
     window.localStorage.setItem(SESSION_KEY, account.b2bId);
-    setState((s) => ({ ...s, supplier: account }));
+    const securityLog = [...(account.securityLog ?? []), { text: "Signed in", time: Date.now() }].slice(-SECURITY_LOG_LIMIT);
+    persistOverride(account.b2bId, { securityLog });
+    const updated = { ...account, securityLog };
+    setState((s) => ({ ...s, supplier: updated, accounts: s.accounts.map((a) => (a.b2bId === updated.b2bId ? updated : a)) }));
     return { ok: true };
   };
 
@@ -159,11 +180,51 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
   const changePassword = (newPassword: string) => {
     setState((s) => {
       if (!s.supplier) return s;
-      persistOverride(s.supplier.b2bId, { password: newPassword });
-      const updated = { ...s.supplier, password: newPassword };
+      const securityLog = [...(s.supplier.securityLog ?? []), { text: "Changed password", time: Date.now() }].slice(-SECURITY_LOG_LIMIT);
+      persistOverride(s.supplier.b2bId, { password: newPassword, mustChangePassword: false, securityLog });
+      const updated = { ...s.supplier, password: newPassword, mustChangePassword: false, securityLog };
       const accounts = s.accounts.map((a) => (a.b2bId === updated.b2bId ? updated : a));
       return { accounts, supplier: updated, ready: true };
     });
+  };
+
+  const adminUpdateAccount = (
+    b2bId: string,
+    patch: Partial<
+      Pick<B2BAccount, "companyName" | "contactPerson" | "email" | "phone" | "altPhone" | "address" | "businessDocument" | "ownerIdDocument">
+    >,
+  ) => {
+    persistOverride(b2bId, patch);
+    setState((s) => ({ ...s, accounts: s.accounts.map((a) => (a.b2bId === b2bId ? { ...a, ...patch } : a)) }));
+  };
+
+  const adminResetPassword = (b2bId: string): Result => {
+    const account = state.accounts.find((a) => a.b2bId === b2bId);
+    if (!account) return { ok: false, error: "B2B account not found." };
+    const tempPassword = generateTempPassword();
+    const securityLog = [...(account.securityLog ?? []), { text: "Admin reset password (temporary password emailed)", time: Date.now() }].slice(
+      -SECURITY_LOG_LIMIT,
+    );
+    persistOverride(b2bId, { password: tempPassword, mustChangePassword: true, securityLog });
+    setState((s) => ({
+      ...s,
+      accounts: s.accounts.map((a) => (a.b2bId === b2bId ? { ...a, password: tempPassword, mustChangePassword: true, securityLog } : a)),
+    }));
+    notifyEvent("admin_password_reset", account.email, account.contactPerson, { name: account.contactPerson, tempPassword });
+    return { ok: true };
+  };
+
+  const adminSetPassword = (b2bId: string, newPassword: string): Result => {
+    const account = state.accounts.find((a) => a.b2bId === b2bId);
+    if (!account) return { ok: false, error: "B2B account not found." };
+    if (!newPassword.trim()) return { ok: false, error: "Enter a password." };
+    const securityLog = [...(account.securityLog ?? []), { text: "Admin set a new password directly", time: Date.now() }].slice(-SECURITY_LOG_LIMIT);
+    persistOverride(b2bId, { password: newPassword, mustChangePassword: true, securityLog });
+    setState((s) => ({
+      ...s,
+      accounts: s.accounts.map((a) => (a.b2bId === b2bId ? { ...a, password: newPassword, mustChangePassword: true, securityLog } : a)),
+    }));
+    return { ok: true };
   };
 
   return (
@@ -179,6 +240,9 @@ export function B2BAuthProvider({ children }: { children: React.ReactNode }) {
         requestPasswordReset,
         resetPassword,
         addSupplier,
+        adminUpdateAccount,
+        adminResetPassword,
+        adminSetPassword,
       }}
     >
       {children}

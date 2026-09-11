@@ -7,6 +7,16 @@ export type B2BAccount = {
   phone: string;
   altPhone: string;
   address: string;
+  /** Registration documents, carried over from the B2BRegistration on approval -- image data URL
+   * or a real PDF/Word data URL. Empty/unset means the document isn't on file. */
+  businessDocument?: string;
+  ownerIdDocument?: string;
+  /** Set when an admin resets this account's password to a temporary one — cleared the next time
+   * the supplier sets their own password from their profile. */
+  mustChangePassword?: boolean;
+  /** Append-only log of sign-ins and password changes (self-service and admin-initiated), shown
+   * as "Login" entries in the admin Activity feed. Capped to the most recent entries. */
+  securityLog?: { text: string; time: number }[];
 };
 
 export const b2bAccountSeed: B2BAccount[] = [

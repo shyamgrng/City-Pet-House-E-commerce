@@ -7,6 +7,7 @@ import PhoneInput from "@/components/PhoneInput";
 import { useAdoption } from "@/context/AdoptionContext";
 import { useAdminAuth } from "@/context/AdminAuthContext";
 import { useAuth } from "@/context/AuthContext";
+import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
 import { useB2BRegistration } from "@/context/B2BRegistrationContext";
 import { useCourierAuth } from "@/context/CourierAuthContext";
@@ -19,6 +20,7 @@ import type { AdminUser } from "@/lib/admin-user-types";
 import type { AdoptionPost } from "@/lib/adoption-types";
 import type { B2BAccount } from "@/lib/b2b-auth-types";
 import type { B2BRegistration } from "@/lib/b2b-registration-types";
+import { netPayout, type B2BProductSubmission } from "@/lib/b2b-types";
 import type { CourierAccount } from "@/lib/courier-auth-types";
 import type { CourierRegistration } from "@/lib/courier-registration-types";
 import type { DoctorAccount } from "@/lib/doctor-auth-types";
@@ -146,6 +148,8 @@ export default function AccountsPage() {
       phone: reg.phone,
       altPhone: reg.altPhone,
       address: reg.address,
+      businessDocument: reg.businessDocument,
+      ownerIdDocument: reg.ownerIdDocument,
     });
     setB2bRegStatus(reg.id, "Approved");
     notifyEvent("partner_registration_approved", reg.email, reg.contactPerson || reg.companyName, {
@@ -481,10 +485,11 @@ function CourierAccountTab({ couriers }: { couriers: CourierAccount[] }) {
   );
 }
 
-const ACTIVITY_CATEGORY_COLORS: Record<"Financial" | "Login" | "Client", string> = {
+const ACTIVITY_CATEGORY_COLORS: Record<"Financial" | "Login" | "Client" | "Listing", string> = {
   Client: "#1996C8",
   Financial: "#C9962B",
   Login: "#7A56C8",
+  Listing: "#0E7C86",
 };
 
 /** Chronological feed of everything tied to this doctor — consult bookings and outcomes
@@ -1156,8 +1161,339 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
   );
 }
 
+const B2B_DOCUMENTS: { field: "businessDocument" | "ownerIdDocument"; label: string }[] = [
+  { field: "businessDocument", label: "Business Registration Document" },
+  { field: "ownerIdDocument", label: "Owner's National ID" },
+];
+
+/** Chronological feed of everything tied to this B2B supplier — product listings submitted,
+ * approved, or rejected (Listing), net payout per approved listing after commission
+ * (Financial), and sign-ins/password changes (Login). */
+function buildB2BActivity(
+  b2bId: string,
+  submissions: B2BProductSubmission[],
+  securityLog: { text: string; time: number }[] | undefined,
+): ActivityEntry[] {
+  const entries: ActivityEntry[] = [];
+  const fmtMoney = (n: number) => "Rs. " + n.toLocaleString("en-IN");
+
+  for (const s of submissions.filter((s) => s.b2bId === b2bId)) {
+    entries.push({
+      key: `${s.id}-submitted`,
+      text: `Submitted "${s.name}" for review — ${fmtMoney(s.price)} x ${s.qty}`,
+      time: s.submittedAt,
+      category: "Listing",
+    });
+    if (s.status === "Approved") {
+      entries.push({
+        key: `${s.id}-approved`,
+        text: `Listing "${s.name}" approved — payout ${fmtMoney(netPayout(s))} (${fmtMoney(s.price * s.qty)} sales − ${s.commissionPct}% commission)`,
+        time: s.submittedAt,
+        category: "Financial",
+      });
+    } else if (s.status === "Rejected") {
+      entries.push({
+        key: `${s.id}-rejected`,
+        text: `Listing "${s.name}" rejected${s.removedBy === "Supplier" ? " (removed by you)" : ""}`,
+        time: s.submittedAt,
+        category: "Listing",
+      });
+    }
+  }
+
+  for (const e of securityLog ?? []) {
+    entries.push({ key: `sec-${e.time}-${e.text}`, text: e.text, time: e.time, category: "Login" });
+  }
+
+  return entries.sort((a, b) => b.time - a.time);
+}
+
 function B2BAccountTab({ suppliers }: { suppliers: B2BAccount[] }) {
+  const { submissions } = useB2B();
+  const { adminUpdateAccount, adminResetPassword, adminSetPassword } = useB2BAuth();
+  const [selected, setSelected] = useState<B2BAccount | null>(null);
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<{
+    companyName: string;
+    contactPerson: string;
+    email: string;
+    phone: string;
+    altPhone: string;
+    address: string;
+  } | null>(null);
+  const [resetMsg, setResetMsg] = useState("");
+  const [setPwDraft, setSetPwDraft] = useState("");
+  const [setPwMsg, setSetPwMsg] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailMsg, setEmailMsg] = useState("");
+  const [activityQuery, setActivityQuery] = useState("");
+  const [activityFrom, setActivityFrom] = useState("");
+  const [activityTo, setActivityTo] = useState("");
+
+  const fmtDateTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+  if (selected) {
+    const mine = suppliers.find((s) => s.b2bId === selected.b2bId) ?? selected;
+    const activity = buildB2BActivity(mine.b2bId, submissions, mine.securityLog);
+
+    const activityQ = activityQuery.trim().toLowerCase();
+    const filteredActivity = activity.filter((a) => {
+      if (activityQ && !a.text.toLowerCase().includes(activityQ)) return false;
+      if (activityFrom && a.time < new Date(activityFrom).setHours(0, 0, 0, 0)) return false;
+      if (activityTo && a.time > new Date(activityTo).setHours(23, 59, 59, 999)) return false;
+      return true;
+    });
+    const activityFiltersActive = Boolean(activityQuery || activityFrom || activityTo);
+    const clearActivityFilters = () => {
+      setActivityQuery("");
+      setActivityFrom("");
+      setActivityTo("");
+    };
+
+    const startEdit = () => {
+      setDraft({
+        companyName: mine.companyName,
+        contactPerson: mine.contactPerson,
+        email: mine.email,
+        phone: mine.phone,
+        altPhone: mine.altPhone,
+        address: mine.address,
+      });
+      setEditing(true);
+    };
+    const save = () => {
+      if (!draft) return;
+      adminUpdateAccount(mine.b2bId, draft);
+      setEditing(false);
+    };
+    const doResetPassword = () => {
+      const res = adminResetPassword(mine.b2bId);
+      setResetMsg(res.ok ? "✓ A temporary password has been emailed to the supplier." : res.error);
+      setTimeout(() => setResetMsg(""), 4000);
+    };
+    const doSetPassword = () => {
+      const res = adminSetPassword(mine.b2bId, setPwDraft);
+      setSetPwMsg(res.ok ? "✓ Password updated — the supplier will be prompted to change it on next sign-in." : res.error);
+      if (res.ok) setSetPwDraft("");
+      setTimeout(() => setSetPwMsg(""), 4000);
+    };
+    const doSendEmail = async () => {
+      if (!emailBody.trim()) return;
+      setEmailSending(true);
+      const res = await notifyEvent("admin_custom_message", mine.email, mine.contactPerson, {
+        name: mine.contactPerson,
+        subject: emailSubject,
+        message: emailBody,
+      });
+      setEmailSending(false);
+      setEmailMsg(res.ok ? "✓ Email sent." : `Failed to send: ${res.error}`);
+      if (res.ok) {
+        setEmailSubject("");
+        setEmailBody("");
+      }
+      setTimeout(() => setEmailMsg(""), 4000);
+    };
+
+    return (
+      <div>
+        <div
+          onClick={() => {
+            setSelected(null);
+            setEditing(false);
+          }}
+          className="text-xs text-primary font-semibold cursor-pointer mb-4"
+        >
+          ← Back to B2B Accounts
+        </div>
+
+        <div className="max-w-[760px]">
+          <div className="border border-[#E4E9EC] rounded-xl p-5 mb-3.5">
+            <div className="flex justify-between items-start mb-3.5">
+              <div>
+                <div className="text-[15px] font-bold text-[#1A2027]">{mine.companyName}</div>
+                <div className="text-[11px] text-[#8A96A3] mt-0.5">{mine.b2bId}</div>
+              </div>
+              {!editing && (
+                <button onClick={startEdit} className="text-xs font-semibold text-primary cursor-pointer shrink-0">
+                  Edit
+                </button>
+              )}
+            </div>
+            {!editing ? (
+              <div className="grid grid-cols-2 gap-3.5 text-xs">
+                <Field label="Contact Person" value={mine.contactPerson} />
+                <Field label="Email" value={mine.email} />
+                <Field label="Phone" value={mine.phone} />
+                <Field label="Alt Phone" value={mine.altPhone || "—"} />
+                <Field label="Address" value={mine.address} />
+              </div>
+            ) : (
+              draft && (
+                <div className="text-xs">
+                  <EditField label="Company Name" value={draft.companyName} onChange={(v) => setDraft({ ...draft, companyName: v })} />
+                  <EditField label="Contact Person" value={draft.contactPerson} onChange={(v) => setDraft({ ...draft, contactPerson: v })} />
+                  <div className="mb-3">
+                    <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Email</div>
+                    <EmailInput value={draft.email} onChange={(v) => setDraft({ ...draft, email: v })} />
+                  </div>
+                  <div className="mb-3">
+                    <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone</div>
+                    <PhoneInput value={draft.phone} onChange={(v) => setDraft({ ...draft, phone: v })} />
+                  </div>
+                  <div className="mb-3">
+                    <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Alt Phone</div>
+                    <PhoneInput value={draft.altPhone} onChange={(v) => setDraft({ ...draft, altPhone: v })} />
+                  </div>
+                  <EditField label="Address" value={draft.address} onChange={(v) => setDraft({ ...draft, address: v })} />
+                  <div className="flex gap-2.5 mt-1">
+                    <button
+                      onClick={save}
+                      disabled={!isValidNepalPhone(draft.phone) || !isValidEmail(draft.email) || !draft.companyName.trim() || !draft.contactPerson.trim()}
+                      className="flex-1 bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditing(false)}
+                      className="px-[18px] py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer bg-[#F0F2F4] text-[#5B6773]"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+
+          <div className="border border-[#E4E9EC] rounded-xl p-4 mb-3.5">
+            <div className="text-[13px] font-bold text-[#1A2027] mb-3">Password</div>
+            <div className="flex items-center justify-between gap-3 mb-3.5 pb-3.5 border-b border-[#F0F2F4]">
+              <div className="text-[11px] text-[#8A96A3]">Email the supplier a random temporary password.</div>
+              <button
+                onClick={doResetPassword}
+                className="shrink-0 px-3.5 py-2 rounded-lg text-xs font-semibold border border-[#E4E9EC] text-[#3A4652] cursor-pointer"
+              >
+                Reset Password
+              </button>
+            </div>
+            {resetMsg && <div className="text-[11px] text-[#1F7A4D] mb-3.5">{resetMsg}</div>}
+
+            <div className="text-[11px] text-[#8A96A3] mb-2">Or set a specific password directly (e.g. to tell the supplier yourself).</div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={setPwDraft}
+                onChange={(e) => setSetPwDraft(e.target.value)}
+                placeholder="New password"
+                className="flex-1 min-w-0 px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+              />
+              <button
+                onClick={doSetPassword}
+                disabled={!setPwDraft.trim()}
+                className="shrink-0 bg-primary text-white px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Set Password
+              </button>
+            </div>
+            {setPwMsg && <div className="text-[11px] text-[#1F7A4D] mt-2">{setPwMsg}</div>}
+          </div>
+
+          <div className="border border-[#E4E9EC] rounded-xl p-4 mb-3.5">
+            <div className="text-[13px] font-bold text-[#1A2027] mb-1">Send Email</div>
+            <div className="text-[11px] text-[#8A96A3] mb-3">Send a one-off message to this supplier&apos;s inbox.</div>
+            <input
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+              placeholder="Subject"
+              className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5 box-border"
+            />
+            <textarea
+              value={emailBody}
+              onChange={(e) => setEmailBody(e.target.value)}
+              placeholder="Message"
+              rows={4}
+              className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5 box-border resize-none"
+            />
+            <button
+              onClick={doSendEmail}
+              disabled={!emailBody.trim() || emailSending}
+              className="bg-primary text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {emailSending ? "Sending…" : "Send Email"}
+            </button>
+            {emailMsg && <div className="text-[11px] text-[#1F7A4D] mt-2">{emailMsg}</div>}
+          </div>
+
+          <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Documents</div>
+          <div className="bg-white border border-[#E4E9EC] rounded-[10px] px-4 mb-5">
+            {B2B_DOCUMENTS.map((d) => (
+              <AdminDocumentRow
+                key={d.field}
+                label={d.label}
+                value={mine[d.field] ?? ""}
+                onUpload={(v) => adminUpdateAccount(mine.b2bId, { [d.field]: v })}
+              />
+            ))}
+          </div>
+
+          <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Activity ({filteredActivity.length})</div>
+          <div className="flex flex-col sm:flex-row gap-2 mb-2.5">
+            <input
+              value={activityQuery}
+              onChange={(e) => setActivityQuery(e.target.value)}
+              placeholder="Search activity..."
+              className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#E4E9EC] text-xs box-border"
+            />
+            <input
+              type="date"
+              value={activityFrom}
+              onChange={(e) => setActivityFrom(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-[#E4E9EC] text-xs box-border"
+            />
+            <input
+              type="date"
+              value={activityTo}
+              onChange={(e) => setActivityTo(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-[#E4E9EC] text-xs box-border"
+            />
+            {activityFiltersActive && (
+              <button onClick={clearActivityFilters} className="text-xs font-semibold text-primary cursor-pointer shrink-0 px-1">
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
+            {filteredActivity.length === 0 ? (
+              <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">
+                {activity.length === 0 ? "No activity yet" : "No activity matches your filters."}
+              </div>
+            ) : (
+              filteredActivity.map((a) => (
+                <div key={a.key} className="px-4 py-3 border-b border-[#F0F2F4] last:border-0">
+                  <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                    {a.category && (
+                      <span
+                        className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0"
+                        style={{ background: `${ACTIVITY_CATEGORY_COLORS[a.category]}1A`, color: ACTIVITY_CATEGORY_COLORS[a.category] }}
+                      >
+                        {a.category}
+                      </span>
+                    )}
+                    <div className="text-xs font-semibold text-[#3A4652]">{a.text}</div>
+                  </div>
+                  <div className="text-[10px] text-[#8A96A3] mt-0.5">{fmtDateTime(a.time)}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const q = search.trim().toLowerCase();
   const visible = suppliers.filter(
     (s) =>
@@ -1173,11 +1509,12 @@ function B2BAccountTab({ suppliers }: { suppliers: B2BAccount[] }) {
     <div>
       <SearchBox value={search} onChange={setSearch} placeholder="Search by company, contact person, ID, email, or phone..." />
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
-        <div className="grid grid-cols-[1.4fr_1fr_1.2fr_1fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[600px]">
+        <div className="grid grid-cols-[1.3fr_1fr_1.1fr_1fr_0.6fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[650px]">
           <div>Company</div>
           <div>Contact Person</div>
           <div>Contact</div>
           <div>Address</div>
+          <div>Actions</div>
         </div>
         {suppliers.length === 0 ? (
           <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No B2B accounts yet</div>
@@ -1187,7 +1524,7 @@ function B2BAccountTab({ suppliers }: { suppliers: B2BAccount[] }) {
           visible.map((s) => (
             <div
               key={s.b2bId}
-              className="grid grid-cols-[1.4fr_1fr_1.2fr_1fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[600px]"
+              className="grid grid-cols-[1.3fr_1fr_1.1fr_1fr_0.6fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[650px]"
             >
               <div>
                 <div className="font-semibold text-[#1A2027]">{s.companyName}</div>
@@ -1200,6 +1537,9 @@ function B2BAccountTab({ suppliers }: { suppliers: B2BAccount[] }) {
                 {s.phone}
               </div>
               <div className="text-[#5B6773]">{s.address || "—"}</div>
+              <div onClick={() => setSelected(s)} className="text-primary font-semibold cursor-pointer">
+                View
+              </div>
             </div>
           ))
         )}
@@ -1249,7 +1589,7 @@ function StaffAccountTab({ users }: { users: AdminUser[] }) {
   );
 }
 
-type ActivityEntry = { key: string; text: string; time: number; category?: "Financial" | "Login" | "Client" };
+type ActivityEntry = { key: string; text: string; time: number; category?: "Financial" | "Login" | "Client" | "Listing" };
 
 /** A single chronological feed of everything this client has done — order lifecycle, vet
  * consults, adoption posts, and refunds — instead of separate lists per feature area. Only
