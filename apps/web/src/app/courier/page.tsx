@@ -3,15 +3,14 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import AccountTab from "@/components/courier/AccountTab";
 import DeliveredTab from "@/components/courier/DeliveredTab";
 import DeliveriesTab from "@/components/courier/DeliveriesTab";
-import EarningsTab from "@/components/courier/EarningsTab";
-import ProfileTab from "@/components/courier/ProfileTab";
 import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useDelivery } from "@/context/DeliveryContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 
-const TABS = ["Overview", "Deliveries", "Delivered", "Earnings", "Profile"] as const;
+const TABS = ["Overview", "Deliveries", "Delivered", "Account"] as const;
 type Tab = (typeof TABS)[number];
 
 const ACTIVE_STATUSES = ["Dispatched", "Received", "Processing"];
@@ -116,8 +115,7 @@ export default function CourierPortalPage() {
 
         {tab === "Deliveries" && <DeliveriesTab courierId={courier.courierId} />}
         {tab === "Delivered" && <DeliveredTab deliveries={[...delivered, ...cancelled].sort((a, b) => (b.deliveredAt ?? 0) - (a.deliveredAt ?? 0))} />}
-        {tab === "Earnings" && <EarningsTab deliveries={mine} />}
-        {tab === "Profile" && <ProfileTab />}
+        {tab === "Account" && <AccountTab deliveries={mine} />}
       </div>
     </div>
   );

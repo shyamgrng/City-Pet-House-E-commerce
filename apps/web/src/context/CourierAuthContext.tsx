@@ -69,7 +69,8 @@ type CourierAuthValue = {
   ready: boolean;
   signIn: (courierId: string, password: string) => Result;
   signOut: () => void;
-  updateProfile: (patch: { phone: string; altPhone: string; address: string }) => void;
+  updateProfile: (patch: Partial<Pick<CourierAccount, "companyName" | "contactPerson" | "email" | "phone" | "altPhone" | "address">>) => void;
+  updateDocument: (field: "businessDocument" | "ownerIdDocument", value: string) => void;
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (courierId: string) => Result;
   resetPassword: (courierId: string, code: string, newPassword: string) => Result;
@@ -253,11 +254,21 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
     setState((s) => ({ ...s, courier: null }));
   };
 
-  const updateProfile = (patch: { phone: string; altPhone: string; address: string }) => {
+  const updateProfile = (patch: Partial<Pick<CourierAccount, "companyName" | "contactPerson" | "email" | "phone" | "altPhone" | "address">>) => {
     setState((s) => {
       if (!s.courier) return s;
       persistOverride(s.courier.courierId, patch);
       const updated = { ...s.courier, ...patch };
+      const accounts = s.accounts.map((a) => (a.courierId === updated.courierId ? updated : a));
+      return { accounts, courier: updated, ready: true };
+    });
+  };
+
+  const updateDocument = (field: "businessDocument" | "ownerIdDocument", value: string) => {
+    setState((s) => {
+      if (!s.courier) return s;
+      persistOverride(s.courier.courierId, { [field]: value });
+      const updated = { ...s.courier, [field]: value };
       const accounts = s.accounts.map((a) => (a.courierId === updated.courierId ? updated : a));
       return { accounts, courier: updated, ready: true };
     });
@@ -322,6 +333,7 @@ export function CourierAuthProvider({ children }: { children: React.ReactNode })
         signIn,
         signOut,
         updateProfile,
+        updateDocument,
         changePassword,
         requestPasswordReset,
         resetPassword,
