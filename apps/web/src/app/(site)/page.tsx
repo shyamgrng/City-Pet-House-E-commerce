@@ -29,7 +29,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <div className="flex flex-col lg:flex-row gap-3.5 px-4 md:px-8 pt-5 pb-2">
-        <div className="flex-[2.2] relative h-[300px] rounded-xl overflow-hidden">
+        <div className="lg:flex-[2.2] relative h-[300px] rounded-xl overflow-hidden">
           <MediaSlot src={content.heroImage} label="cover photo — shop & clinic" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="absolute inset-0 pointer-events-none"
@@ -62,8 +62,8 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <div className="flex-1 flex flex-row lg:flex-col gap-3.5">
-          <div className="flex-1 min-h-[140px] lg:min-h-0 relative rounded-xl overflow-hidden">
+        <div className="hidden lg:flex flex-1 flex-col gap-3.5">
+          <div className="flex-1 relative rounded-xl overflow-hidden">
             <MediaSlot src={content.banner1Image} label="promo — hot sale, shop deals" fit="cover" className="absolute inset-0 w-full h-full" />
             {content.banner1Text && (
               <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
@@ -71,7 +71,7 @@ export default function HomePage() {
               </div>
             )}
           </div>
-          <div className="flex-1 min-h-[140px] lg:min-h-0 relative rounded-xl overflow-hidden">
+          <div className="flex-1 relative rounded-xl overflow-hidden">
             <MediaSlot src={content.banner2Image} label="promo — vet consult booking" fit="cover" className="absolute inset-0 w-full h-full" />
             {content.banner2Text && (
               <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>

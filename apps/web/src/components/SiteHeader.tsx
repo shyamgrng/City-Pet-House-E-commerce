@@ -19,6 +19,21 @@ const navLinks = [
   { label: "Blog", href: "/blog" },
 ];
 
+// Secondary links folded into the mobile "⋯" menu — primary nav (Home/Shop/Pets/Web
+// Vet/Cart) lives in the mobile bottom tab bar instead (see MobileBottomNav.tsx).
+const moreMenuLinks = [
+  { label: "Services", href: "/services" },
+  { label: "Blog", href: "/blog" },
+  { label: "Careers", href: "/career" },
+  { label: "FAQ", href: "/faq" },
+  { label: "How to Buy", href: "/how-to-buy" },
+  { label: "Dog Adoption", href: "/adoption" },
+  { label: "Admin Login", href: "/admin/login" },
+  { label: "Terms & Conditions", href: "/terms" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Return & Refund", href: "/refund" },
+];
+
 export default function SiteHeader() {
   const { user, ready, signOut } = useAuth();
   const { count } = useCart();
@@ -26,10 +41,10 @@ export default function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const isSignedIn = ready && !!user;
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const handleTopSignInClick = () => {
-    setMenuOpen(false);
+    setMoreOpen(false);
     if (isSignedIn) {
       signOut();
       router.push("/");
@@ -39,7 +54,7 @@ export default function SiteHeader() {
   };
 
   const handleAccountClick = () => {
-    setMenuOpen(false);
+    setMoreOpen(false);
     if (isSignedIn) {
       router.push("/account");
       return;
@@ -57,46 +72,27 @@ export default function SiteHeader() {
         </div>
       </div>
 
-      <div className="border-b border-[#E4E9EC]">
-        <div className="flex items-center gap-3 lg:gap-6 max-w-7xl mx-auto px-4 lg:px-8 py-3 lg:py-3.5">
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="lg:hidden shrink-0 w-9 h-9 flex items-center justify-center rounded-md border border-[#E4E9EC] cursor-pointer text-lg"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-          >
-            {menuOpen ? "✕" : "☰"}
-          </button>
-
-          <Link href="/" className="flex items-center gap-2 lg:gap-2.5 shrink-0" onClick={() => setMenuOpen(false)}>
-            <Image
-              src="/assets/cph-logo.jpeg"
-              alt="logo"
-              width={34}
-              height={34}
-              className="rounded-md object-contain w-8 h-8 lg:w-[34px] lg:h-[34px]"
-            />
-            <span className="font-heading font-bold text-[13px] lg:text-[15px] text-[#1A2027] whitespace-nowrap">City Pet House</span>
+      {/* Desktop header */}
+      <div className="hidden lg:block border-b border-[#E4E9EC]">
+        <div className="flex items-center gap-6 max-w-7xl mx-auto px-8 py-3.5">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
+            <Image src="/assets/cph-logo.jpeg" alt="logo" width={34} height={34} className="rounded-md object-contain" />
+            <span className="font-heading font-bold text-[15px] text-[#1A2027] whitespace-nowrap">City Pet House</span>
           </Link>
 
-          <div className="hidden lg:flex flex-1">
+          <div className="flex flex-1">
             <HeaderSearch />
           </div>
 
-          <button
-            onClick={handleTopSignInClick}
-            className="hidden lg:inline text-[13px] font-semibold text-primary shrink-0 whitespace-nowrap cursor-pointer"
-          >
+          <button onClick={handleTopSignInClick} className="text-[13px] font-semibold text-primary shrink-0 whitespace-nowrap cursor-pointer">
             {isSignedIn ? "Sign Out" : "Pet Owner Sign In"}
           </button>
-          <button onClick={handleAccountClick} className="hidden lg:inline text-[13px] font-medium text-[#3A4652] shrink-0 cursor-pointer">
+          <button onClick={handleAccountClick} className="text-[13px] font-medium text-[#3A4652] shrink-0 cursor-pointer">
             Account
           </button>
-          <Link href="/cart" className="flex items-center gap-1.5 text-[13px] font-semibold text-primary shrink-0 ml-auto lg:ml-0">
-            🛒 <span className="hidden lg:inline">Cart</span> ({count})
+          <Link href="/cart" className="flex items-center gap-1.5 text-[13px] font-semibold text-primary shrink-0">
+            🛒 Cart ({count})
           </Link>
-        </div>
-        <div className="lg:hidden px-4 pb-3">
-          <HeaderSearch />
         </div>
       </div>
 
@@ -110,28 +106,51 @@ export default function SiteHeader() {
         </nav>
       </div>
 
-      {menuOpen && (
-        <div className="lg:hidden border-b border-[#E4E9EC] bg-white max-h-[calc(100vh-56px)] overflow-y-auto">
-          <div className="px-4 py-1.5 text-[11px] text-[#5B6773] border-b border-[#F0F2F4]">
-            <div className="py-1.5">📞 {settings.phone}</div>
-            <div className="py-1.5">📍 {settings.address}</div>
-            <div className="py-1.5">{settings.hours}</div>
+      {/* Mobile header — single row (logo/tagline + utility icons), matching the design source exactly.
+          Primary nav (Home/Shop/Pets/Web Vet/Cart) lives in the mobile bottom tab bar instead. */}
+      <div className="lg:hidden bg-[#F7F9FA] relative">
+        <div className="flex items-center justify-between px-4 pt-3.5 pb-1.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <Image src="/assets/cph-logo.jpeg" alt="logo" width={28} height={28} className="rounded-lg object-contain w-7 h-7 shrink-0" />
+            <span className="text-xs text-[#5B6773] truncate">One Roof Solution to Your Pet Care</span>
           </div>
-          <nav className="flex flex-col px-4 py-1 text-sm text-[#3A4652] font-medium">
-            {navLinks.map((l) => (
-              <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="py-3 border-b border-[#F0F2F4] last:border-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-label={moreOpen ? "Close menu" : "More"}
+              className="w-[30px] h-[30px] rounded-full bg-white border border-[#E4E9EC] flex items-center justify-center text-sm text-[#1A2027] cursor-pointer"
+            >
+              {moreOpen ? "✕" : "⋯"}
+            </button>
+            <button
+              onClick={handleAccountClick}
+              aria-label="Account"
+              className="w-[30px] h-[30px] rounded-full bg-white border border-[#E4E9EC] flex items-center justify-center text-sm cursor-pointer"
+            >
+              👤
+            </button>
+          </div>
+        </div>
+
+        <div className="px-4 pb-3">
+          <HeaderSearch />
+        </div>
+
+        {moreOpen && (
+          <div className="absolute right-4 top-[52px] w-[220px] bg-white border border-[#E4E9EC] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.1)] overflow-hidden z-30">
+            {moreMenuLinks.map((l, i) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                onClick={() => setMoreOpen(false)}
+                className={`block px-4 py-3 text-[13px] text-[#3A4652] cursor-pointer hover:bg-[#F7F9FA] ${i < moreMenuLinks.length - 1 ? "border-b border-[#EEF1F3]" : ""}`}
+              >
                 {l.label}
               </Link>
             ))}
-            <button onClick={handleAccountClick} className="text-left py-3 border-b border-[#F0F2F4] text-[#3A4652] font-medium cursor-pointer">
-              Account
-            </button>
-            <button onClick={handleTopSignInClick} className="text-left py-3 text-primary font-semibold cursor-pointer">
-              {isSignedIn ? "Sign Out" : "Pet Owner Sign In"}
-            </button>
-          </nav>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
