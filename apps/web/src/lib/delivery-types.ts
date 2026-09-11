@@ -26,13 +26,23 @@ export const STATUS_COLORS: Record<DeliveryStatus, string> = {
   Cancelled: "#D64545",
 };
 
-export function deliveryTimeline(d: Delivery) {
+export type DeliveryTimelineStep = { key: string; title: string; subtitle: string; icon: string; done: boolean };
+
+/** Mirrors the client-facing order timeline (orderTimeline in order-types.ts) so a courier sees
+ * the same numbered/icon-circle style with a title + subtitle per step, not just a bare checklist. */
+export function deliveryTimeline(d: Delivery): DeliveryTimelineStep[] {
   const order: DeliveryStatus[] = ["Dispatched", "Received", "Processing", "Delivered"];
   const idx = order.indexOf(d.status);
   return [
-    { label: "Handed to Courier", done: idx >= 0 },
-    { label: "Item Received by Courier", done: idx >= 1 },
-    { label: "Delivery Person Assigned", done: idx >= 2 },
-    { label: "Delivered to Customer", done: idx >= 3 },
+    { key: "dispatched", title: "Handed to Courier", subtitle: "Order picked up from City Pet House for delivery", icon: "1", done: idx >= 0 },
+    { key: "received", title: "Item Received by Courier", subtitle: "Package received and confirmed by your team", icon: "📦", done: idx >= 1 },
+    {
+      key: "assigned",
+      title: "Delivery Person Assigned",
+      subtitle: d.dpName ? `Assigned to ${d.dpName}` : "A delivery person will be assigned next",
+      icon: "🧑",
+      done: idx >= 2,
+    },
+    { key: "delivered", title: "Delivered to Customer", subtitle: "Order delivered to the customer's address", icon: "✓", done: idx >= 3 },
   ];
 }
