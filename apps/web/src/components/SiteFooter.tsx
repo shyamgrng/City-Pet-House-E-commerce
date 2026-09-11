@@ -122,22 +122,22 @@ export default function SiteFooter() {
       </div>
 
       <div className="flex flex-wrap gap-5 mb-[22px]">
-        <div className="flex-1 min-w-[320px] rounded-xl bg-[#F0F8F2] px-4 md:px-8 py-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-          <div className="min-w-0">
+        <div className="flex-1 min-w-[320px] rounded-xl bg-[#F0F8F2] px-6 py-7 flex flex-col items-center text-center gap-3.5">
+          <div>
             <div className="font-heading font-bold text-lg text-[#1F7A4D]">Happy Pet Owner</div>
             <div className="font-heading font-bold text-[15px] text-[#1A2027]">Download Vaccination Record App</div>
           </div>
-          <div className="flex gap-3 flex-nowrap shrink-0">
+          <div className="flex gap-3">
             <AppBadge kind="ios" href={settings.vaccinationAppStoreUrl} />
             <AppBadge kind="android" href={settings.vaccinationGooglePlayUrl} />
           </div>
         </div>
-        <div className="flex-1 min-w-[320px] rounded-xl bg-[#F3F9FC] px-4 md:px-8 py-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-          <div className="min-w-0">
+        <div className="flex-1 min-w-[320px] rounded-xl bg-[#F3F9FC] px-6 py-7 flex flex-col items-center text-center gap-3.5">
+          <div>
             <div className="font-heading font-bold text-lg text-primary">Happy Shopping</div>
             <div className="font-heading font-bold text-[15px] text-[#1A2027]">{settings.shoppingAppLabel}</div>
           </div>
-          <div className="flex gap-3 flex-nowrap shrink-0">
+          <div className="flex gap-3">
             <AppBadge kind="ios" href={settings.shoppingAppStoreUrl} />
             <AppBadge kind="android" href={settings.shoppingGooglePlayUrl} />
           </div>
