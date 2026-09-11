@@ -29,7 +29,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <div className="flex flex-col lg:flex-row gap-3.5 px-4 md:px-8 pt-5 pb-2">
-        <div className="lg:flex-[2.2] relative h-[300px] rounded-xl overflow-hidden">
+        <div className="lg:flex-[2.2] relative h-[210px] lg:h-[300px] rounded-xl overflow-hidden">
           <MediaSlot src={content.heroImage} label="cover photo — shop & clinic" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="absolute inset-0 pointer-events-none"
@@ -83,12 +83,16 @@ export default function HomePage() {
       </div>
 
       {/* Categories */}
-      <div className="flex flex-wrap gap-3.5 px-4 md:px-8 pt-4 pb-6">
+      <div
+        className="flex flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible gap-3.5 px-4 md:px-8 pt-4 pb-6"
+        style={{ scrollSnapType: "x proximity", WebkitOverflowScrolling: "touch" }}
+      >
         {categories.map((cat) => (
           <Link
             key={cat.slug}
             href={`/pets?species=${encodeURIComponent(cat.name)}`}
-            className="group flex-1 min-w-[78px] sm:min-w-[110px] flex flex-col items-center gap-2 cursor-pointer transition-transform duration-200 hover:scale-105"
+            className="group shrink-0 lg:flex-1 lg:min-w-[110px] flex flex-col items-center gap-2 cursor-pointer transition-transform duration-200 hover:scale-105"
+            style={{ scrollSnapAlign: "start" }}
           >
             <MediaSlot
               src={content.categoryImages[cat.name]}
