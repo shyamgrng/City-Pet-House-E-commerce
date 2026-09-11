@@ -714,11 +714,6 @@ function AdminPhotoUpload({
   );
 }
 
-/** This doctor's booking conversations with clients, newest booking first — read-only, admin never replies from here. */
-function buildDoctorChats(doctorId: string, bookings: VetBooking[]): VetBooking[] {
-  return bookings.filter((b) => b.doctorId === doctorId && b.chatMessages.length > 0).sort((a, b) => b.createdAt - a.createdAt);
-}
-
 function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
   const { bookings, doctors: vetDoctors, adminUpdateDoctorProfile } = useVet();
   const { adminUpdateAccount, adminResetPassword, adminSetPassword } = useDoctorAuth();
@@ -753,14 +748,12 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
   const [activityFrom, setActivityFrom] = useState("");
   const [activityTo, setActivityTo] = useState("");
 
-  const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const fmtDateTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   if (selected) {
     const mine = doctors.find((d) => d.doctorId === selected.doctorId) ?? selected;
     const doctorRecord = vetDoctors.find((d) => d.id === mine.doctorId);
     const activity = buildDoctorActivity(mine.doctorId, bookings, doctorRecord, mine.securityLog);
-    const chats = buildDoctorChats(mine.doctorId, bookings);
 
     const activityQ = activityQuery.trim().toLowerCase();
     const filteredActivity = activity.filter((a) => {
@@ -847,12 +840,16 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
           ← Back to Doctor Accounts
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-5 items-start">
+        <div className="max-w-[760px]">
           <div className="min-w-0">
             <div className="border border-[#E4E9EC] rounded-xl p-5 mb-3.5">
               <div className="flex justify-between items-start mb-3.5">
                 <div className="flex items-center gap-4">
-                  <MediaSlot src={mine.photo} label="profile photo" shape="circle" className="w-[96px] h-[96px] shrink-0" />
+                  <MediaSlot
+                    src={mine.photo}
+                    label="profile photo"
+                    className="w-[100px] h-[130px] rounded-md border border-[#E4E9EC] shrink-0"
+                  />
                   <div>
                     <div className="text-[15px] font-bold text-[#1A2027]">{mine.name}</div>
                     <div className="text-[11px] text-[#8A96A3] mt-0.5">{mine.doctorId}</div>
@@ -1098,38 +1095,6 @@ function DoctorAccountTab({ doctors }: { doctors: DoctorAccount[] }) {
                       <div className="text-xs font-semibold text-[#3A4652]">{a.text}</div>
                     </div>
                     <div className="text-[10px] text-[#8A96A3] mt-0.5">{fmtDateTime(a.time)}</div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="lg:sticky lg:top-4">
-            <div className="text-[13px] font-bold text-[#1A2027] mb-2.5">Chat History (read-only)</div>
-            <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden max-h-[80vh] overflow-y-auto">
-              {chats.length === 0 ? (
-                <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No chat messages yet</div>
-              ) : (
-                chats.map((b) => (
-                  <div key={b.id} className="border-b border-[#F0F2F4] last:border-0 p-3.5">
-                    <div className="text-xs font-semibold text-[#1A2027] mb-0.5">
-                      {b.ownerName} · {b.petName}
-                    </div>
-                    <div className="text-[10px] text-[#8A96A3] mb-2">{fmtDate(b.createdAt)}</div>
-                    <div className="flex flex-col gap-1.5">
-                      {b.chatMessages.map((msg, i) => {
-                        const fromDoctor = msg.from === "doctor";
-                        return (
-                          <div
-                            key={i}
-                            className="max-w-[85%] px-2.5 py-1.5 text-[11px] leading-relaxed rounded-lg"
-                            style={{ alignSelf: fromDoctor ? "flex-end" : "flex-start", background: fromDoctor ? "#1996C8" : "#F0F2F4", color: fromDoctor ? "#fff" : "#1A2027" }}
-                          >
-                            {msg.text}
-                          </div>
-                        );
-                      })}
-                    </div>
                   </div>
                 ))
               )}
