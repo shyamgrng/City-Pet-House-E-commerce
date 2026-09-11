@@ -17,14 +17,18 @@ export default function HealthCareRail() {
   const { services } = useServices();
 
   return (
-    <div className="flex flex-wrap gap-4">
+    <div
+      className="flex flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible gap-4"
+      style={{ scrollSnapType: "x proximity", WebkitOverflowScrolling: "touch" }}
+    >
       {items.map((item) => {
         const service = findServiceByKeyword(services, item.keyword);
         return (
           <Link
             key={item.title}
             href={service ? `/services/${service.id}` : "/services"}
-            className="flex-1 min-w-[150px] text-center cursor-pointer transition-transform duration-200 hover:scale-105"
+            className="w-[150px] shrink-0 lg:flex-1 lg:w-auto lg:min-w-[150px] text-center cursor-pointer transition-transform duration-200 hover:scale-105"
+            style={{ scrollSnapAlign: "start" }}
           >
             <div className="w-[104px] h-[104px] rounded-full flex items-center justify-center mx-auto mb-4 bg-[#E7EFEC] overflow-hidden">
               <Image src={item.icon} alt={item.title} width={104} height={104} className="object-contain w-full h-full" />
