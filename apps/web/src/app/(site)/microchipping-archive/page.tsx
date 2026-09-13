@@ -205,15 +205,9 @@ function MicrochippingArchiveInner() {
 
   return (
     <div>
-      <div
-        style={{ background: "linear-gradient(90deg, #7A56C8, #4E3A8A)" }}
-        className="px-9 py-10 flex items-center justify-between gap-6 flex-wrap"
-      >
-        <div>
-          <div className="font-heading font-bold text-[30px] text-white mb-1.5">{content.bannerTitle}</div>
-          <div className="text-[15px] text-white/85">{content.bannerSubtitle}</div>
-        </div>
-        <div className="text-sm text-white/80 font-semibold tracking-[0.5px]">💠 MICROCHIP REGISTRY</div>
+      <div style={{ background: "linear-gradient(90deg, #7A56C8, #4E3A8A)" }} className="px-9 py-10">
+        <div className="font-heading font-bold text-[30px] text-white mb-1.5">{content.bannerTitle}</div>
+        <div className="text-[15px] text-white/85">{content.bannerSubtitle}</div>
       </div>
 
       <div className="flex gap-10 px-4 md:px-8 py-11 items-start flex-wrap lg:flex-nowrap">
