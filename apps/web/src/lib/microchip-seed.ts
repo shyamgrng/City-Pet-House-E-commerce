@@ -53,7 +53,7 @@ export const microchipSeed: MicrochipRecord[] = [
 
 export const microchipContentSeed: MicrochipPageContent = {
   bannerTitle: "Microchipping Archive",
-  bannerSubtitle: "Reuniting microchipped pets with their families across City Pet House's network.",
+  bannerSubtitle: "Reuniting microchipped pets with their families.",
   searchCaption: "Found a microchipped pet? Enter the number printed on the scanner readout, or the pet's name, to reach the owner.",
   sections: [
     {
