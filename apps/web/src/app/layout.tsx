@@ -24,6 +24,7 @@ import { DoctorRegistrationProvider } from "@/context/DoctorRegistrationContext"
 import { FaqProvider } from "@/context/FaqContext";
 import { HomeContentProvider } from "@/context/HomeContentContext";
 import { HowToBuyProvider } from "@/context/HowToBuyContext";
+import { LedgerProvider } from "@/context/LedgerContext";
 import { LegalProvider } from "@/context/LegalContext";
 import { MicrochipProvider } from "@/context/MicrochipContext";
 import { OrderProvider } from "@/context/OrderContext";
@@ -79,6 +80,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                           <CategoryProvider>
                           <CartProvider>
                             <OrderProvider>
+                              <LedgerProvider>
                               <PetProvider>
                                 <AdoptionProvider>
                                   <BlogProvider>
@@ -108,6 +110,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                                   </BlogProvider>
                                 </AdoptionProvider>
                               </PetProvider>
+                              </LedgerProvider>
                             </OrderProvider>
                           </CartProvider>
                           </CategoryProvider>
