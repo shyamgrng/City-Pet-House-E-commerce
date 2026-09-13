@@ -110,10 +110,10 @@ export default function SiteHeader() {
           Primary nav (Home/Shop/Pets/Web Vet/Cart) lives in the mobile bottom tab bar instead. */}
       <div className="lg:hidden bg-[#F7F9FA] relative">
         <div className="flex items-center justify-between px-4 pt-3.5 pb-1.5">
-          <div className="flex items-center gap-2 min-w-0">
+          <Link href="/" className="flex items-center gap-2 min-w-0">
             <Image src="/assets/cph-logo.jpeg" alt="logo" width={28} height={28} className="rounded-lg object-contain w-7 h-7 shrink-0" />
             <span className="text-xs text-[#5B6773] truncate">One Roof Solution to Your Pet Care</span>
-          </div>
+          </Link>
           <div className="relative z-30 flex items-center gap-2 shrink-0">
             <button
               onClick={() => setMoreOpen((v) => !v)}
