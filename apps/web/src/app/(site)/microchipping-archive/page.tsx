@@ -213,7 +213,7 @@ function MicrochippingArchiveInner() {
           <div className="font-heading font-bold text-[30px] text-white mb-1.5">{content.bannerTitle}</div>
           <div className="text-[15px] text-white/85">{content.bannerSubtitle}</div>
         </div>
-        <div className="text-sm text-white/80 font-semibold tracking-[0.5px]">💠 CITY PET HOUSE · MICROCHIP REGISTRY</div>
+        <div className="text-sm text-white/80 font-semibold tracking-[0.5px]">💠 MICROCHIP REGISTRY</div>
       </div>
 
       <div className="flex gap-10 px-4 md:px-8 py-11 items-start flex-wrap lg:flex-nowrap">
