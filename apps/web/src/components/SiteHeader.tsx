@@ -114,7 +114,7 @@ export default function SiteHeader() {
             <Image src="/assets/cph-logo.jpeg" alt="logo" width={28} height={28} className="rounded-lg object-contain w-7 h-7 shrink-0" />
             <span className="text-xs text-[#5B6773] truncate">One Roof Solution to Your Pet Care</span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="relative z-30 flex items-center gap-2 shrink-0">
             <button
               onClick={() => setMoreOpen((v) => !v)}
               aria-label={moreOpen ? "Close menu" : "More"}
@@ -135,6 +135,10 @@ export default function SiteHeader() {
         <div className="px-4 pb-3">
           <HeaderSearch />
         </div>
+
+        {moreOpen && (
+          <div className="fixed inset-0 z-20" onClick={() => setMoreOpen(false)} />
+        )}
 
         {moreOpen && (
           <div className="absolute right-4 top-[52px] w-[220px] bg-white border border-[#E4E9EC] rounded-[10px] shadow-[0_6px_20px_rgba(0,0,0,0.1)] overflow-hidden z-30">
