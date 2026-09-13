@@ -28,6 +28,8 @@ const moreMenuLinks = [
   { label: "FAQ", href: "/faq" },
   { label: "How to Buy", href: "/how-to-buy" },
   { label: "Dog Adoption", href: "/adoption" },
+  { label: "Pet Tag Archive", href: "/pet-tag-archive" },
+  { label: "Microchipping Archive", href: "/microchipping-archive" },
   { label: "Admin Login", href: "/admin/login" },
   { label: "Terms & Conditions", href: "/terms" },
   { label: "Privacy Policy", href: "/privacy" },
