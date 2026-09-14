@@ -195,7 +195,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   };
 
   const placeOrder = (input: PlaceOrderInput): string => {
-    const id = "ORD-" + Math.floor(2000 + Math.random() * 8000);
+    const id = "ORD-" + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 36).toString(36).toUpperCase();
     const order: Order = { ...input, id, status: "Receipt Uploaded", createdAt: Date.now(), checklist: defaultChecklist(), refunded: false, refundedItems: [] };
 
     if (supabase) {
