@@ -10,7 +10,7 @@ import { orderTimeline, STATUS_COLORS } from "@/lib/order-types";
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { user, ready } = useAuth();
-  const { orders, submitReview } = useOrder();
+  const { orders, submitReview, saveError } = useOrder();
   const order = orders.find((o) => o.id === id);
 
   if (!ready) return null;
@@ -36,6 +36,11 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       </Link>
 
       <div className="text-[15px] font-bold text-[#1A2027] mb-1">{order.id}</div>
+      {saveError && (
+        <div className="text-xs text-[#D64545] bg-[#FDEDEC] border border-[#F3C6C2] rounded-md px-3 py-2 mb-4">
+          {saveError} If this order doesn&apos;t show up for the admin, please contact us with your order ID.
+        </div>
+      )}
       <div className="text-xs text-[#8A96A3] mb-5">
         {fmtDate(order.createdAt)} · {formatRs(order.total)}
       </div>

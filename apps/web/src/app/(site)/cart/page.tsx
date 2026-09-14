@@ -37,7 +37,7 @@ export default function CartPage() {
   const { user, ready } = useAuth();
   const { items, subtotal, inc, dec, remove, clear } = useCart();
   const { products } = useCatalog();
-  const { placeOrder } = useOrder();
+  const { placeOrder, saveError } = useOrder();
   const deliveryResult = useCartDeliveryFee(items);
 
   if (!ready) return null;
@@ -114,6 +114,7 @@ export default function CartPage() {
           total={total}
           deliveryResult={deliveryResult}
           placeOrder={placeOrder}
+          saveError={saveError}
           clear={clear}
         />
       )}
@@ -128,6 +129,7 @@ function CheckoutSection({
   total,
   deliveryResult,
   placeOrder,
+  saveError,
   clear,
 }: {
   user: Account;
@@ -136,6 +138,7 @@ function CheckoutSection({
   total: number;
   deliveryResult: DeliveryFeeResult;
   placeOrder: ReturnType<typeof useOrder>["placeOrder"];
+  saveError: string | null;
   clear: () => void;
 }) {
   const router = useRouter();
@@ -307,7 +310,7 @@ function CheckoutSection({
         )}
       </div>
 
-      {error && <div className="text-xs text-[#D64545] mb-3">{error}</div>}
+      {(error || saveError) && <div className="text-xs text-[#D64545] mb-3">{error || saveError}</div>}
       <button onClick={submit} className="w-full bg-primary text-white text-center py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer">
         Place Order &amp; Upload Receipt
       </button>
