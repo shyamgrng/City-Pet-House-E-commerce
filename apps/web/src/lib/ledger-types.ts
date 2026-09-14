@@ -39,6 +39,10 @@ export type LedgerPayment = {
   notes: string;
   receiptPhoto: string;
   createdAt: number;
+  /** Order/booking/delivery refs (vch no.) this payment is settling, if the admin picked any from
+   * the party's outstanding list. Empty for a flexible/advance payment not tied to a specific
+   * invoice. */
+  linkedRefs: string[];
 };
 
 export type NewLedgerPayment = Omit<LedgerPayment, "id" | "createdAt">;

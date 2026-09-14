@@ -534,7 +534,18 @@ function AuditLogTab({
   rangeStart,
   inputs,
 }: {
-  payments: { id: string; partyType: PartyType; partyId: string; amount: number; paymentDate: string; method: PaymentMethod; reference: string; createdAt: number }[];
+  payments: {
+    id: string;
+    partyType: PartyType;
+    partyId: string;
+    amount: number;
+    paymentDate: string;
+    method: PaymentMethod;
+    reference: string;
+    notes: string;
+    linkedRefs: string[];
+    createdAt: number;
+  }[];
   rangeStart: number;
   inputs: LedgerInputs;
 }) {
@@ -544,12 +555,13 @@ function AuditLogTab({
     <>
       <div className="font-heading font-bold text-base text-[#1A2027] mb-1">Audit Log</div>
       <div className="text-xs text-[#5B6773] mb-4">Every payout recorded, in the order it was made.</div>
-      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-        <div className="grid grid-cols-5 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden overflow-x-auto">
+        <div className="grid grid-cols-6 gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[760px]">
           <div>Date</div>
           <div>Party</div>
           <div>Method</div>
           <div>Reference</div>
+          <div>For</div>
           <div>Amount</div>
         </div>
         {rows.length === 0 ? (
@@ -558,11 +570,14 @@ function AuditLogTab({
           rows.map((p) => {
             const name = allParties(inputs).find((party) => party.partyType === p.partyType && party.partyId === p.partyId)?.name ?? p.partyId;
             return (
-              <div key={p.id} className="grid grid-cols-5 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+              <div key={p.id} className="grid grid-cols-6 gap-2 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[760px]">
                 <div>{p.paymentDate}</div>
                 <div className="font-semibold text-[#1A2027]">{name}</div>
                 <div className="text-[#5B6773]">{PAYMENT_METHOD_LABELS[p.method]}</div>
                 <div className="text-[#5B6773]">{p.reference || "—"}</div>
+                <div className="text-[#5B6773] truncate" title={p.linkedRefs.length ? p.linkedRefs.join(", ") : p.notes}>
+                  {p.linkedRefs.length ? p.linkedRefs.join(", ") : p.notes ? `(${p.notes})` : "Advance"}
+                </div>
                 <div className="font-semibold text-[#1F7A4D]">{fmt(p.amount)}</div>
               </div>
             );
@@ -666,11 +681,14 @@ function PaymentModal({
     reference: string;
     notes: string;
     receiptPhoto: string;
+    linkedRefs: string[];
   }) => void;
 }) {
   const [partyType, setPartyType] = useState<PartyType>(initial.partyType);
   const [partyId, setPartyId] = useState(initial.partyId);
   const summary = partySummary(inputs, partyType, partyId);
+  const invoiceRows = partyVoucherRows(inputs, partyType, partyId).filter((r) => r.credit > 0);
+  const [selectedRefs, setSelectedRefs] = useState<Set<string>>(new Set());
   const [amount, setAmount] = useState(Math.max(0, summary.balance));
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
   const [method, setMethod] = useState<PaymentMethod>("bank_transfer");
@@ -681,6 +699,24 @@ function PaymentModal({
   const [error, setError] = useState("");
 
   const partiesOfType = allParties(inputs).filter((p) => p.partyType === partyType);
+  const selectedTotal = invoiceRows.filter((r) => selectedRefs.has(r.vchNo)).reduce((sum, r) => sum + r.credit, 0);
+  const isExtraPayment = selectedRefs.size === 0 ? amount > 0 : amount !== selectedTotal;
+
+  const switchParty = (nextType: PartyType, nextId: string) => {
+    setPartyType(nextType);
+    setPartyId(nextId);
+    setSelectedRefs(new Set());
+    setAmount(Math.max(0, partySummary(inputs, nextType, nextId).balance));
+  };
+
+  const toggleRef = (vchNo: string, creditAmount: number) => {
+    const next = new Set(selectedRefs);
+    if (next.has(vchNo)) next.delete(vchNo);
+    else next.add(vchNo);
+    setSelectedRefs(next);
+    const total = invoiceRows.filter((r) => next.has(r.vchNo)).reduce((sum, r) => sum + r.credit, 0);
+    setAmount(total || creditAmount);
+  };
 
   const handleReceipt = async (file: File | undefined) => {
     if (!file) return;
@@ -708,12 +744,22 @@ function PaymentModal({
       setError("Please upload the payment receipt.");
       return;
     }
-    onSubmit({ partyType, partyId, amount, paymentDate, method, reference: reference.trim(), notes: notes.trim(), receiptPhoto });
+    onSubmit({
+      partyType,
+      partyId,
+      amount,
+      paymentDate,
+      method,
+      reference: reference.trim(),
+      notes: notes.trim(),
+      receiptPhoto,
+      linkedRefs: Array.from(selectedRefs),
+    });
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4" onClick={onCancel}>
-      <div className="bg-white rounded-xl p-5 w-full max-w-[420px] max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-xl p-5 w-full max-w-[460px] max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="text-sm font-bold text-[#1A2027] mb-4">Record Payment</div>
 
         <div className="grid grid-cols-2 gap-2 mb-2.5">
@@ -722,8 +768,7 @@ function PaymentModal({
               value={partyType}
               onChange={(e) => {
                 const next = e.target.value as PartyType;
-                setPartyType(next);
-                setPartyId(allParties(inputs).find((p) => p.partyType === next)?.partyId ?? "");
+                switchParty(next, allParties(inputs).find((p) => p.partyType === next)?.partyId ?? "");
               }}
               className={modalInputCls}
             >
@@ -735,7 +780,7 @@ function PaymentModal({
             </select>
           </ModalField>
           <ModalField label="Party">
-            <select value={partyId} onChange={(e) => setPartyId(e.target.value)} className={modalInputCls}>
+            <select value={partyId} onChange={(e) => switchParty(partyType, e.target.value)} className={modalInputCls}>
               {partiesOfType.map((p) => (
                 <option key={p.partyId} value={p.partyId}>
                   {p.name}
@@ -745,8 +790,24 @@ function PaymentModal({
           </ModalField>
         </div>
 
-        <div className="text-[11px] text-[#5B6773] mb-2.5">
+        <div className="text-[11px] text-[#5B6773] mb-3">
           Outstanding balance: <span className="font-bold text-[#7A56C8]">{fmt(summary.balance)}</span>
+        </div>
+
+        <div className="text-[11px] font-semibold text-[#5B6773] mb-1.5">Outstanding Orders / Invoices</div>
+        <div className="border border-[#E4E9EC] rounded-lg overflow-hidden mb-3 max-h-[180px] overflow-y-auto">
+          {invoiceRows.length === 0 ? (
+            <div className="px-3 py-3 text-[11px] text-[#8A96A3] text-center">Nothing outstanding for this party</div>
+          ) : (
+            invoiceRows.map((r) => (
+              <label key={r.key} className="flex items-center gap-2.5 px-3 py-2 text-xs border-b border-[#F0F2F4] last:border-0 cursor-pointer hover:bg-[#F7F9FA]">
+                <input type="checkbox" checked={selectedRefs.has(r.vchNo)} onChange={() => toggleRef(r.vchNo, r.credit)} />
+                <span className="font-semibold text-[#1A2027] shrink-0">{r.vchNo}</span>
+                <span className="text-[#5B6773] flex-1 truncate">{r.particulars}</span>
+                <span className="font-semibold text-[#7A56C8] shrink-0">{fmt(r.credit)}</span>
+              </label>
+            ))
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-2 mb-2.5">
@@ -757,6 +818,13 @@ function PaymentModal({
             <input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className={modalInputCls} />
           </ModalField>
         </div>
+        {isExtraPayment && (
+          <div className="text-[11px] text-[#C9962B] mb-2.5">
+            {selectedRefs.size === 0
+              ? "Not tied to a specific invoice — this will be recorded as a flexible/advance payment. Consider adding a note."
+              : "Amount doesn't match the selected invoices — consider adding a note explaining the difference."}
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2 mb-2.5">
           <ModalField label="Method">
@@ -773,15 +841,15 @@ function PaymentModal({
           </ModalField>
         </div>
 
-        <ModalField label="Notes">
-          <input value={notes} onChange={(e) => setNotes(e.target.value)} className={modalInputCls} />
+        <ModalField label="Notes / Remarks">
+          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g., advance payment, adjustment, extra fee" className={modalInputCls} />
         </ModalField>
         <div className="h-2.5" />
-        <ModalField label="Payment Receipt (required)">
+        <ModalField label="Payment Screenshot (required)">
           <input type="file" accept={IMAGE_ACCEPT} onChange={(e) => handleReceipt(e.target.files?.[0])} className="text-[11px]" />
         </ModalField>
         {uploading && <div className="text-[11px] text-[#8A96A3] mt-1">Processing photo…</div>}
-        {receiptPhoto && !uploading && <div className="text-[11px] text-[#1F7A4D] font-semibold mt-1">✓ Receipt attached</div>}
+        {receiptPhoto && !uploading && <div className="text-[11px] text-[#1F7A4D] font-semibold mt-1">✓ Screenshot attached</div>}
         {(error || saveError) && <div className="text-[11px] text-[#D64545] mt-2">{error || saveError}</div>}
 
         <div className="flex gap-2 mt-4">
