@@ -22,15 +22,16 @@ import { isValidNepalPhone } from "@/lib/phone";
 function useCartDeliveryFee(items: CartItem[]) {
   const { products } = useCatalog();
   const { accounts: couriers } = useCourierAuth();
-  const { standardFee, freeDeliveryThreshold, freeDeliveryMaxTier } = useDeliverySettings();
+  const { standardFeeSmall, standardFeeMedium, standardFeeLarge, standardFeeVeryLarge, feeTiers, freeDeliveryMaxTier } = useDeliverySettings();
 
   const feeItems = items.map((it) => {
     const product = products.find((p) => p.id === it.productId);
     return { subtotal: it.price * it.qty, tier: product?.courierPackageSize ?? "Small" };
   });
   const activeCourier = couriers.find((c) => c.isActive) ?? null;
+  const standardRates = { standardFeeSmall, standardFeeMedium, standardFeeLarge, standardFeeVeryLarge };
 
-  return calculateDeliveryFee({ items: feeItems, courier: activeCourier, standardFee, freeDeliveryThreshold, freeDeliveryMaxTier });
+  return calculateDeliveryFee({ items: feeItems, courier: activeCourier, standardRates, feeTiers, freeDeliveryMaxTier });
 }
 
 export default function CartPage() {

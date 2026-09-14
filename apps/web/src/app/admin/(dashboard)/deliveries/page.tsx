@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { courierAccountSeed } from "@/lib/courier-auth-types";
 import { useB2B } from "@/context/B2BContext";
 import { useCatalog } from "@/context/CatalogContext";
+import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useDelivery } from "@/context/DeliveryContext";
 import { useOrder } from "@/context/OrderContext";
 import type { B2BProductSubmission } from "@/lib/b2b-types";
+import type { CourierAccount } from "@/lib/courier-auth-types";
 import { STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
 import { supplierForProduct } from "@/lib/order-fulfillment";
 import { STATUS_COLORS as ORDER_STATUS_COLORS, type Order } from "@/lib/order-types";
@@ -60,6 +61,7 @@ export default function DeliveriesPage() {
   const { deliveries, assignCourier, addDelivery } = useDelivery();
   const { orders, refunds, approveOrder, rejectOrder, markOnTheWay, toggleChecklistItem, refundItem, refundWholeOrder } = useOrder();
   const { products, updateProduct } = useCatalog();
+  const { accounts: courierAccounts } = useCourierAuth();
   const { submissions } = useB2B();
 
   const awaitingCourier = deliveries.filter((d) => d.status === "Awaiting Courier");
@@ -144,9 +146,9 @@ export default function DeliveriesPage() {
     setSelectedOrderId(null);
   };
 
-  const dispatch = (id: string, courierId: string, courierName: string) => {
+  const dispatch = (id: string, courierId: string, courierName: string, newFee: number | null) => {
     assignCourier(id, courierId, courierName);
-    markOnTheWay(id);
+    markOnTheWay(id, newFee ?? undefined);
   };
 
   const receiptOrder = orders.find((o) => o.id === receiptOrderId) ?? null;
@@ -235,7 +237,13 @@ export default function DeliveriesPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {awaitingCourier.map((o) => (
-                <DispatchCard key={o.id} delivery={o} onDispatch={dispatch} />
+                <DispatchCard
+                  key={o.id}
+                  delivery={o}
+                  order={orders.find((ord) => ord.id === o.id) ?? null}
+                  courierAccounts={courierAccounts}
+                  onDispatch={dispatch}
+                />
               ))}
             </div>
           )}
@@ -578,13 +586,26 @@ function PaymentQueueRow({
   );
 }
 
-function DispatchCard({ delivery, onDispatch }: { delivery: Delivery; onDispatch: (id: string, courierId: string, courierName: string) => void }) {
+function DispatchCard({
+  delivery,
+  order,
+  courierAccounts,
+  onDispatch,
+}: {
+  delivery: Delivery;
+  order: Order | null;
+  courierAccounts: CourierAccount[];
+  onDispatch: (id: string, courierId: string, courierName: string, newFee: number | null) => void;
+}) {
   const [courierId, setCourierId] = useState("");
+  const [feeInput, setFeeInput] = useState(String(order?.deliveryFee ?? 0));
 
   const dispatch = () => {
-    const courier = courierAccountSeed.find((c) => c.courierId === courierId);
+    const courier = courierAccounts.find((c) => c.courierId === courierId);
     if (!courier) return;
-    onDispatch(delivery.id, courier.courierId, courier.companyName);
+    const parsedFee = Number(feeInput);
+    const newFee = order && !isNaN(parsedFee) && parsedFee !== order.deliveryFee ? parsedFee : null;
+    onDispatch(delivery.id, courier.courierId, courier.companyName, newFee);
   };
 
   return (
@@ -606,13 +627,25 @@ function DispatchCard({ delivery, onDispatch }: { delivery: Delivery; onDispatch
         <span>Amount</span>
         <span className="font-bold text-sm text-[#1A2027]">Rs. {delivery.amount.toLocaleString("en-IN")}</span>
       </div>
+      {order && (
+        <div className="mt-2.5">
+          <div className="text-[10px] text-[#8A96A3] font-bold uppercase mb-1">Delivery Charge (Rs.)</div>
+          <input
+            type="number"
+            value={feeInput}
+            onChange={(e) => setFeeInput(e.target.value)}
+            className="w-full border border-[#E4E9EC] rounded-md px-3 py-2 text-xs text-[#1A2027] box-border"
+          />
+          <div className="text-[10px] text-[#8A96A3] mt-1">Override this order&apos;s courier charge if it differs from the checkout rate.</div>
+        </div>
+      )}
       <select
         value={courierId}
         onChange={(e) => setCourierId(e.target.value)}
         className="w-full mt-3 border border-[#E4E9EC] rounded-md px-3 py-2 text-xs text-[#5B6773]"
       >
         <option value="">Select courier…</option>
-        {courierAccountSeed.map((c) => (
+        {courierAccounts.map((c) => (
           <option key={c.courierId} value={c.courierId}>
             {c.companyName}
           </option>

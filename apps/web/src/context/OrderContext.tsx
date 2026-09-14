@@ -42,7 +42,8 @@ type OrderValue = {
   placeOrder: (input: PlaceOrderInput) => string;
   approveOrder: (id: string) => void;
   rejectOrder: (id: string, reason: string) => void;
-  markOnTheWay: (id: string) => void;
+  /** `deliveryFeeOverride`, when given, replaces the order's deliveryFee (and recomputes total) in the same update as the status change -- e.g. an admin correcting the courier charge right before dispatch. */
+  markOnTheWay: (id: string, deliveryFeeOverride?: number) => void;
   markDelivered: (id: string) => void;
   submitReview: (id: string, productId: string, rating: number, comment: string) => void;
   toggleChecklistItem: (orderId: string, index: number) => void;
@@ -262,8 +263,11 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
           notifyForOrder(id, "payment_approved");
         },
         rejectOrder: (id, reason) => update(id, { status: "Payment Rejected", rejectReason: reason }),
-        markOnTheWay: (id) => {
-          update(id, { status: "On the Way" });
+        markOnTheWay: (id, deliveryFeeOverride) => {
+          const order = state.orders.find((o) => o.id === id);
+          const feePatch =
+            order && deliveryFeeOverride != null ? { deliveryFee: deliveryFeeOverride, total: order.subtotal + deliveryFeeOverride } : {};
+          update(id, { status: "On the Way", ...feePatch });
           notifyForOrder(id, "order_dispatched");
         },
         markDelivered: (id) => {
