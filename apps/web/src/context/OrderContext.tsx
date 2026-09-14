@@ -205,7 +205,10 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         .from("orders")
         .insert({ id, data: order, updated_at: new Date().toISOString() })
         .then(({ error }) => {
-          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+          if (error) {
+            console.error("[placeOrder] Supabase insert failed:", error);
+            setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+          }
         });
     } else {
       persist([order, ...state.orders]);
