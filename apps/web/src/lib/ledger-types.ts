@@ -14,12 +14,13 @@ export const CATEGORY_LABELS: Record<LedgerCategory, string> = {
   vet: "Web Vet",
 };
 
-export type PaymentMethod = "bank_transfer" | "esewa" | "khalti" | "cash";
+export type PaymentMethod = "bank_transfer" | "esewa" | "khalti" | "fonepay" | "cash";
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   bank_transfer: "Bank Transfer",
   esewa: "eSewa",
   khalti: "Khalti",
+  fonepay: "FonePay",
   cash: "Cash",
 };
 
