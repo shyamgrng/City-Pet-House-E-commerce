@@ -211,7 +211,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         .then(({ error }) => {
           if (error) {
             console.error("[placeOrder] Supabase insert failed:", error);
-            setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE, failedOrderId: id }));
+            const detail = [error.code, error.message].filter(Boolean).join(": ");
+            setState((s) => ({ ...s, saveError: detail ? `${CLOUD_ERROR_MESSAGE} (${detail})` : CLOUD_ERROR_MESSAGE, failedOrderId: id }));
           }
         });
     } else {
