@@ -62,18 +62,18 @@ export type MainLedgerRow = {
   credit: number;
 };
 
-function productMap(products: Product[]): Map<string, Product> {
+export function productMap(products: Product[]): Map<string, Product> {
   return new Map(products.map((p) => [p.id, p]));
 }
 
-function b2bIdByCompanyName(b2bAccounts: B2BAccount[]): Map<string, string> {
+export function b2bIdByCompanyName(b2bAccounts: B2BAccount[]): Map<string, string> {
   return new Map(b2bAccounts.map((a) => [a.companyName, a.b2bId]));
 }
 
-type ItemSplit = { gross: number; commission: number; payable: number; b2bId: string | null };
+export type ItemSplit = { gross: number; commission: number; payable: number; b2bId: string | null };
 
 /** How one order item's sale splits between City Pet House's commission and the supplier's payable. */
-function splitItem(item: OrderItem, products: Map<string, Product>, companyToB2bId: Map<string, string>): ItemSplit {
+export function splitItem(item: OrderItem, products: Map<string, Product>, companyToB2bId: Map<string, string>): ItemSplit {
   const gross = item.price * item.qty;
   const product = products.get(item.productId);
   const b2bId = product?.suppliedBy ? (companyToB2bId.get(product.suppliedBy) ?? null) : null;

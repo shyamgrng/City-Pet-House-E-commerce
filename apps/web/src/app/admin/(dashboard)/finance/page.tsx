@@ -9,9 +9,11 @@ import { useLedger } from "@/context/LedgerContext";
 import { useOrder } from "@/context/OrderContext";
 import { usePets } from "@/context/PetContext";
 import { useVet } from "@/context/VetContext";
+import { formatRs, isDealLive, salePrice } from "@/lib/catalog-types";
 import { IMAGE_ACCEPT, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
 import {
   allParties,
+  b2bIdByCompanyName,
   incomeByCategory,
   type LedgerInputs,
   mainLedgerRows,
@@ -20,7 +22,9 @@ import {
   partySummaries,
   partySummary,
   partyVoucherRows,
+  productMap,
   receivableTotal,
+  splitItem,
 } from "@/lib/ledger-selectors";
 import { CATEGORY_LABELS, PARTY_TYPE_LABELS, PAYMENT_METHOD_LABELS, type LedgerCategory, type PartyType, type PaymentMethod } from "@/lib/ledger-types";
 
@@ -605,6 +609,8 @@ function PartyStatementView({
 }) {
   const summary = partySummary(inputs, partyType, partyId);
   const rows = partyVoucherRows(inputs, partyType, partyId).filter((r) => r.date >= rangeStart);
+  const [invoiceOrderId, setInvoiceOrderId] = useState<string | null>(null);
+  const commissionTaken = summary.totalBilled - summary.totalOwed;
 
   return (
     <div>
@@ -621,41 +627,159 @@ function PartyStatementView({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-5">
-        <Stat label="Total Billed" value={fmt(summary.totalBilled)} color="#1A2027" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-2">
+        <Stat label="Total Billed (Gross Sales)" value={fmt(summary.totalBilled)} color="#1A2027" />
         <Stat label="Total Paid" value={fmt(summary.totalPaid)} color="#1F7A4D" />
         <Stat label="Balance Payable" value={fmt(summary.balance)} color="#7A56C8" />
       </div>
+      {commissionTaken > 0 && (
+        <div className="text-[11px] text-[#5B6773] bg-[#F7F9FA] border border-[#E4E9EC] rounded-lg px-3.5 py-2.5 mb-5 leading-relaxed">
+          <span className="font-semibold text-[#1A2027]">Total Billed</span> is the full amount customers paid for this party&apos;s products/services.{" "}
+          <span className="font-semibold text-[#1A2027]">Balance Payable</span> is only what&apos;s still owed to <em>them</em> — City Pet House&apos;s
+          commission ({fmt(commissionTaken)} so far) is deducted first. That&apos;s why Total Billed − Total Paid ({fmt(summary.totalBilled - summary.totalPaid)}
+          ) doesn&apos;t equal Balance Payable.
+          {partyType === "b2b" && " Click any Sale row below to see the exact commission split per item."}
+        </div>
+      )}
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
-        <div className="grid grid-cols-6 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
+        <div className="grid grid-cols-7 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC]">
           <div className="col-span-2">Particulars</div>
           <div>Vch Type</div>
           <div>Vch No.</div>
           <div>Debit</div>
+          <div>Credit</div>
           <div>Balance</div>
         </div>
-        <div className="grid grid-cols-6 px-4 py-2.5 text-xs items-center border-b border-[#F0F2F4] bg-[#F7F9FA]">
-          <div className="col-span-5 font-semibold text-[#1A2027]">Opening Balance</div>
+        <div className="grid grid-cols-7 px-4 py-2.5 text-xs items-center border-b border-[#F0F2F4] bg-[#F7F9FA]">
+          <div className="col-span-6 font-semibold text-[#1A2027]">Opening Balance</div>
           <div className="font-semibold">{fmt(0)}</div>
         </div>
         {rows.length === 0 ? (
           <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No activity in this range</div>
         ) : (
-          rows.map((r) => (
-            <div key={r.key} className="grid grid-cols-6 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
-              <div className="col-span-2 text-[#3A4652]">{r.particulars}</div>
-              <div className="text-[#5B6773]">{r.vchType}</div>
-              <div className="text-[#5B6773]">{r.vchNo}</div>
-              <div className={r.debit > 0 ? "font-semibold text-[#1F7A4D]" : "text-[#B0B8BF]"}>{r.debit > 0 ? fmt(r.debit) : "—"}</div>
-              <div className="font-semibold text-[#1A2027]">{fmt(r.balance)}</div>
-            </div>
-          ))
+          rows.map((r) => {
+            const clickable = partyType === "b2b" && r.vchType === "Sale";
+            return (
+              <div key={r.key} className="grid grid-cols-7 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0">
+                <div className="col-span-2 text-[#3A4652]">{r.particulars}</div>
+                <div className="text-[#5B6773]">{r.vchType}</div>
+                <div className="text-[#5B6773]">
+                  {clickable ? (
+                    <button onClick={() => setInvoiceOrderId(r.vchNo)} className="text-primary font-semibold underline cursor-pointer">
+                      {r.vchNo}
+                    </button>
+                  ) : (
+                    r.vchNo
+                  )}
+                </div>
+                <div className={r.debit > 0 ? "font-semibold text-[#1F7A4D]" : "text-[#B0B8BF]"}>{r.debit > 0 ? fmt(r.debit) : "—"}</div>
+                <div className={r.credit > 0 ? "font-semibold text-[#7A56C8]" : "text-[#B0B8BF]"}>{r.credit > 0 ? fmt(r.credit) : "—"}</div>
+                <div className="font-semibold text-[#1A2027]">{fmt(r.balance)}</div>
+              </div>
+            );
+          })
         )}
-        <div className="grid grid-cols-6 px-4 py-2.5 text-xs items-center bg-[#F7F9FA]">
-          <div className="col-span-5 font-semibold text-[#1A2027]">Closing Balance</div>
+        <div className="grid grid-cols-7 px-4 py-2.5 text-xs items-center bg-[#F7F9FA]">
+          <div className="col-span-6 font-semibold text-[#1A2027]">Closing Balance</div>
           <div className="font-bold text-[#7A56C8]">{fmt(rows.length ? rows[rows.length - 1].balance : 0)}</div>
         </div>
+      </div>
+
+      {invoiceOrderId && (
+        <OrderInvoiceModal inputs={inputs} orderId={invoiceOrderId} partyId={partyId} onClose={() => setInvoiceOrderId(null)} />
+      )}
+    </div>
+  );
+}
+
+function OrderInvoiceModal({
+  inputs,
+  orderId,
+  partyId,
+  onClose,
+}: {
+  inputs: LedgerInputs;
+  orderId: string;
+  partyId: string;
+  onClose: () => void;
+}) {
+  const order = inputs.orders.find((o) => o.id === orderId);
+  const products = productMap(inputs.products);
+  const companyToB2bId = b2bIdByCompanyName(inputs.b2bAccounts);
+  const lines = (order?.items ?? [])
+    .map((item) => ({ item, split: splitItem(item, products, companyToB2bId), product: products.get(item.productId) }))
+    .filter((l) => l.split.b2bId === partyId);
+  const totals = lines.reduce(
+    (acc, l) => ({ gross: acc.gross + l.split.gross, commission: acc.commission + l.split.commission, payable: acc.payable + l.split.payable }),
+    { gross: 0, commission: 0, payable: 0 },
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4" onClick={onClose}>
+      <div className="bg-white rounded-xl p-5 w-full max-w-[620px] max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-sm font-bold text-[#1A2027]">Invoice — {orderId}</div>
+          <button onClick={onClose} className="text-[#8A96A3] cursor-pointer text-lg leading-none">
+            ×
+          </button>
+        </div>
+        {!order ? (
+          <div className="text-xs text-[#8A96A3] mt-3">Order not found.</div>
+        ) : (
+          <>
+            <div className="text-[11px] text-[#8A96A3] mb-4">
+              {new Date(order.approvedAt ?? order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · Customer:{" "}
+              {order.ownerName}
+            </div>
+
+            <div className="border border-[#E4E9EC] rounded-lg overflow-hidden mb-3">
+              <div className="grid grid-cols-6 gap-2 px-3 py-2 text-[10px] font-bold text-[#8A96A3] uppercase bg-[#F7F9FA] border-b border-[#E4E9EC]">
+                <div className="col-span-2">Item</div>
+                <div>MRP / Deal</div>
+                <div>Charged</div>
+                <div>Commission</div>
+                <div>Payable</div>
+              </div>
+              {lines.map((l) => (
+                <div key={l.item.productId} className="grid grid-cols-6 gap-2 px-3 py-2.5 text-xs border-b border-[#F0F2F4] last:border-0">
+                  <div className="col-span-2">
+                    <div className="font-semibold text-[#1A2027]">
+                      {l.item.name} ×{l.item.qty}
+                    </div>
+                    {l.product?.hotSale && <div className="text-[10px] text-[#D64545] font-semibold mt-0.5">🔥 Hot Sale — {l.product.hotDiscount}% off</div>}
+                    {l.product && isDealLive(l.product) && <div className="text-[10px] text-[#C9962B] font-semibold mt-0.5">⏰ Today&apos;s Deal</div>}
+                  </div>
+                  <div className="text-[#5B6773]">
+                    {l.product ? (
+                      <>
+                        {formatRs(l.product.price)}
+                        {l.product.hotSale && <div className="text-[10px] text-[#8A96A3]">→ {formatRs(salePrice(l.product))}</div>}
+                      </>
+                    ) : (
+                      <span className="text-[#B0B8BF]">— (product removed)</span>
+                    )}
+                  </div>
+                  <div className="font-semibold text-[#1A2027]">{fmt(l.split.gross)}</div>
+                  <div className="text-[#8A6D1F]">
+                    {fmt(l.split.commission)} <span className="text-[10px] text-[#B0B8BF]">({l.product?.commissionPercent ?? 0}%)</span>
+                  </div>
+                  <div className="font-bold text-[#7A56C8]">{fmt(l.split.payable)}</div>
+                </div>
+              ))}
+              <div className="grid grid-cols-6 gap-2 px-3 py-2.5 text-xs bg-[#F7F9FA]">
+                <div className="col-span-3 font-bold text-[#1A2027]">Total</div>
+                <div className="font-bold text-[#1A2027]">{fmt(totals.gross)}</div>
+                <div className="font-bold text-[#8A6D1F]">{fmt(totals.commission)}</div>
+                <div className="font-bold text-[#7A56C8]">{fmt(totals.payable)}</div>
+              </div>
+            </div>
+            <div className="text-[11px] text-[#8A96A3] leading-relaxed">
+              &quot;MRP / Deal&quot; shows the product&apos;s current catalog price and promotions, which may have changed since this order was placed.
+              &quot;Charged&quot; is the actual amount billed to the customer at the time of the order.
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
