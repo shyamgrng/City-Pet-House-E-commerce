@@ -56,7 +56,9 @@ export function LedgerProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await db.from("ledger_payments").select("id, data");
       if (cancelled) return;
       if (error) {
-        setState((s) => ({ ...s, ready: true, saveError: CLOUD_ERROR_MESSAGE }));
+        console.error("[LedgerProvider] Supabase load failed:", error);
+        const detail = [error.code, error.message].filter(Boolean).join(": ");
+        setState((s) => ({ ...s, ready: true, saveError: detail ? `${CLOUD_ERROR_MESSAGE} (${detail})` : CLOUD_ERROR_MESSAGE }));
         return;
       }
       const rows = (data ?? []) as PaymentRow[];
@@ -99,7 +101,11 @@ export function LedgerProvider({ children }: { children: React.ReactNode }) {
         .from("ledger_payments")
         .insert({ id: payment.id, data: payment })
         .then(({ error }) => {
-          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+          if (error) {
+            console.error("[addPayment] Supabase insert failed:", error);
+            const detail = [error.code, error.message].filter(Boolean).join(": ");
+            setState((s) => ({ ...s, saveError: detail ? `${CLOUD_ERROR_MESSAGE} (${detail})` : CLOUD_ERROR_MESSAGE }));
+          }
         });
       return true;
     }
