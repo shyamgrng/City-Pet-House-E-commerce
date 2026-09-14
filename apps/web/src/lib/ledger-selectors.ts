@@ -224,7 +224,9 @@ export function partyVoucherRows(inputs: LedgerInputs, partyType: PartyType, par
 
   for (const p of inputs.payments) {
     if (p.partyType !== partyType || p.partyId !== partyId) continue;
-    rows.push({ date: new Date(p.paymentDate).getTime() || p.createdAt, particulars: p.notes || "Payment made", vchType: "Payment", vchNo: p.id, debit: p.amount, credit: 0 });
+    const linked = p.linkedRefs?.length ? `Payment — ${p.linkedRefs.join(", ")}` : "Payment made";
+    const particulars = p.notes ? `${linked} (${p.notes})` : linked;
+    rows.push({ date: new Date(p.paymentDate).getTime() || p.createdAt, particulars, vchType: "Payment", vchNo: p.reference || p.id, debit: p.amount, credit: 0 });
   }
 
   rows.sort((a, b) => a.date - b.date);
