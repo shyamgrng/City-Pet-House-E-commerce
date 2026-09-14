@@ -774,6 +774,10 @@ function OrderDetailModal({
         {order.items.map((it, i) => {
           const supplier = supplierForProduct(submissions, it.productId);
           const fulfillment = supplier ? order.supplierFulfillments?.find((f) => f.b2bId === supplier.b2bId) : undefined;
+          // A product's supplier can also be set directly on the catalog record (e.g. admin editing it in
+          // Shop) without ever going through the B2B self-submission flow -- fall back to that so every
+          // B2B-sourced item shows its supplier here, not just ones with a fulfillment record to track.
+          const suppliedByName = supplier?.companyName ?? products.find((p) => p.id === it.productId)?.suppliedBy;
           return (
             <div key={i} className="py-1.5">
               <div className="flex justify-between items-center text-xs">
@@ -790,9 +794,10 @@ function OrderDetailModal({
                   )}
                 </div>
               </div>
-              {supplier && (
+              {suppliedByName && (
                 <div className="text-[11px] mt-0.5" style={{ color: fulfillment?.sentAt ? "#1F7A4D" : "#8A96A3" }}>
-                  {supplier.companyName} · {fulfillment?.sentAt ? "✓ Sent by supplier" : "Awaiting supplier"}
+                  {suppliedByName}
+                  {supplier ? ` · ${fulfillment?.sentAt ? "✓ Sent by supplier" : "Awaiting supplier"}` : ""}
                 </div>
               )}
             </div>
