@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
@@ -37,7 +37,7 @@ export default function CartPage() {
   const { user, ready } = useAuth();
   const { items, subtotal, inc, dec, remove, clear } = useCart();
   const { products } = useCatalog();
-  const { placeOrder, saveError } = useOrder();
+  const { placeOrder, saveError, clearSaveError } = useOrder();
   const deliveryResult = useCartDeliveryFee(items);
 
   if (!ready) return null;
@@ -115,6 +115,7 @@ export default function CartPage() {
           deliveryResult={deliveryResult}
           placeOrder={placeOrder}
           saveError={saveError}
+          clearSaveError={clearSaveError}
           clear={clear}
         />
       )}
@@ -130,6 +131,7 @@ function CheckoutSection({
   deliveryResult,
   placeOrder,
   saveError,
+  clearSaveError,
   clear,
 }: {
   user: Account;
@@ -139,6 +141,7 @@ function CheckoutSection({
   deliveryResult: DeliveryFeeResult;
   placeOrder: ReturnType<typeof useOrder>["placeOrder"];
   saveError: string | null;
+  clearSaveError: () => void;
   clear: () => void;
 }) {
   const router = useRouter();
@@ -152,6 +155,13 @@ function CheckoutSection({
   const [error, setError] = useState("");
   const [previewQr, setPreviewQr] = useState<{ src: string; label: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // A saveError left over from an earlier, unrelated failed save (e.g. a previous order
+  // attempt) must not be shown as if it belonged to this fresh checkout session.
+  useEffect(() => {
+    clearSaveError();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;

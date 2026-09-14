@@ -36,6 +36,9 @@ type OrderValue = {
   refunds: RefundRecord[];
   ready: boolean;
   saveError: string | null;
+  /** Set to the order's id when `saveError` is the result of that specific order failing to save (e.g. via placeOrder), so a page for a different, unaffected order doesn't show a leftover error from something else. */
+  failedOrderId: string | null;
+  clearSaveError: () => void;
   placeOrder: (input: PlaceOrderInput) => string;
   approveOrder: (id: string) => void;
   rejectOrder: (id: string, reason: string) => void;
@@ -74,11 +77,12 @@ function loadRefunds(): RefundRecord[] {
 }
 
 export function OrderProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ orders: Order[]; refunds: RefundRecord[]; ready: boolean; saveError: string | null }>({
+  const [state, setState] = useState<{ orders: Order[]; refunds: RefundRecord[]; ready: boolean; saveError: string | null; failedOrderId: string | null }>({
     orders: orderSeed,
     refunds: refundSeed,
     ready: false,
     saveError: null,
+    failedOrderId: null,
   });
 
   // Cloud mode (Supabase configured): orders and refunds live in a shared database so a phone
@@ -89,7 +93,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!supabase) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setState({ orders: loadStored(), refunds: loadRefunds(), ready: true, saveError: null });
+      setState({ orders: loadStored(), refunds: loadRefunds(), ready: true, saveError: null, failedOrderId: null });
 
       const onStorage = (e: StorageEvent) => {
         if (e.key === STORAGE_KEY) setState((s) => ({ ...s, orders: loadStored() }));
@@ -123,7 +127,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
       const refundRows = (refundsRes.data ?? []) as RefundRow[];
       const refunds = refundRows.map((r) => r.data).sort((a, b) => b.createdAt - a.createdAt);
 
-      if (!cancelled) setState({ orders, refunds, ready: true, saveError: null });
+      if (!cancelled) setState({ orders, refunds, ready: true, saveError: null, failedOrderId: null });
     })();
 
     const channel = db
@@ -181,12 +185,12 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
     if (supabase) {
       const db = supabase;
-      setState((s) => ({ ...s, orders: s.orders.map((o) => (o.id === id ? patched : o)), saveError: null }));
+      setState((s) => ({ ...s, orders: s.orders.map((o) => (o.id === id ? patched : o)), saveError: null, failedOrderId: null }));
       void db
         .from("orders")
         .upsert({ id, data: patched, updated_at: new Date().toISOString() })
         .then(({ error }) => {
-          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+          if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE, failedOrderId: null }));
         });
       return;
     }
@@ -200,14 +204,14 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
     if (supabase) {
       const db = supabase;
-      setState((s) => ({ ...s, orders: [order, ...s.orders], saveError: null }));
+      setState((s) => ({ ...s, orders: [order, ...s.orders], saveError: null, failedOrderId: null }));
       void db
         .from("orders")
         .insert({ id, data: order, updated_at: new Date().toISOString() })
         .then(({ error }) => {
           if (error) {
             console.error("[placeOrder] Supabase insert failed:", error);
-            setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
+            setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE, failedOrderId: id }));
           }
         });
     } else {
@@ -229,7 +233,7 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
 
     if (supabase) {
       const db = supabase;
-      setState((s) => ({ ...s, refunds: [refund, ...s.refunds], saveError: null }));
+      setState((s) => ({ ...s, refunds: [refund, ...s.refunds], saveError: null, failedOrderId: null }));
       void db
         .from("refunds")
         .insert({ id: refund.id, data: refund, updated_at: new Date().toISOString() })
@@ -249,6 +253,8 @@ export function OrderProvider({ children }: { children: React.ReactNode }) {
         refunds: state.refunds,
         ready: state.ready,
         saveError: state.saveError,
+        failedOrderId: state.failedOrderId,
+        clearSaveError: () => setState((s) => ({ ...s, saveError: null, failedOrderId: null })),
         placeOrder,
         approveOrder: (id) => {
           update(id, { status: "Payment Approved", approvedAt: Date.now() });
