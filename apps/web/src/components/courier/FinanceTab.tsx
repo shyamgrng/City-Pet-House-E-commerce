@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
-import { myProductIds } from "@/lib/b2b-analytics";
-import type { B2BProductSubmission } from "@/lib/b2b-types";
-import type { Order } from "@/lib/order-types";
+import type { Delivery } from "@/lib/delivery-types";
 
 const RANGE_OPTIONS = ["Today", "Yesterday", "Last 7 days", "This Month", "All Time", "Custom"] as const;
 type RangeKey = (typeof RANGE_OPTIONS)[number];
@@ -58,64 +56,39 @@ const fmtDMY = (ts: number) => {
 };
 const fmtAmt = (n: number) => n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-type VchType = "Sale" | "Commission" | "Payment";
-const VCH_RANK: Record<VchType, number> = { Sale: 0, Commission: 1, Payment: 2 };
-
+type VchType = "Delivery" | "Received";
 type Voucher = {
-  key: string;
+  delivery: Delivery;
   date: number;
-  particulars: string;
-  narration: string;
-  vchNo: string;
-  refNo: string;
   vchType: VchType;
   debit: number;
   credit: number;
 };
 
-/** Every non-pending, non-rejected order posts a "Sale" (debit, gross item value) and matching
- * "Commission" (credit, City Pet House's cut) the day payment was approved -- that's when the sale
- * is real. A "Payment" (credit, net payout) posts the day the order is actually delivered, since
- * that's the closest thing to a settlement event this app has -- exactly like a real double-entry
- * ledger, instead of one row that tries to show sale, commission and payout all at once. */
-function buildVouchers(orders: Order[], submissions: B2BProductSubmission[], b2bId: string): Voucher[] {
-  const ids = myProductIds(submissions, b2bId);
+/** Every accepted delivery posts a "Delivery" (debit) entry the day it's dispatched to the
+ * courier; a Delivered one also posts a matching "Received" (credit) entry the day payment was
+ * actually collected -- two vouchers per settled delivery, exactly like the doctor's consult
+ * ledger, instead of one row that tries to show both earned and received at once. */
+function buildVouchers(deliveries: Delivery[]): Voucher[] {
   const vouchers: Voucher[] = [];
-  for (const o of orders) {
-    if (o.status === "Payment Rejected" || o.status === "Receipt Uploaded") continue;
-    for (const it of o.items) {
-      if (!ids.has(it.productId)) continue;
-      const sub = submissions.find((s) => s.productId === it.productId);
-      const commissionPct = sub?.commissionPct ?? 0;
-      const gross = it.price * it.qty;
-      const commission = Math.round((gross * commissionPct) / 100);
-      const net = gross - commission;
-      const saleDate = o.approvedAt ?? o.createdAt;
-      const particulars = o.ownerName;
-      const narration = `${it.name} × ${it.qty} · Order ${o.id}`;
-      const vchNo = o.id;
-      const refNo = sub?.sku || it.productId;
-
-      vouchers.push({ key: `${o.id}-${it.productId}-sale`, date: saleDate, particulars, narration, vchNo, refNo, vchType: "Sale", debit: gross, credit: 0 });
-      if (commission > 0) {
-        vouchers.push({ key: `${o.id}-${it.productId}-commission`, date: saleDate, particulars, narration, vchNo, refNo, vchType: "Commission", debit: 0, credit: commission });
-      }
-      if (o.status === "Delivered" && o.deliveredAt) {
-        vouchers.push({ key: `${o.id}-${it.productId}-payment`, date: o.deliveredAt, particulars, narration, vchNo, refNo, vchType: "Payment", debit: 0, credit: net });
-      }
+  for (const d of deliveries) {
+    if (d.status === "Cancelled" || d.status === "Awaiting Courier") continue;
+    vouchers.push({ delivery: d, date: d.dispatchedAt ?? 0, vchType: "Delivery", debit: d.amount, credit: 0 });
+    if (d.status === "Delivered") {
+      vouchers.push({ delivery: d, date: d.deliveredAt ?? d.dispatchedAt ?? 0, vchType: "Received", debit: 0, credit: d.amount });
     }
   }
-  return vouchers.sort((a, b) => a.date - b.date || VCH_RANK[a.vchType] - VCH_RANK[b.vchType]);
+  return vouchers.sort((a, b) => a.date - b.date || (a.vchType === "Delivery" ? -1 : 1));
 }
 
-export default function FinanceTab({ orders, submissions, b2bId, companyName }: { orders: Order[]; submissions: B2BProductSubmission[]; b2bId: string; companyName: string }) {
+export default function FinanceTab({ deliveries, courierName }: { deliveries: Delivery[]; courierName: string }) {
   const { settings } = useSiteSettings();
   const [range, setRange] = useState<RangeKey>("All Time");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
 
   const dateWindow = computeWindow(range, customFrom, customTo);
-  const allVouchers = buildVouchers(orders, submissions, b2bId);
+  const allVouchers = buildVouchers(deliveries);
 
   // Opening balance carries forward everything before the window -- a "receivable" balance
   // doesn't reset just because you're only looking at today; it's what's actually owed as of
@@ -133,11 +106,9 @@ export default function FinanceTab({ orders, submissions, b2bId, companyName }: 
 
   const periodDebit = periodVouchers.reduce((sum, v) => sum + v.debit, 0);
   const periodCredit = periodVouchers.reduce((sum, v) => sum + v.credit, 0);
-  const periodCommission = periodVouchers.filter((v) => v.vchType === "Commission").reduce((sum, v) => sum + v.credit, 0);
   const closingBalance = ledger.length > 0 ? ledger[ledger.length - 1].balance : openingBalance;
-  const saleCount = periodVouchers.filter((v) => v.vchType === "Sale").length;
-  const commissionCount = periodVouchers.filter((v) => v.vchType === "Commission").length;
-  const paymentCount = periodVouchers.filter((v) => v.vchType === "Payment").length;
+  const deliveryCount = periodVouchers.filter((v) => v.vchType === "Delivery").length;
+  const receivedCount = periodVouchers.filter((v) => v.vchType === "Received").length;
 
   const periodLabel = dateWindow
     ? `${fmtDMY(dateWindow.start)} To ${fmtDMY(dateWindow.end)}`
@@ -147,12 +118,6 @@ export default function FinanceTab({ orders, submissions, b2bId, companyName }: 
 
   return (
     <div>
-      <div className="flex gap-3.5 mb-6 flex-wrap">
-        <FinanceStat label="Total Sale" value={periodDebit} color="#1A2027" />
-        <FinanceStat label="Total Amount Receivable" value={closingBalance} color="#7A56C8" />
-        <FinanceStat label="Total Commission Paid" value={periodCommission} color="#D64545" />
-      </div>
-
       <div className="flex gap-2 mb-4 flex-wrap items-center">
         {RANGE_OPTIONS.map((r) => (
           <button
@@ -183,11 +148,17 @@ export default function FinanceTab({ orders, submissions, b2bId, companyName }: 
         )}
       </div>
 
+      <div className="flex gap-3.5 mb-6">
+        <FinanceStat label="Total Earned" value={periodDebit} color="#1A2027" />
+        <FinanceStat label="Total Received" value={periodCredit} color="#1F7A4D" />
+        <FinanceStat label="Balance Receivable" value={closingBalance} color="#7A56C8" />
+      </div>
+
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
         <div className="px-5 pt-5 pb-3">
           <div className="text-[15px] font-bold text-primary">{settings.businessName.toUpperCase()}</div>
-          <div className="text-[13px] font-bold text-[#1A2027] mt-1">{companyName} A/C</div>
-          <div className="text-[13px] font-bold text-[#1A2027]">Product Sales — Receivable</div>
+          <div className="text-[13px] font-bold text-[#1A2027] mt-1">{courierName} A/C</div>
+          <div className="text-[13px] font-bold text-[#1A2027]">Delivery Fees — Receivable</div>
           <div className="text-[13px] font-bold text-[#1A2027]">{periodLabel}</div>
         </div>
 
@@ -214,19 +185,19 @@ export default function FinanceTab({ orders, submissions, b2bId, companyName }: 
             {ledger.length === 0 ? (
               <div className="px-5 py-6 text-xs text-[#8A96A3] text-center">No transactions in this period</div>
             ) : (
-              ledger.map((row) => (
-                <div key={row.key} className="border-b border-[#F0F2F4] last:border-0">
+              ledger.map((row, i) => (
+                <div key={`${row.delivery.id}-${row.vchType}-${i}`} className="border-b border-[#F0F2F4] last:border-0">
                   <div className="grid grid-cols-[100px_1fr_90px_120px_100px_110px_110px_110px] px-5 py-2.5 text-xs items-center">
                     <div className="text-[#5B6773]">{fmtDMY(row.date)}</div>
-                    <div className="font-semibold text-[#1A2027] truncate pr-2">{row.particulars}</div>
+                    <div className="font-semibold text-[#1A2027] truncate pr-2">{row.delivery.client}</div>
                     <div className="text-[#5B6773]">{row.vchType}</div>
-                    <div className="font-semibold text-primary truncate">{row.vchNo}</div>
-                    <div className="text-[#8A96A3] truncate">{row.refNo}</div>
+                    <div className="font-semibold text-primary truncate">{row.delivery.id}</div>
+                    <div className="text-[#8A96A3]">—</div>
                     <div className="text-right font-semibold text-[#1A2027]">{row.debit > 0 ? fmtAmt(row.debit) : ""}</div>
                     <div className="text-right font-semibold text-[#1F7A4D]">{row.credit > 0 ? fmtAmt(row.credit) : ""}</div>
                     <div className="text-right font-semibold text-[#7A56C8]">{fmtAmt(row.balance)}</div>
                   </div>
-                  <div className="px-5 pb-2 text-[11px] text-[#8A96A3]">Narration: {row.narration}</div>
+                  <div className="px-5 pb-2 text-[11px] text-[#8A96A3]">Narration: {row.delivery.address}</div>
                 </div>
               ))
             )}
@@ -248,12 +219,11 @@ export default function FinanceTab({ orders, submissions, b2bId, companyName }: 
       </div>
 
       <div className="mt-4 bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden max-w-[320px]">
-        <VoucherCountRow label="Sale" count={saleCount} />
-        <VoucherCountRow label="Commission" count={commissionCount} />
-        <VoucherCountRow label="Payment" count={paymentCount} />
+        <VoucherCountRow label="Delivery" count={deliveryCount} />
+        <VoucherCountRow label="Received" count={receivedCount} />
         <div className="flex justify-between items-center px-4 py-2.5 text-xs font-bold text-white bg-[#5B6773]">
           <div>Total Transactions</div>
-          <div>{saleCount + commissionCount + paymentCount}</div>
+          <div>{deliveryCount + receivedCount}</div>
         </div>
       </div>
     </div>
@@ -271,7 +241,7 @@ function VoucherCountRow({ label, count }: { label: string; count: number }) {
 
 function FinanceStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="flex-1 min-w-[160px] border border-[#E4E9EC] rounded-xl p-4">
+    <div className="flex-1 border border-[#E4E9EC] rounded-xl p-4">
       <div className="text-[11px] text-[#8A96A3] mb-1.5">{label}</div>
       <div className="font-heading font-bold text-xl" style={{ color }}>
         Rs. {value.toLocaleString("en-IN")}

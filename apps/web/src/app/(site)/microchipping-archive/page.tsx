@@ -205,19 +205,13 @@ function MicrochippingArchiveInner() {
 
   return (
     <div>
-      <div
-        style={{ background: "linear-gradient(90deg, #7A56C8, #4E3A8A)" }}
-        className="px-9 py-10 flex items-center justify-between gap-6 flex-wrap"
-      >
-        <div>
-          <div className="font-heading font-bold text-[30px] text-white mb-1.5">{content.bannerTitle}</div>
-          <div className="text-[15px] text-white/85">{content.bannerSubtitle}</div>
-        </div>
-        <div className="text-sm text-white/80 font-semibold tracking-[0.5px]">💠 CITY PET HOUSE · MICROCHIP REGISTRY</div>
+      <div style={{ background: "linear-gradient(90deg, #7A56C8, #4E3A8A)" }} className="px-9 py-10">
+        <div className="font-heading font-bold text-[30px] text-white mb-1.5">{content.bannerTitle}</div>
+        <div className="text-[15px] text-white/85">{content.bannerSubtitle}</div>
       </div>
 
       <div className="flex gap-10 px-4 md:px-8 py-11 items-start flex-wrap lg:flex-nowrap">
-        <div className="w-full lg:w-[280px] shrink-0 lg:sticky lg:top-5">
+        <div className="order-2 lg:order-1 w-full lg:w-[280px] shrink-0 lg:sticky lg:top-5">
           <div className="border border-[#E4E9EC] rounded-[10px] overflow-hidden mb-4">
             <div className="h-1 bg-[#7A56C8]" />
             <div className="p-6">
@@ -258,7 +252,7 @@ function MicrochippingArchiveInner() {
           </div>
         </div>
 
-        <div className="flex-1 max-w-[760px] min-w-0">
+        <div className="order-1 lg:order-2 flex-1 max-w-[760px] min-w-0">
           <Link href="/" className="text-[13px] text-primary font-semibold mb-4 inline-block">
             ← Back to Home
           </Link>
@@ -280,7 +274,7 @@ function MicrochippingArchiveInner() {
           ))}
         </div>
 
-        <ImagePlaceholder label="Vertical banner" className="hidden lg:block w-[220px] shrink-0 rounded-xl self-stretch" />
+        <ImagePlaceholder label="Vertical banner" className="hidden lg:block lg:order-3 w-[220px] shrink-0 rounded-xl self-stretch" />
       </div>
 
       {showRegister && (

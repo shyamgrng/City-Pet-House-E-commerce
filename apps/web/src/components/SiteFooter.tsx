@@ -6,19 +6,32 @@ import { useServices } from "@/context/ServiceContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { footerCustomerCareLinks, footerGeneralLinks, footerQuickLinks } from "@/lib/home-data";
 
+/** Splits a comma-separated address into a street/area line and a ward/city line (the last two
+ * segments), so the footer's Contact Us column shows a stable two-line address instead of
+ * wrapping wherever the column happens to be narrow. */
+function splitAddress(address: string): [string, string] {
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length <= 2) return [address, ""];
+  return [parts.slice(0, -2).join(", "), parts.slice(-2).join(", ")];
+}
+
 export default function SiteFooter() {
   const { services } = useServices();
   const { settings } = useSiteSettings();
+  const [addressLine1, addressLine2] = splitAddress(settings.address);
 
   return (
     <div className="bg-[#1A2027] text-[#C9CFD4] pt-11 pb-20 sm:pb-6">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
-      <div className="flex items-center gap-3 mb-7">
+      <div className="hidden lg:flex items-center gap-3 mb-7">
         <Image src="/assets/cph-logo.jpeg" alt="logo" width={40} height={40} className="rounded-lg object-contain" />
         <span className="text-[22px] font-heading font-bold text-white">City Pet House</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr_1.3fr] gap-7 mb-7">
+      <div className="hidden lg:flex lg:flex-row lg:justify-between gap-7 mb-7">
         <div>
           <div className="text-[15px] font-bold text-white mb-3">General</div>
           <div className="text-sm leading-[2.2]">
@@ -70,8 +83,14 @@ export default function SiteFooter() {
             Contact Us
           </Link>
           <div className="text-sm leading-[2.2]">
-            {settings.address}
+            {addressLine1}
             <br />
+            {addressLine2 && (
+              <>
+                {addressLine2}
+                <br />
+              </>
+            )}
             {settings.phone}
             <br />
             {settings.email}
@@ -81,7 +100,7 @@ export default function SiteFooter() {
         </div>
       </div>
 
-      <div className="flex justify-end gap-4 py-2.5 pb-[22px]">
+      <div className="flex justify-center lg:justify-end gap-4 py-2.5 pb-[22px]">
         <Link
           href={settings.facebook}
           className="w-10 h-10 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-heading font-bold text-lg"
@@ -102,23 +121,23 @@ export default function SiteFooter() {
         </Link>
       </div>
 
-      <div className="flex flex-wrap rounded-xl overflow-hidden mb-[22px]">
-        <div className="flex-1 min-w-[320px] bg-[#F0F8F2] px-4 md:px-8 py-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-          <div className="min-w-0">
+      <div className="flex flex-wrap gap-5 mb-[22px]">
+        <div className="flex-1 min-w-[320px] rounded-xl bg-[#F0F8F2] px-6 py-7 flex flex-col items-center text-center gap-3.5">
+          <div>
             <div className="font-heading font-bold text-lg text-[#1F7A4D]">Happy Pet Owner</div>
             <div className="font-heading font-bold text-[15px] text-[#1A2027]">Download Vaccination Record App</div>
           </div>
-          <div className="flex gap-3 flex-nowrap shrink-0">
+          <div className="flex gap-3">
             <AppBadge kind="ios" href={settings.vaccinationAppStoreUrl} />
             <AppBadge kind="android" href={settings.vaccinationGooglePlayUrl} />
           </div>
         </div>
-        <div className="flex-1 min-w-[320px] bg-[#F3F9FC] px-4 md:px-8 py-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-          <div className="min-w-0">
+        <div className="hidden lg:flex flex-1 min-w-[320px] rounded-xl bg-[#F3F9FC] px-6 py-7 flex-col items-center text-center gap-3.5">
+          <div>
             <div className="font-heading font-bold text-lg text-primary">Happy Shopping</div>
             <div className="font-heading font-bold text-[15px] text-[#1A2027]">{settings.shoppingAppLabel}</div>
           </div>
-          <div className="flex gap-3 flex-nowrap shrink-0">
+          <div className="flex gap-3">
             <AppBadge kind="ios" href={settings.shoppingAppStoreUrl} />
             <AppBadge kind="android" href={settings.shoppingGooglePlayUrl} />
           </div>

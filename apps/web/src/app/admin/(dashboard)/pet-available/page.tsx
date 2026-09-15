@@ -3,11 +3,12 @@
 import { useState } from "react";
 import AdoptionFormModal from "@/components/admin/AdoptionFormModal";
 import PetManageCard from "@/components/admin/PetManageCard";
+import RecordSaleModal from "@/components/admin/RecordSaleModal";
 import MediaSlot from "@/components/MediaSlot";
 import { useAdoption } from "@/context/AdoptionContext";
 import { usePets } from "@/context/PetContext";
 import { daysLeft, isExpired, type AdoptionPost } from "@/lib/adoption-types";
-import { coverPhoto, dewormStages, PET_PHOTO_SLOTS, petSpeciesList, vaccineStages } from "@/lib/pet-types";
+import { coverPhoto, dewormStages, PET_PHOTO_SLOTS, petSpeciesList, type Pet, vaccineStages } from "@/lib/pet-types";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Dog: "#1996C8",
@@ -29,6 +30,7 @@ export default function PetAvailablePage() {
   const [tab, setTab] = useState("Overview");
   const [adoptionModalOpen, setAdoptionModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<AdoptionPost | null>(null);
+  const [saleModalPet, setSaleModalPet] = useState<Pet | null>(null);
 
   const total = pets.length;
   const available = pets.filter((p) => p.status === "Available").length;
@@ -57,7 +59,13 @@ export default function PetAvailablePage() {
     setTab("Manage Pets");
   };
   const editFromOverview = () => setTab("Manage Pets");
-  const markSold = (p: (typeof pets)[number]) => updatePet(p.id, { ...p, status: p.status === "Sold" ? "Available" : "Sold" });
+  const markSold = (p: Pet) => {
+    if (p.status === "Sold") {
+      updatePet(p.id, { ...p, status: "Available" });
+      return;
+    }
+    setSaleModalPet(p);
+  };
 
   const openAddPost = () => {
     setEditingPost(null);
@@ -244,6 +252,17 @@ export default function PetAvailablePage() {
 
       {adoptionModalOpen && (
         <AdoptionFormModal initial={editingPost} onClose={() => setAdoptionModalOpen(false)} onSave={handleSavePost} />
+      )}
+
+      {saleModalPet && (
+        <RecordSaleModal
+          defaultAmount={saleModalPet.price}
+          onCancel={() => setSaleModalPet(null)}
+          onConfirm={(sale) => {
+            updatePet(saleModalPet.id, { ...saleModalPet, status: "Sold", ...sale, soldAt: Date.now() });
+            setSaleModalPet(null);
+          }}
+        />
       )}
     </div>
   );

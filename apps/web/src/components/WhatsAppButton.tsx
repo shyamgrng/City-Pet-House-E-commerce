@@ -18,7 +18,7 @@ export default function WhatsAppButton() {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       aria-label="Chat with City Pet House on WhatsApp"
-      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center gap-2.5"
+      className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 flex items-center gap-2.5"
     >
       {hover && (
         <div className="hidden sm:block bg-white text-[#1A2027] text-[13px] font-semibold px-3.5 py-2.5 rounded-lg shadow-[0_4px_14px_rgba(0,0,0,0.15)] whitespace-nowrap">

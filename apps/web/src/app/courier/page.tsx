@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import DeliveredTab from "@/components/courier/DeliveredTab";
 import DeliveriesTab from "@/components/courier/DeliveriesTab";
-import EarningsTab from "@/components/courier/EarningsTab";
+import FinanceTab from "@/components/courier/FinanceTab";
 import ProfileTab from "@/components/courier/ProfileTab";
 import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useDelivery } from "@/context/DeliveryContext";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
 
-const TABS = ["Overview", "Deliveries", "Delivered", "Earnings", "Profile"] as const;
+const TABS = ["Overview", "Deliveries", "Delivered", "Finance", "Profile"] as const;
 type Tab = (typeof TABS)[number];
 
 const ACTIVE_STATUSES = ["Dispatched", "Received", "Processing"];
@@ -18,6 +19,7 @@ const ACTIVE_STATUSES = ["Dispatched", "Received", "Processing"];
 export default function CourierPortalPage() {
   const { courier, ready, signOut } = useCourierAuth();
   const { deliveries } = useDelivery();
+  const { settings } = useSiteSettings();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("Overview");
 
@@ -35,23 +37,33 @@ export default function CourierPortalPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
-      <div className="bg-white border-b border-[#E4E9EC] px-4 md:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <Image src="/assets/cph-logo.jpeg" alt="" width={28} height={28} className="rounded-md object-cover" />
-          <span className="font-heading font-bold text-sm text-[#1A2027]">CPH Courier Portal</span>
+      <div className="bg-[#F7F9FA] border-b border-[#E4E9EC]">
+        <div className="flex items-center justify-center gap-4 max-w-7xl mx-auto px-4 md:px-8 py-1.5 text-[11px] text-[#5B6773]">
+          <div>📞 {settings.phone}</div>
+          <div>📍 {settings.address}</div>
+          <div>{settings.hours}</div>
         </div>
-        <button
-          onClick={() => {
-            signOut();
-            router.push("/courier/login");
-          }}
-          className="text-xs font-semibold text-[#D64545] cursor-pointer"
-        >
-          Sign Out
-        </button>
       </div>
 
-      <div className="px-4 md:px-8 py-7 max-w-[900px]">
+      <div className="bg-white border-b border-[#E4E9EC]">
+        <div className="flex items-center justify-between max-w-7xl mx-auto px-4 md:px-8 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <Image src="/assets/cph-logo.jpeg" alt="" width={34} height={34} className="rounded-md object-contain" />
+            <span className="font-heading font-bold text-[15px] text-[#1A2027]">CPH Courier Portal</span>
+          </div>
+          <button
+            onClick={() => {
+              signOut();
+              router.push("/courier/login");
+            }}
+            className="text-[13px] font-semibold text-[#D64545] cursor-pointer"
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-7">
         <div className="flex gap-2 flex-wrap mb-[22px]">
           {TABS.map((t) => (
             <button
@@ -104,7 +116,7 @@ export default function CourierPortalPage() {
 
         {tab === "Deliveries" && <DeliveriesTab courierId={courier.courierId} />}
         {tab === "Delivered" && <DeliveredTab deliveries={[...delivered, ...cancelled].sort((a, b) => (b.deliveredAt ?? 0) - (a.deliveredAt ?? 0))} />}
-        {tab === "Earnings" && <EarningsTab deliveries={mine} />}
+        {tab === "Finance" && <FinanceTab deliveries={mine} courierName={courier.companyName} />}
         {tab === "Profile" && <ProfileTab />}
       </div>
     </div>

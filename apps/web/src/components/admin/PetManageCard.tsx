@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { usePets } from "@/context/PetContext";
 import { IMAGE_ACCEPT, VIDEO_ACCEPT, isAllowedImageFile, isAllowedVideoFile, readVideoFile } from "@/lib/image-upload";
 import ImageCropModal from "./ImageCropModal";
+import RecordSaleModal from "./RecordSaleModal";
 import { dewormStages, formatRs, petSpeciesList, vaccineStages, type Pet, type PetStatus } from "@/lib/pet-types";
 
 const SPECIES_COLORS: Record<string, string> = {
@@ -20,6 +21,7 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
   const { updatePet, deletePet, saveError } = usePets();
   const [justUpdated, setJustUpdated] = useState(false);
   const [photoError, setPhotoError] = useState("");
+  const [showSaleModal, setShowSaleModal] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const patch = (fields: Partial<Omit<Pet, "id">>) => updatePet(pet.id, { ...pet, ...fields });
@@ -116,7 +118,18 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
           />
         </Field>
         <Field label="Status">
-          <select value={pet.status} onChange={(e) => patch({ status: e.target.value as PetStatus })} className={inputCls}>
+          <select
+            value={pet.status}
+            onChange={(e) => {
+              const next = e.target.value as PetStatus;
+              if (next === "Sold" && !pet.soldAt) {
+                setShowSaleModal(true);
+                return;
+              }
+              patch({ status: next });
+            }}
+            className={inputCls}
+          >
             {statuses.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -166,6 +179,18 @@ export default function PetManageCard({ pet }: { pet: Pet }) {
           </div>
         )}
       </div>
+
+      {showSaleModal && (
+        <RecordSaleModal
+          defaultAmount={pet.price}
+          onCancel={() => setShowSaleModal(false)}
+          onConfirm={(sale) => {
+            patch({ status: "Sold", ...sale, soldAt: Date.now() });
+            setShowSaleModal(false);
+            flashUpdated();
+          }}
+        />
+      )}
     </div>
   );
 }

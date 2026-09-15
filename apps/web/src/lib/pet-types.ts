@@ -36,6 +36,14 @@ export type Pet = {
   vaccinations: boolean[];
   /** Aligned to dewormStages — which doses this pet has received. */
   dewormings: boolean[];
+  /** Set together when status is changed to "Sold" — the sale record feeds the Finance ledger's
+   * pet_sales income. Absent for pets never sold (Available/Reserved) or sold before this field
+   * existed. */
+  saleAmount?: number;
+  buyerName?: string;
+  buyerPhone?: string;
+  saleReceiptPhoto?: string;
+  soldAt?: number;
 };
 
 export const petSpeciesList = ["Dog", "Cat", "Small Pets", "Birds", "Fish"];

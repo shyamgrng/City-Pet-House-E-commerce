@@ -8,7 +8,7 @@ import PhoneInput from "@/components/PhoneInput";
 import { DocDrop, RegField } from "@/components/registration/RegistrationFields";
 import { useCourierRegistration } from "@/context/CourierRegistrationContext";
 import { isValidEmail } from "@/lib/email-format";
-import { isAllowedDocumentFile, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
+import { isAllowedDocumentFile, isAllowedImageFile, readDocumentFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
 const STORAGE_FULL_MESSAGE =
@@ -43,9 +43,17 @@ export default function CourierRegisterPage() {
   ) => {
     if (!file) return;
     setFieldError(key, "");
-    if (isAllowedDocumentFile(file)) {
-      setValue(`DOC:${file.name}`);
-      setName(file.name);
+    if (isAllowedDocumentFile(file) && !isAllowedImageFile(file)) {
+      setFieldBusy(key, true);
+      try {
+        const dataUrl = await readDocumentFile(file);
+        setValue(dataUrl);
+        setName(file.name);
+      } catch (err) {
+        setFieldError(key, err instanceof Error ? err.message : "Could not process that file — try a different one.");
+      } finally {
+        setFieldBusy(key, false);
+      }
       return;
     }
     if (!isAllowedImageFile(file)) {

@@ -23,11 +23,11 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   }, [ready, user]);
 
   if (!ready || !user) {
-    return <div className="min-h-screen flex items-center justify-center bg-[#F7F9FA]" />;
+    return <div className="min-h-screen flex items-center justify-center bg-white" />;
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-[#F7F9FA]">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <AdminSidebar />
       <div className="flex-1 overflow-auto p-4 lg:p-6 lg:px-7">
         {storagePercent >= 80 && (

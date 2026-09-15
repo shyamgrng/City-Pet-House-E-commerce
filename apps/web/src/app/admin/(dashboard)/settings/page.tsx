@@ -37,12 +37,12 @@ function Card({ title, subtitle, children }: { title: string; subtitle?: string;
 export default function SettingsPage() {
   const { settings, updateSettings, ready: settingsReady } = useSiteSettings();
   const {
-    customerFeeSmall,
-    customerFeeMedium,
-    customerFeeLarge,
-    customerFeeVeryLarge,
+    standardFeeSmall,
+    standardFeeMedium,
+    standardFeeLarge,
+    standardFeeVeryLarge,
     puppyFee,
-    freeDeliveryThreshold,
+    feeTiers,
     freeDeliveryMaxTier,
     setSettings: setDeliverySettings,
     ready: deliveryReady,
@@ -58,15 +58,7 @@ export default function SettingsPage() {
   };
 
   const setPuppyFee = (v: number) => {
-    setDeliverySettings({
-      customerFeeSmall,
-      customerFeeMedium,
-      customerFeeLarge,
-      customerFeeVeryLarge,
-      puppyFee: v,
-      freeDeliveryThreshold,
-      freeDeliveryMaxTier,
-    });
+    setDeliverySettings({ standardFeeSmall, standardFeeMedium, standardFeeLarge, standardFeeVeryLarge, puppyFee: v, feeTiers, freeDeliveryMaxTier });
     setSaved(false);
   };
 
@@ -104,7 +96,7 @@ export default function SettingsPage() {
 
       <Card
         title="Delivery"
-        subtitle="Customer delivery fees by size and courier cost rates are set in Shop → Delivery Setting."
+        subtitle="Customer delivery fees (by size, plus subtotal-value discount tiers) and courier cost rates are set separately in Shop → Delivery Setting."
       >
         <Field label="Puppy Delivery Fee (Rs.)" value={String(puppyFee)} onChange={(v) => setPuppyFee(Number(v) || 0)} />
       </Card>

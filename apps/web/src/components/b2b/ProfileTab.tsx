@@ -48,7 +48,14 @@ export default function ProfileTab() {
   };
 
   return (
-    <div className="flex gap-4 flex-wrap items-start">
+    <div>
+      {supplier.mustChangePassword && (
+        <div className="px-4 py-3 rounded-[10px] mb-4 bg-[#FDF3E7] border border-[#F0DCB8] text-[#8A5A00]">
+          <div className="text-xs font-bold mb-0.5">Please set a new password</div>
+          <div className="text-[11px]">An admin reset your password to a temporary one — set your own below to keep your account secure.</div>
+        </div>
+      )}
+      <div className="flex gap-4 flex-wrap items-start">
       <div className="flex-1 min-w-[280px] border border-[#E4E9EC] rounded-xl p-5">
         <div className="flex justify-between items-center mb-3.5">
           <div className="text-[13px] font-bold text-[#1A2027]">Company Details</div>
@@ -126,6 +133,7 @@ export default function ProfileTab() {
         >
           Update Password
         </button>
+      </div>
       </div>
     </div>
   );

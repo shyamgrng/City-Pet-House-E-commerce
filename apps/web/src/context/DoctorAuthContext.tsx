@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { generateTempPassword } from "@/lib/doctor-registration-types";
 import { notifyEvent } from "@/lib/notify-client";
 import { doctorAccountSeed, type DoctorAccount } from "@/lib/doctor-auth-types";
 
@@ -26,10 +27,37 @@ type DoctorAuthValue = {
   updateEmergencyPhone: (phone: string) => void;
   updatePhoto: (photo: string) => void;
   updateDocument: (field: "cv" | "degreeCertificate" | "nvcLicense" | "nationalId", value: string) => void;
+  updateBankDetails: (patch: Partial<Pick<DoctorAccount, "bankName" | "bankAccountHolder" | "bankAccountNumber" | "bankBranch">>) => void;
+  updateBankQr: (bankQr: string) => void;
   changePassword: (newPassword: string) => void;
   requestPasswordReset: (doctorId: string) => Result;
   resetPassword: (doctorId: string, code: string, newPassword: string) => Result;
   addAccount: (account: DoctorAccount) => boolean;
+  adminUpdateAccount: (
+    doctorId: string,
+    patch: Partial<
+      Pick<
+        DoctorAccount,
+        | "name"
+        | "email"
+        | "phone"
+        | "emergencyPhone"
+        | "address"
+        | "photo"
+        | "cv"
+        | "degreeCertificate"
+        | "nvcLicense"
+        | "nationalId"
+        | "bankName"
+        | "bankAccountHolder"
+        | "bankAccountNumber"
+        | "bankBranch"
+        | "bankQr"
+      >
+    >,
+  ) => void;
+  adminResetPassword: (doctorId: string) => Result;
+  adminSetPassword: (doctorId: string, newPassword: string) => Result;
 };
 
 const DoctorAuthContext = createContext<DoctorAuthValue | null>(null);
@@ -64,6 +92,16 @@ function loadSession(accounts: DoctorAccount[]): DoctorAccount | null {
   const id = window.localStorage.getItem(SESSION_KEY);
   if (!id) return null;
   return accounts.find((d) => d.doctorId === id) ?? null;
+}
+
+const SECURITY_LOG_LIMIT = 200;
+
+/** Appends a sign-in/password-change event to one account's security log, for the admin
+ * Activity feed's "Login" entries -- capped so it can't grow without bound. */
+function withSecurityLogEntry(accounts: DoctorAccount[], doctorId: string, text: string): DoctorAccount[] {
+  return accounts.map((a) =>
+    a.doctorId === doctorId ? { ...a, securityLog: [...(a.securityLog ?? []), { text, time: Date.now() }].slice(-SECURITY_LOG_LIMIT) } : a,
+  );
 }
 
 export function DoctorAuthProvider({ children }: { children: React.ReactNode }) {
@@ -129,7 +167,9 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
       return { ok: false, error: "Incorrect Doctor ID or password." };
     }
     window.localStorage.setItem(SESSION_KEY, account.doctorId);
-    setState((s) => ({ ...s, doctor: account }));
+    const nextAccounts = withSecurityLogEntry(state.accounts, account.doctorId, "Signed in");
+    persistAccounts(nextAccounts);
+    setState((s) => ({ ...s, doctor: nextAccounts.find((a) => a.doctorId === account.doctorId) ?? account }));
     return { ok: true };
   };
 
@@ -168,14 +208,74 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
     persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, [field]: value } : a)));
   };
 
+  const updateBankDetails = (patch: Partial<Pick<DoctorAccount, "bankName" | "bankAccountHolder" | "bankAccountNumber" | "bankBranch">>) => {
+    if (!state.doctor) return;
+    const doctorId = state.doctor.doctorId;
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, ...patch } : a)));
+  };
+
+  const updateBankQr = (bankQr: string) => {
+    if (!state.doctor) return;
+    const doctorId = state.doctor.doctorId;
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, bankQr } : a)));
+  };
+
   const changePassword = (newPassword: string) => {
     if (!state.doctor) return;
     const doctorId = state.doctor.doctorId;
-    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, password: newPassword } : a)));
+    const updated = state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, password: newPassword, mustChangePassword: false } : a));
+    persistAccounts(withSecurityLogEntry(updated, doctorId, "Changed password"));
   };
 
   const addAccount = (account: DoctorAccount): boolean => {
     return persistAccounts([...state.accounts, account]);
+  };
+
+  const adminUpdateAccount = (
+    doctorId: string,
+    patch: Partial<
+      Pick<
+        DoctorAccount,
+        | "name"
+        | "email"
+        | "phone"
+        | "emergencyPhone"
+        | "address"
+        | "photo"
+        | "cv"
+        | "degreeCertificate"
+        | "nvcLicense"
+        | "nationalId"
+        | "bankName"
+        | "bankAccountHolder"
+        | "bankAccountNumber"
+        | "bankBranch"
+        | "bankQr"
+      >
+    >,
+  ) => {
+    persistAccounts(state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, ...patch } : a)));
+  };
+
+  const adminResetPassword = (doctorId: string): Result => {
+    const account = state.accounts.find((a) => a.doctorId === doctorId);
+    if (!account) return { ok: false, error: "Doctor account not found." };
+    const tempPassword = generateTempPassword();
+    const updated = state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, password: tempPassword, mustChangePassword: true } : a));
+    const ok = persistAccounts(withSecurityLogEntry(updated, doctorId, "Admin reset password (temporary password emailed)"));
+    if (!ok) return { ok: false, error: STORAGE_FULL_MESSAGE };
+    notifyEvent("admin_password_reset", account.email, account.name, { name: account.name, tempPassword });
+    return { ok: true };
+  };
+
+  const adminSetPassword = (doctorId: string, newPassword: string): Result => {
+    const account = state.accounts.find((a) => a.doctorId === doctorId);
+    if (!account) return { ok: false, error: "Doctor account not found." };
+    if (!newPassword.trim()) return { ok: false, error: "Enter a password." };
+    const updated = state.accounts.map((a) => (a.doctorId === doctorId ? { ...a, password: newPassword, mustChangePassword: true } : a));
+    const ok = persistAccounts(withSecurityLogEntry(updated, doctorId, "Admin set a new password directly"));
+    if (!ok) return { ok: false, error: STORAGE_FULL_MESSAGE };
+    return { ok: true };
   };
 
   return (
@@ -192,10 +292,15 @@ export function DoctorAuthProvider({ children }: { children: React.ReactNode }) 
         updateEmergencyPhone,
         updatePhoto,
         updateDocument,
+        updateBankDetails,
+        updateBankQr,
         changePassword,
         requestPasswordReset,
         resetPassword,
         addAccount,
+        adminUpdateAccount,
+        adminResetPassword,
+        adminSetPassword,
       }}
     >
       {children}

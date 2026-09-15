@@ -6,7 +6,7 @@ import PhoneInput from "@/components/PhoneInput";
 import PriceInput from "@/components/PriceInput";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useVet } from "@/context/VetContext";
-import { DOCUMENT_UPLOAD_ACCEPT, isAllowedDocumentFile, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
+import { DOCUMENT_UPLOAD_ACCEPT, isAllowedDocumentFile, isAllowedImageFile, readDocumentFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 import type { Doctor } from "@/lib/vet-types";
 
@@ -19,8 +19,17 @@ const REQUIRED_DOCUMENTS: { field: DocField; label: string }[] = [
 ];
 
 export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | undefined }) {
-  const { doctor, updateAddress, updatePhone, updateEmergencyPhone, updatePhoto, updateDocument, changePassword } = useDoctorAuth();
+  const { doctor, updateAddress, updatePhone, updateEmergencyPhone, updatePhoto, updateDocument, updateBankDetails, updateBankQr, changePassword } =
+    useDoctorAuth();
   const { setDoctorFee, setDoctorCommission } = useVet();
+
+  const [bankDraft, setBankDraft] = useState({
+    bankName: doctor?.bankName ?? "",
+    bankAccountHolder: doctor?.bankAccountHolder ?? "",
+    bankAccountNumber: doctor?.bankAccountNumber ?? "",
+    bankBranch: doctor?.bankBranch ?? "",
+  });
+  const [bankSaved, setBankSaved] = useState(false);
 
   const [addressDraft, setAddressDraft] = useState(doctor?.address ?? "");
   const [addressSaved, setAddressSaved] = useState(false);
@@ -82,6 +91,12 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
     setTimeout(() => setCommissionSaved(false), 3000);
   };
 
+  const saveBankDetails = () => {
+    updateBankDetails(bankDraft);
+    setBankSaved(true);
+    setTimeout(() => setBankSaved(false), 3000);
+  };
+
   const submitPasswordChange = () => {
     if (!newPassword || mismatch) return;
     changePassword(newPassword);
@@ -93,6 +108,12 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
 
   return (
     <div>
+      {doctor.mustChangePassword && (
+        <div className="px-4 py-3 rounded-[10px] mb-4 bg-[#FDF3E7] border border-[#F0DCB8] text-[#8A5A00]">
+          <div className="text-xs font-bold mb-0.5">Please set a new password</div>
+          <div className="text-[11px]">An admin reset your password to a temporary one — set your own below to keep your account secure.</div>
+        </div>
+      )}
       <div
         className="px-4 py-3 rounded-[10px] mb-6"
         style={{ background: verified ? "#EAF6EE" : "#FFF8EA", border: `1px solid ${verified ? "#CFE9D8" : "#F0DFAE"}` }}
@@ -232,6 +253,52 @@ export default function ProfileTab({ doctorRecord }: { doctorRecord: Doctor | un
 
         <Divider />
 
+        <FormRow label="Bank Name">
+          <input
+            value={bankDraft.bankName}
+            onChange={(e) => setBankDraft((d) => ({ ...d, bankName: e.target.value }))}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+        </FormRow>
+
+        <FormRow label="Account Holder Name">
+          <input
+            value={bankDraft.bankAccountHolder}
+            onChange={(e) => setBankDraft((d) => ({ ...d, bankAccountHolder: e.target.value }))}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+        </FormRow>
+
+        <FormRow label="Account Number">
+          <input
+            value={bankDraft.bankAccountNumber}
+            onChange={(e) => setBankDraft((d) => ({ ...d, bankAccountNumber: e.target.value }))}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+        </FormRow>
+
+        <FormRow label="Branch">
+          <input
+            value={bankDraft.bankBranch}
+            onChange={(e) => setBankDraft((d) => ({ ...d, bankBranch: e.target.value }))}
+            className="w-full max-w-[360px] px-3 py-2.5 rounded-md border border-[#C7CDD3] text-[13px] box-border focus:border-primary focus:outline-none"
+          />
+          <div className="flex items-center gap-2.5 mt-2">
+            <button onClick={saveBankDetails} className="bg-primary text-white px-4 py-2 rounded-md text-xs font-semibold cursor-pointer">
+              Save
+            </button>
+            {bankSaved && <div className="text-[11px] text-[#1F7A4D]">✓ Bank details updated</div>}
+          </div>
+        </FormRow>
+
+        <FormRow label="Bank QR (scan to pay)">
+          <div className="w-[160px]">
+            <ImageUploadField value={doctor.bankQr ?? ""} onChange={updateBankQr} label="bank QR code" height="h-[160px]" maxWidth={600} maxHeight={600} />
+          </div>
+        </FormRow>
+
+        <Divider />
+
         <FormRow label="New password">
           <input
             type="password"
@@ -304,7 +371,15 @@ function DocumentRow({ label, value, onUpload }: { label: string; value: string;
     if (!file) return;
     setError("");
     if (isAllowedDocumentFile(file) && !isAllowedImageFile(file)) {
-      onUpload(`DOC:${file.name}`);
+      setBusy(true);
+      try {
+        const dataUrl = await readDocumentFile(file);
+        onUpload(dataUrl);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not process that file — try a different one.");
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     if (!isAllowedImageFile(file)) {

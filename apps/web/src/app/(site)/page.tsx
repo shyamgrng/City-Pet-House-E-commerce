@@ -29,7 +29,7 @@ export default function HomePage() {
 
       {/* Hero */}
       <div className="flex flex-col lg:flex-row gap-3.5 px-4 md:px-8 pt-5 pb-2">
-        <div className="flex-[2.2] relative h-[300px] rounded-xl overflow-hidden">
+        <div className="lg:flex-[2.2] relative h-[165px] lg:h-[300px] rounded-xl overflow-hidden">
           <MediaSlot src={content.heroImage} label="cover photo — shop & clinic" fit="cover" className="absolute inset-0 w-full h-full" />
           <div
             className="absolute inset-0 pointer-events-none"
@@ -38,7 +38,18 @@ export default function HomePage() {
                 "linear-gradient(90deg, rgba(26,32,39,0.55) 0%, rgba(26,32,39,0.15) 55%, rgba(26,32,39,0) 100%)",
             }}
           />
-          <div className="relative px-7 max-w-[460px] h-full flex flex-col justify-center pointer-events-none">
+          {/* Mobile: centered text pinned to the bottom, no buttons */}
+          <div className="lg:hidden absolute left-0 right-0 bottom-0 text-center px-4 pb-3 pointer-events-none">
+            <div className="font-heading font-bold text-sm text-white leading-snug" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+              {heroHeadline}
+            </div>
+            <div className="text-[11px] text-white mt-1 leading-snug" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+              {heroSubtext}
+            </div>
+          </div>
+
+          {/* Desktop: left-aligned, vertically centered, with CTA buttons */}
+          <div className="hidden lg:flex relative px-7 max-w-[460px] h-full flex-col justify-center pointer-events-none">
             <div
               className="font-heading font-bold text-[26px] text-white leading-tight"
               style={{ textShadow: "0 2px 8px rgba(0,0,0,0.45)" }}
@@ -62,8 +73,8 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <div className="flex-1 flex flex-row lg:flex-col gap-3.5">
-          <div className="flex-1 min-h-[140px] lg:min-h-0 relative rounded-xl overflow-hidden">
+        <div className="hidden lg:flex flex-1 flex-col gap-3.5">
+          <div className="flex-1 relative rounded-xl overflow-hidden">
             <MediaSlot src={content.banner1Image} label="promo — hot sale, shop deals" fit="cover" className="absolute inset-0 w-full h-full" />
             {content.banner1Text && (
               <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
@@ -71,7 +82,7 @@ export default function HomePage() {
               </div>
             )}
           </div>
-          <div className="flex-1 min-h-[140px] lg:min-h-0 relative rounded-xl overflow-hidden">
+          <div className="flex-1 relative rounded-xl overflow-hidden">
             <MediaSlot src={content.banner2Image} label="promo — vet consult booking" fit="cover" className="absolute inset-0 w-full h-full" />
             {content.banner2Text && (
               <div className="absolute left-3.5 bottom-3.5 right-3.5 text-white text-[13px] font-bold" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
@@ -83,12 +94,16 @@ export default function HomePage() {
       </div>
 
       {/* Categories */}
-      <div className="flex flex-wrap gap-3.5 px-4 md:px-8 pt-4 pb-6">
+      <div
+        className="flex flex-nowrap lg:flex-wrap overflow-x-auto lg:overflow-visible gap-3.5 px-4 md:px-8 pt-4 pb-6"
+        style={{ scrollSnapType: "x proximity", WebkitOverflowScrolling: "touch" }}
+      >
         {categories.map((cat) => (
           <Link
             key={cat.slug}
             href={`/pets?species=${encodeURIComponent(cat.name)}`}
-            className="group flex-1 min-w-[78px] sm:min-w-[110px] flex flex-col items-center gap-2 cursor-pointer transition-transform duration-200 hover:scale-105"
+            className="group shrink-0 lg:flex-1 lg:min-w-[110px] flex flex-col items-center gap-2 cursor-pointer transition-transform duration-200 hover:scale-105"
+            style={{ scrollSnapAlign: "start" }}
           >
             <MediaSlot
               src={content.categoryImages[cat.name]}
@@ -130,7 +145,7 @@ export default function HomePage() {
       </div>
 
       {/* Health & Wellness Care */}
-      <div className="mx-4 md:mx-8 px-5 pt-5 pb-6 rounded-xl bg-[#E7EFEC]">
+      <div className="hidden lg:block mx-4 md:mx-8 px-5 pt-5 pb-6 rounded-xl bg-[#E7EFEC]">
         <div className="flex items-center justify-between sm:justify-center gap-2 mb-[26px] sm:relative">
           <div className="font-heading font-bold text-base sm:text-lg text-[#1A2027]">City Pet Health &amp; Wellness Care</div>
           <Link href="/services" className="text-xs text-[#1F7A4D] font-semibold cursor-pointer shrink-0 sm:absolute sm:right-0">

@@ -63,14 +63,27 @@ export default function DeliveriesTab({ courierId }: { courierId: string }) {
           ))}
 
           <div className="text-[11px] font-bold text-[#8A96A3] uppercase mt-5 mb-2">Timeline</div>
-          {timeline.map((step) => (
-            <div key={step.label} className="flex items-center gap-2 py-1 text-xs">
-              <span className="w-4 h-4 rounded-full flex items-center justify-center text-[10px]" style={{ background: step.done ? "#1F7A4D" : "#E4E9EC", color: step.done ? "#fff" : "#8A96A3" }}>
-                {step.done ? "✓" : ""}
-              </span>
-              <span className={step.done ? "text-[#1A2027] font-semibold" : "text-[#8A96A3]"}>{step.label}</span>
-            </div>
-          ))}
+          <div>
+            {timeline.map((step, i, arr) => (
+              <div key={step.key} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] shrink-0"
+                    style={{ background: step.done ? "#1F7A4D" : "#D8DEE2", color: "#fff" }}
+                  >
+                    {step.icon}
+                  </div>
+                  {i < arr.length - 1 && <div className="w-0.5 flex-1 my-0.5" style={{ background: step.done ? "#1F7A4D" : "#D8DEE2" }} />}
+                </div>
+                <div className="pb-5 flex-1 min-w-0">
+                  <div className="text-[13px] font-bold" style={{ color: step.done ? "#1A2027" : "#8A96A3" }}>
+                    {step.title}
+                  </div>
+                  <div className="text-xs text-[#8A96A3] mt-0.5">{step.subtitle}</div>
+                </div>
+              </div>
+            ))}
+          </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
             {selected.status === "Dispatched" && (

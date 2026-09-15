@@ -10,7 +10,7 @@ const STORAGE_KEY = "cph_catalog";
 type CatalogValue = {
   products: Product[];
   ready: boolean;
-  addProduct: (input: Omit<Product, "id">) => void;
+  addProduct: (input: Omit<Product, "id">) => string;
   updateProduct: (id: string, input: Omit<Product, "id">) => void;
   deleteProduct: (id: string) => void;
   renameCategoryInProducts: (oldName: string, newName: string) => void;
@@ -84,6 +84,7 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
   const addProduct = (input: Omit<Product, "id">) => {
     const id = slugify(input.name) + "-" + Math.random().toString(36).slice(2, 7);
     persist([{ ...input, id }, ...state.products]);
+    return id;
   };
 
   const updateProduct = (id: string, input: Omit<Product, "id">) => {

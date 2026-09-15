@@ -2,35 +2,45 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { CourierPackageSize } from "@/lib/catalog-types";
+import type { DeliveryFeeTier } from "@/lib/delivery-fee";
 
 const STORAGE_KEY = "cph_delivery_settings";
 
-type DeliverySettings = {
-  /** City Pet House's own customer-facing delivery fee per tier -- independent of any courier's cost. */
-  customerFeeSmall: number;
-  customerFeeMedium: number;
-  customerFeeLarge: number;
-  customerFeeVeryLarge: number;
+/** City Pet House's own customer-facing delivery fee per package size -- set by CPH directly and
+ * completely independent of any courier's rate card or cost. */
+type StandardRates = {
+  standardFeeSmall: number;
+  standardFeeMedium: number;
+  standardFeeLarge: number;
+  standardFeeVeryLarge: number;
+};
+
+type DeliverySettings = StandardRates & {
   puppyFee: number;
-  freeDeliveryThreshold: number;
-  /** Highest tier still eligible for the free-delivery waiver — "Medium" means Small & Medium qualify. */
+  feeTiers: DeliveryFeeTier[];
+  /** Highest package tier still eligible for a value-tier discount/free-shipping — "Medium" means Small & Medium qualify, Large/Very Large always pay the full size-based fee. */
   freeDeliveryMaxTier: CourierPackageSize;
 };
 
+export const DEFAULT_FEE_TIERS: DeliveryFeeTier[] = [
+  { id: "tier-1", minAmount: 50, maxAmount: 1999, fee: 150, active: true },
+  { id: "tier-2", minAmount: 2000, maxAmount: 3499, fee: 200, active: true },
+  { id: "tier-3", minAmount: 3500, maxAmount: 5999, fee: 100, active: true },
+  { id: "tier-4", minAmount: 6000, maxAmount: null, fee: 0, active: true },
+];
+
 const DEFAULT_SETTINGS: DeliverySettings = {
-  customerFeeSmall: 100,
-  customerFeeMedium: 150,
-  customerFeeLarge: 220,
-  customerFeeVeryLarge: 300,
+  standardFeeSmall: 150,
+  standardFeeMedium: 150,
+  standardFeeLarge: 250,
+  standardFeeVeryLarge: 350,
   puppyFee: 250,
-  freeDeliveryThreshold: 10000,
+  feeTiers: DEFAULT_FEE_TIERS,
   freeDeliveryMaxTier: "Medium",
 };
 
 type DeliverySettingsValue = DeliverySettings & {
   ready: boolean;
-  /** The 4 tier fees above, keyed for calculateDeliveryFee. */
-  customerFees: Record<CourierPackageSize, number>;
   setSettings: (settings: DeliverySettings) => void;
 };
 
@@ -41,13 +51,17 @@ function loadStored(): DeliverySettings {
   if (!raw) return DEFAULT_SETTINGS;
   try {
     const parsed = JSON.parse(raw);
+    // A pre-tiered-standard-fee settings blob only has a single flat `standardFee` -- migrate it
+    // into all four size tiers so existing configured values aren't silently discarded.
+    const legacyFlatFee = Number(parsed.standardFee) || null;
+    const tiers = Array.isArray(parsed.feeTiers) && parsed.feeTiers.length ? (parsed.feeTiers as DeliveryFeeTier[]) : DEFAULT_FEE_TIERS;
     return {
-      customerFeeSmall: Number(parsed.customerFeeSmall) || DEFAULT_SETTINGS.customerFeeSmall,
-      customerFeeMedium: Number(parsed.customerFeeMedium) || DEFAULT_SETTINGS.customerFeeMedium,
-      customerFeeLarge: Number(parsed.customerFeeLarge) || DEFAULT_SETTINGS.customerFeeLarge,
-      customerFeeVeryLarge: Number(parsed.customerFeeVeryLarge) || DEFAULT_SETTINGS.customerFeeVeryLarge,
+      standardFeeSmall: Number(parsed.standardFeeSmall) || legacyFlatFee || DEFAULT_SETTINGS.standardFeeSmall,
+      standardFeeMedium: Number(parsed.standardFeeMedium) || legacyFlatFee || DEFAULT_SETTINGS.standardFeeMedium,
+      standardFeeLarge: Number(parsed.standardFeeLarge) || legacyFlatFee || DEFAULT_SETTINGS.standardFeeLarge,
+      standardFeeVeryLarge: Number(parsed.standardFeeVeryLarge) || legacyFlatFee || DEFAULT_SETTINGS.standardFeeVeryLarge,
       puppyFee: Number(parsed.puppyFee) || DEFAULT_SETTINGS.puppyFee,
-      freeDeliveryThreshold: Number(parsed.freeDeliveryThreshold) || DEFAULT_SETTINGS.freeDeliveryThreshold,
+      feeTiers: tiers,
       freeDeliveryMaxTier: parsed.freeDeliveryMaxTier === "Small" ? "Small" : DEFAULT_SETTINGS.freeDeliveryMaxTier,
     };
   } catch {
@@ -71,19 +85,13 @@ export function DeliverySettingsProvider({ children }: { children: React.ReactNo
   return (
     <DeliverySettingsContext.Provider
       value={{
-        customerFeeSmall: state.customerFeeSmall,
-        customerFeeMedium: state.customerFeeMedium,
-        customerFeeLarge: state.customerFeeLarge,
-        customerFeeVeryLarge: state.customerFeeVeryLarge,
+        standardFeeSmall: state.standardFeeSmall,
+        standardFeeMedium: state.standardFeeMedium,
+        standardFeeLarge: state.standardFeeLarge,
+        standardFeeVeryLarge: state.standardFeeVeryLarge,
         puppyFee: state.puppyFee,
-        freeDeliveryThreshold: state.freeDeliveryThreshold,
+        feeTiers: state.feeTiers,
         freeDeliveryMaxTier: state.freeDeliveryMaxTier,
-        customerFees: {
-          Small: state.customerFeeSmall,
-          Medium: state.customerFeeMedium,
-          Large: state.customerFeeLarge,
-          "Very Large": state.customerFeeVeryLarge,
-        },
         ready: state.ready,
         setSettings,
       }}

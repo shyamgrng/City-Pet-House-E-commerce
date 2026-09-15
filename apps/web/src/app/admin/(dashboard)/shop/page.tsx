@@ -9,6 +9,7 @@ import { useCategory } from "@/context/CategoryContext";
 import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useDeliverySettings } from "@/context/DeliverySettingsContext";
 import { formatRs, salePrice, type Product } from "@/lib/catalog-types";
+import type { DeliveryFeeTier } from "@/lib/delivery-fee";
 
 const subTabs = ["Overview", "Product", "Category Setting", "Brand Setting", "Delivery Setting"];
 
@@ -450,17 +451,32 @@ const emptyCourierForm = {
 };
 
 function DeliverySettingTab() {
-  const { customerFeeSmall, customerFeeMedium, customerFeeLarge, customerFeeVeryLarge, puppyFee, freeDeliveryThreshold, freeDeliveryMaxTier, setSettings } =
+  const { standardFeeSmall, standardFeeMedium, standardFeeLarge, standardFeeVeryLarge, puppyFee, feeTiers, freeDeliveryMaxTier, setSettings } =
     useDeliverySettings();
   const { accounts, addCourier, removeCourier, setActiveCourier } = useCourierAuth();
-  const [smallInput, setSmallInput] = useState(String(customerFeeSmall));
-  const [mediumInput, setMediumInput] = useState(String(customerFeeMedium));
-  const [largeInput, setLargeInput] = useState(String(customerFeeLarge));
-  const [veryLargeInput, setVeryLargeInput] = useState(String(customerFeeVeryLarge));
+  const [standardDraft, setStandardDraft] = useState({
+    small: String(standardFeeSmall),
+    medium: String(standardFeeMedium),
+    large: String(standardFeeLarge),
+    veryLarge: String(standardFeeVeryLarge),
+  });
   const [puppyInput, setPuppyInput] = useState(String(puppyFee));
-  const [thresholdInput, setThresholdInput] = useState(String(freeDeliveryThreshold));
+  const [tiersDraft, setTiersDraft] = useState<DeliveryFeeTier[]>(feeTiers);
   const [maxTierInput, setMaxTierInput] = useState<"Small" | "Medium">(freeDeliveryMaxTier === "Small" ? "Small" : "Medium");
   const [feesSaved, setFeesSaved] = useState(false);
+
+  const updateTier = (id: string, patch: Partial<DeliveryFeeTier>) => {
+    setTiersDraft((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    setFeesSaved(false);
+  };
+  const addTierRow = () => {
+    setTiersDraft((rows) => [...rows, { id: "tier-" + Math.random().toString(36).slice(2, 9), minAmount: 0, maxAmount: null, fee: 0, active: true }]);
+    setFeesSaved(false);
+  };
+  const removeTierRow = (id: string) => {
+    setTiersDraft((rows) => rows.filter((r) => r.id !== id));
+    setFeesSaved(false);
+  };
 
   const [form, setForm] = useState(emptyCourierForm);
   const [error, setError] = useState("");
@@ -469,12 +485,12 @@ function DeliverySettingTab() {
 
   const saveFees = () => {
     setSettings({
-      customerFeeSmall: Number(smallInput) || 0,
-      customerFeeMedium: Number(mediumInput) || 0,
-      customerFeeLarge: Number(largeInput) || 0,
-      customerFeeVeryLarge: Number(veryLargeInput) || 0,
+      standardFeeSmall: Number(standardDraft.small) || 0,
+      standardFeeMedium: Number(standardDraft.medium) || 0,
+      standardFeeLarge: Number(standardDraft.large) || 0,
+      standardFeeVeryLarge: Number(standardDraft.veryLarge) || 0,
       puppyFee: Number(puppyInput) || 0,
-      freeDeliveryThreshold: Number(thresholdInput) || 0,
+      feeTiers: tiersDraft,
       freeDeliveryMaxTier: maxTierInput,
     });
     setFeesSaved(true);
@@ -516,41 +532,17 @@ function DeliverySettingTab() {
       </div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
-        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Customer Delivery Fee by Size (Rs.)</div>
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          <SizeField
-            label="Small"
-            value={smallInput}
-            onChange={(v) => {
-              setSmallInput(v);
-              setFeesSaved(false);
-            }}
-          />
-          <SizeField
-            label="Medium"
-            value={mediumInput}
-            onChange={(v) => {
-              setMediumInput(v);
-              setFeesSaved(false);
-            }}
-          />
-          <SizeField
-            label="Large"
-            value={largeInput}
-            onChange={(v) => {
-              setLargeInput(v);
-              setFeesSaved(false);
-            }}
-          />
-          <SizeField
-            label="Very Large"
-            value={veryLargeInput}
-            onChange={(v) => {
-              setVeryLargeInput(v);
-              setFeesSaved(false);
-            }}
-          />
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Customer Delivery Fee — by Package Size (Rs.)</div>
+        <div className="text-[11px] text-[#8A96A3] mb-2">
+          What we charge the shopper for this size, set by City Pet House — independent of which courier is active or what a courier charges us.
         </div>
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          <SizeField label="Small" value={standardDraft.small} onChange={(v) => { setStandardDraft((s) => ({ ...s, small: v })); setFeesSaved(false); }} />
+          <SizeField label="Medium" value={standardDraft.medium} onChange={(v) => { setStandardDraft((s) => ({ ...s, medium: v })); setFeesSaved(false); }} />
+          <SizeField label="Large" value={standardDraft.large} onChange={(v) => { setStandardDraft((s) => ({ ...s, large: v })); setFeesSaved(false); }} />
+          <SizeField label="V. Large" value={standardDraft.veryLarge} onChange={(v) => { setStandardDraft((s) => ({ ...s, veryLarge: v })); setFeesSaved(false); }} />
+        </div>
+
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Puppy Delivery Fee (Rs.)</div>
         <input
           type="number"
@@ -562,20 +554,11 @@ function DeliverySettingTab() {
           className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-4 box-border"
         />
 
-        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Free Delivery Threshold (Rs.)</div>
-        <input
-          type="number"
-          value={thresholdInput}
-          onChange={(e) => {
-            setThresholdInput(e.target.value);
-            setFeesSaved(false);
-          }}
-          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-1.5 box-border"
-        />
-        <div className="text-[11px] text-[#8A96A3] mb-3">Waived only for carts at or above this subtotal, and only within the tier limit below.</div>
-
-        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Free Delivery Applies Up To</div>
-        <div className="flex gap-2 bg-[#F0F2F4] rounded-[9px] p-1">
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Delivery Fee Discount Applies Up To</div>
+        <div className="text-[11px] text-[#8A96A3] mb-2">
+          Oversized carts always pay the full size-based fee above, even if their subtotal reaches a discount tier below.
+        </div>
+        <div className="flex gap-2 bg-[#F0F2F4] rounded-[9px] p-1 mb-4">
           {(["Small", "Medium"] as const).map((t) => (
             <button
               key={t}
@@ -590,6 +573,51 @@ function DeliverySettingTab() {
             </button>
           ))}
         </div>
+
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Subtotal-Value Discount Tiers (Rs.)</div>
+        <div className="text-[11px] text-[#8A96A3] mb-2">
+          Whichever fee is cheaper for the cart&apos;s subtotal — this table or the size-based fee above — is what gets charged. Leave Max blank for an
+          open-ended top tier (e.g. free delivery above a threshold).
+        </div>
+        <div className="border border-[#E4E9EC] rounded-lg overflow-hidden mb-2">
+          <div className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-2 px-3 py-2 text-[10px] font-bold text-[#8A96A3] uppercase bg-[#F7F9FA] border-b border-[#E4E9EC]">
+            <div>Min (Rs.)</div>
+            <div>Max (Rs.)</div>
+            <div>Fee (Rs.)</div>
+            <div>Active</div>
+            <div></div>
+          </div>
+          {tiersDraft.map((tier) => (
+            <div key={tier.id} className="grid grid-cols-[1fr_1fr_1fr_auto_auto] gap-2 px-3 py-2 items-center border-b border-[#F0F2F4] last:border-0">
+              <input
+                type="number"
+                value={tier.minAmount}
+                onChange={(e) => updateTier(tier.id, { minAmount: Number(e.target.value) || 0 })}
+                className="w-full px-2 py-1.5 rounded-md border border-[#E4E9EC] text-xs box-border"
+              />
+              <input
+                type="number"
+                placeholder="No max"
+                value={tier.maxAmount ?? ""}
+                onChange={(e) => updateTier(tier.id, { maxAmount: e.target.value === "" ? null : Number(e.target.value) || 0 })}
+                className="w-full px-2 py-1.5 rounded-md border border-[#E4E9EC] text-xs box-border"
+              />
+              <input
+                type="number"
+                value={tier.fee}
+                onChange={(e) => updateTier(tier.id, { fee: Number(e.target.value) || 0 })}
+                className="w-full px-2 py-1.5 rounded-md border border-[#E4E9EC] text-xs box-border"
+              />
+              <input type="checkbox" checked={tier.active} onChange={(e) => updateTier(tier.id, { active: e.target.checked })} />
+              <button onClick={() => removeTierRow(tier.id)} className="text-[#D64545] text-[11px] font-semibold cursor-pointer">
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+        <button onClick={addTierRow} className="text-xs font-semibold text-primary cursor-pointer">
+          + Add Tier
+        </button>
       </div>
       <button onClick={saveFees} className="w-full bg-primary text-white text-center py-3 rounded-lg text-sm font-semibold cursor-pointer mb-2">
         Save

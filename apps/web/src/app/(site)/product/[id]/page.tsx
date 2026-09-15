@@ -134,7 +134,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <button
               onClick={() => {
                 if (product.outOfStock) return;
-                addItem({ id: product.id, name: product.name, price: product.price }, qty);
+                addItem({ id: product.id, name: product.name, price: salePrice(product) }, qty);
                 setAdded(true);
                 setTimeout(() => setAdded(false), 2000);
               }}
@@ -146,7 +146,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             {!product.outOfStock && (
               <button
                 onClick={() => {
-                  addItem({ id: product.id, name: product.name, price: product.price }, qty);
+                  addItem({ id: product.id, name: product.name, price: salePrice(product) }, qty);
                   router.push("/cart");
                 }}
                 className="inline-block bg-[#F0F2F4] text-[#1A2027] px-[22px] py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer"

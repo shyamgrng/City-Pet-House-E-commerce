@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import MediaSlot from "@/components/MediaSlot";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
@@ -22,15 +22,16 @@ import { isValidNepalPhone } from "@/lib/phone";
 function useCartDeliveryFee(items: CartItem[]) {
   const { products } = useCatalog();
   const { accounts: couriers } = useCourierAuth();
-  const { customerFees, freeDeliveryThreshold, freeDeliveryMaxTier } = useDeliverySettings();
+  const { standardFeeSmall, standardFeeMedium, standardFeeLarge, standardFeeVeryLarge, feeTiers, freeDeliveryMaxTier } = useDeliverySettings();
 
   const feeItems = items.map((it) => {
     const product = products.find((p) => p.id === it.productId);
     return { subtotal: it.price * it.qty, tier: product?.courierPackageSize ?? "Small" };
   });
   const activeCourier = couriers.find((c) => c.isActive) ?? null;
+  const standardRates = { standardFeeSmall, standardFeeMedium, standardFeeLarge, standardFeeVeryLarge };
 
-  const deliveryResult = calculateDeliveryFee({ items: feeItems, customerFees, freeDeliveryThreshold, freeDeliveryMaxTier });
+  const deliveryResult = calculateDeliveryFee({ items: feeItems, standardRates, feeTiers, freeDeliveryMaxTier });
   const courierResult = calculateCourierCost(feeItems, activeCourier);
 
   return { deliveryResult, courierResult };
@@ -40,7 +41,7 @@ export default function CartPage() {
   const { user, ready } = useAuth();
   const { items, subtotal, inc, dec, remove, clear } = useCart();
   const { products } = useCatalog();
-  const { placeOrder } = useOrder();
+  const { placeOrder, saveError, clearSaveError } = useOrder();
   const { deliveryResult, courierResult } = useCartDeliveryFee(items);
 
   if (!ready) return null;
@@ -118,6 +119,8 @@ export default function CartPage() {
           deliveryResult={deliveryResult}
           courierResult={courierResult}
           placeOrder={placeOrder}
+          saveError={saveError}
+          clearSaveError={clearSaveError}
           clear={clear}
         />
       )}
@@ -133,6 +136,8 @@ function CheckoutSection({
   deliveryResult,
   courierResult,
   placeOrder,
+  saveError,
+  clearSaveError,
   clear,
 }: {
   user: Account;
@@ -142,6 +147,8 @@ function CheckoutSection({
   deliveryResult: DeliveryFeeResult;
   courierResult: CourierCostResult;
   placeOrder: ReturnType<typeof useOrder>["placeOrder"];
+  saveError: string | null;
+  clearSaveError: () => void;
   clear: () => void;
 }) {
   const router = useRouter();
@@ -155,6 +162,13 @@ function CheckoutSection({
   const [error, setError] = useState("");
   const [previewQr, setPreviewQr] = useState<{ src: string; label: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // A saveError left over from an earlier, unrelated failed save (e.g. a previous order
+  // attempt) must not be shown as if it belonged to this fresh checkout session.
+  useEffect(() => {
+    clearSaveError();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
@@ -312,7 +326,7 @@ function CheckoutSection({
         )}
       </div>
 
-      {error && <div className="text-xs text-[#D64545] mb-3">{error}</div>}
+      {(error || saveError) && <div className="text-xs text-[#D64545] mb-3">{error || saveError}</div>}
       <button onClick={submit} className="w-full bg-primary text-white text-center py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer">
         Place Order &amp; Upload Receipt
       </button>

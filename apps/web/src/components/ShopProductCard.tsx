@@ -11,7 +11,7 @@ export default function ShopProductCard({ product }: { product: Product }) {
 
   return (
     <Link href={`/product/${product.id}`} className="block rounded-[10px] overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-lg">
-      <div className="h-[110px] relative">
+      <div className="aspect-square relative">
         <MediaSlot src={product.photo} label={product.photoAlts[0] || product.name} className="absolute inset-0 w-full h-full" />
         {product.newArrival && (
           <div className="absolute top-1.5 left-1.5 text-white text-[9px] font-semibold px-1.5 py-0.5 rounded bg-primary">New</div>
@@ -28,7 +28,7 @@ export default function ShopProductCard({ product }: { product: Product }) {
         )}
       </div>
       <div className="p-2.5">
-        <div className="text-xs text-[#1A2027] font-medium">{product.name}</div>
+        <div className="text-xs text-[#1A2027] font-semibold">{product.name}</div>
         {product.rating > 0 && (
           <div className="text-[10px] text-[#C9962B] mt-0.5">
             {"★".repeat(Math.round(product.rating))}
