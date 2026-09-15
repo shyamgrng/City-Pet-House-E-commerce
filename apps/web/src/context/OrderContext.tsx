@@ -20,6 +20,8 @@ type PlaceOrderInput = {
   items: OrderItem[];
   subtotal: number;
   deliveryFee: number;
+  courierCost?: number;
+  courierName?: string;
   total: number;
   receiptPhoto: string;
 };

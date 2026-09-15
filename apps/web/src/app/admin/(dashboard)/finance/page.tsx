@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCourierAuth } from "@/context/CourierAuthContext";
+import { useOrder } from "@/context/OrderContext";
 import { financeFlows, financeOverview } from "@/lib/admin-data";
 
 const subTabs = ["Overview", "Income", "Refunds", "Cancellations", "Receivable", "Payable", "Accounts", "Audit Log"];
@@ -15,7 +16,13 @@ export default function FinancePage() {
   const [tab, setTab] = useState("Overview");
   const [range, setRange] = useState("All time");
   const { accounts: couriers } = useCourierAuth();
+  const { orders } = useOrder();
   const courierPayableTotal = couriers.reduce((sum, c) => sum + courierPayable(c), 0);
+  // What we've actually charged customers for delivery vs. what couriers actually cost us on
+  // those same orders -- the real delivery margin, not the courier rate-card estimate above.
+  const deliveryIncome = orders.reduce((sum, o) => sum + o.deliveryFee, 0);
+  const deliveryCost = orders.reduce((sum, o) => sum + (o.courierCost ?? 0), 0);
+  const deliveryMargin = deliveryIncome - deliveryCost;
 
   return (
     <div>
@@ -72,6 +79,16 @@ export default function FinancePage() {
             )}
           </div>
           <Stat label="Total Payable" value={"Rs. " + courierPayableTotal.toLocaleString("en-IN")} color="#7A56C8" />
+
+          <div className="font-heading font-bold text-base text-[#1A2027] mt-6 mb-1">Delivery Margin</div>
+          <div className="text-xs text-[#5B6773] mb-4">
+            What we&apos;ve actually charged customers for delivery vs. what couriers actually cost us, across every order placed.
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+            <Stat label="Delivery Fees Charged" value={"Rs. " + deliveryIncome.toLocaleString("en-IN")} color="#1F7A4D" />
+            <Stat label="Courier Cost" value={"Rs. " + deliveryCost.toLocaleString("en-IN")} color="#D64545" />
+            <Stat label="Net Delivery Margin" value={"Rs. " + deliveryMargin.toLocaleString("en-IN")} color={deliveryMargin >= 0 ? "#1A2027" : "#D64545"} />
+          </div>
         </>
       )}
 

@@ -36,8 +36,17 @@ function Card({ title, subtitle, children }: { title: string; subtitle?: string;
 
 export default function SettingsPage() {
   const { settings, updateSettings, ready: settingsReady } = useSiteSettings();
-  const { standardFee, puppyFee, freeDeliveryThreshold, freeDeliveryMaxTier, setSettings: setDeliverySettings, ready: deliveryReady } =
-    useDeliverySettings();
+  const {
+    customerFeeSmall,
+    customerFeeMedium,
+    customerFeeLarge,
+    customerFeeVeryLarge,
+    puppyFee,
+    freeDeliveryThreshold,
+    freeDeliveryMaxTier,
+    setSettings: setDeliverySettings,
+    ready: deliveryReady,
+  } = useDeliverySettings();
   const { methods, toggleMethod, setQr, ready: methodsReady } = usePaymentMethods();
   const [saved, setSaved] = useState(false);
 
@@ -48,8 +57,16 @@ export default function SettingsPage() {
     setSaved(false);
   };
 
-  const setDeliveryFee = (patch: { standardFee?: number; puppyFee?: number }) => {
-    setDeliverySettings({ standardFee, puppyFee, freeDeliveryThreshold, freeDeliveryMaxTier, ...patch });
+  const setPuppyFee = (v: number) => {
+    setDeliverySettings({
+      customerFeeSmall,
+      customerFeeMedium,
+      customerFeeLarge,
+      customerFeeVeryLarge,
+      puppyFee: v,
+      freeDeliveryThreshold,
+      freeDeliveryMaxTier,
+    });
     setSaved(false);
   };
 
@@ -85,13 +102,11 @@ export default function SettingsPage() {
         <Field label="Google Play URL" value={settings.shoppingGooglePlayUrl} onChange={(v) => set({ shoppingGooglePlayUrl: v })} />
       </Card>
 
-      <Card title="Delivery" subtitle="Standard fee is the fallback used when no courier is active — set couriers in Shop → Delivery Setting.">
-        <Field
-          label="Standard Delivery Fee (Rs.)"
-          value={String(standardFee)}
-          onChange={(v) => setDeliveryFee({ standardFee: Number(v) || 0 })}
-        />
-        <Field label="Puppy Delivery Fee (Rs.)" value={String(puppyFee)} onChange={(v) => setDeliveryFee({ puppyFee: Number(v) || 0 })} />
+      <Card
+        title="Delivery"
+        subtitle="Customer delivery fees by size and courier cost rates are set in Shop → Delivery Setting."
+      >
+        <Field label="Puppy Delivery Fee (Rs.)" value={String(puppyFee)} onChange={(v) => setPuppyFee(Number(v) || 0)} />
       </Card>
 
       <Card

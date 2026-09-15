@@ -442,6 +442,7 @@ const emptyCourierForm = {
   priceMedium: "",
   priceLarge: "",
   priceVeryLarge: "",
+  orderValuePct: "",
   usesDistancePricing: false,
   ratePerKg: "",
   ratePerKm: "",
@@ -449,9 +450,13 @@ const emptyCourierForm = {
 };
 
 function DeliverySettingTab() {
-  const { standardFee, puppyFee, freeDeliveryThreshold, freeDeliveryMaxTier, setSettings } = useDeliverySettings();
+  const { customerFeeSmall, customerFeeMedium, customerFeeLarge, customerFeeVeryLarge, puppyFee, freeDeliveryThreshold, freeDeliveryMaxTier, setSettings } =
+    useDeliverySettings();
   const { accounts, addCourier, removeCourier, setActiveCourier } = useCourierAuth();
-  const [standardInput, setStandardInput] = useState(String(standardFee));
+  const [smallInput, setSmallInput] = useState(String(customerFeeSmall));
+  const [mediumInput, setMediumInput] = useState(String(customerFeeMedium));
+  const [largeInput, setLargeInput] = useState(String(customerFeeLarge));
+  const [veryLargeInput, setVeryLargeInput] = useState(String(customerFeeVeryLarge));
   const [puppyInput, setPuppyInput] = useState(String(puppyFee));
   const [thresholdInput, setThresholdInput] = useState(String(freeDeliveryThreshold));
   const [maxTierInput, setMaxTierInput] = useState<"Small" | "Medium">(freeDeliveryMaxTier === "Small" ? "Small" : "Medium");
@@ -464,7 +469,10 @@ function DeliverySettingTab() {
 
   const saveFees = () => {
     setSettings({
-      standardFee: Number(standardInput) || 0,
+      customerFeeSmall: Number(smallInput) || 0,
+      customerFeeMedium: Number(mediumInput) || 0,
+      customerFeeLarge: Number(largeInput) || 0,
+      customerFeeVeryLarge: Number(veryLargeInput) || 0,
       puppyFee: Number(puppyInput) || 0,
       freeDeliveryThreshold: Number(thresholdInput) || 0,
       freeDeliveryMaxTier: maxTierInput,
@@ -487,6 +495,7 @@ function DeliverySettingTab() {
       priceMedium: Number(form.priceMedium) || 0,
       priceLarge: Number(form.priceLarge) || 0,
       priceVeryLarge: Number(form.priceVeryLarge) || 0,
+      orderValuePct: Number(form.orderValuePct) || 0,
       usesDistancePricing: form.usesDistancePricing,
       ratePerKg: Number(form.ratePerKg) || 0,
       ratePerKm: Number(form.ratePerKm) || 0,
@@ -501,19 +510,47 @@ function DeliverySettingTab() {
   return (
     <div className="max-w-[560px]">
       <div className="font-heading font-bold text-[19px] text-[#1A2027] mb-1.5">Delivery Setting</div>
-      <div className="text-[13px] text-[#5B6773] mb-[18px]">Default delivery fee and rules applied at checkout.</div>
+      <div className="text-[13px] text-[#5B6773] mb-[18px]">
+        Customer Delivery Fee below is what we charge shoppers — always ours, no matter which courier we use. Courier
+        Suppliers below is what a courier charges us to actually deliver; the two are tracked separately.
+      </div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
-        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Standard Delivery Fee (Rs.)</div>
-        <input
-          type="number"
-          value={standardInput}
-          onChange={(e) => {
-            setStandardInput(e.target.value);
-            setFeesSaved(false);
-          }}
-          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-4 box-border"
-        />
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Customer Delivery Fee by Size (Rs.)</div>
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          <SizeField
+            label="Small"
+            value={smallInput}
+            onChange={(v) => {
+              setSmallInput(v);
+              setFeesSaved(false);
+            }}
+          />
+          <SizeField
+            label="Medium"
+            value={mediumInput}
+            onChange={(v) => {
+              setMediumInput(v);
+              setFeesSaved(false);
+            }}
+          />
+          <SizeField
+            label="Large"
+            value={largeInput}
+            onChange={(v) => {
+              setLargeInput(v);
+              setFeesSaved(false);
+            }}
+          />
+          <SizeField
+            label="Very Large"
+            value={veryLargeInput}
+            onChange={(v) => {
+              setVeryLargeInput(v);
+              setFeesSaved(false);
+            }}
+          />
+        </div>
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Puppy Delivery Fee (Rs.)</div>
         <input
           type="number"
@@ -560,10 +597,13 @@ function DeliverySettingTab() {
       {feesSaved && <div className="text-[11px] text-[#1F7A4D] mb-4">✓ Delivery fees saved</div>}
 
       <div className="font-heading font-bold text-[15px] text-[#1A2027] mt-8 mb-1">Courier Suppliers</div>
-      <div className="text-[13px] text-[#5B6773] mb-3.5">Rates per parcel size, with an optional default/distance-based price.</div>
+      <div className="text-[13px] text-[#5B6773] mb-3.5">
+        What each courier charges us — a rate per parcel size plus a % of the order value (e.g. for COD collection
+        risk). This is our cost, tracked internally; it&apos;s never shown to the customer.
+      </div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto mb-4">
-        <div className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[720px]">
+        <div className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.6fr_0.7fr_0.7fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[800px]">
           <div>Company</div>
           <div>Address</div>
           <div>Phone</div>
@@ -571,6 +611,7 @@ function DeliverySettingTab() {
           <div>Medium</div>
           <div>Large</div>
           <div>V.Large</div>
+          <div>% Value</div>
           <div>Active</div>
           <div></div>
         </div>
@@ -580,7 +621,7 @@ function DeliverySettingTab() {
           accounts.map((co) => (
             <div
               key={co.courierId}
-              className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr_0.7fr] gap-2 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[720px]"
+              className="grid grid-cols-[1.4fr_1.2fr_1.1fr_0.7fr_0.7fr_0.7fr_0.7fr_0.6fr_0.7fr_0.7fr] gap-2 px-4 py-3 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[800px]"
             >
               <div className="font-semibold text-[#1A2027]">{co.companyName}</div>
               <div className="text-[#5B6773]">{co.address || "—"}</div>
@@ -589,6 +630,7 @@ function DeliverySettingTab() {
               <div>Rs.{co.priceMedium}</div>
               <div>Rs.{co.priceLarge}</div>
               <div>Rs.{co.priceVeryLarge}</div>
+              <div>{co.orderValuePct}%</div>
               <div
                 onClick={() => !co.isActive && setActiveCourier(co.courierId)}
                 className="flex items-center gap-1.5 cursor-pointer"
@@ -646,6 +688,15 @@ function DeliverySettingTab() {
           <SizeField label="Large" value={form.priceLarge} onChange={(v) => set({ priceLarge: v })} />
           <SizeField label="Very Large" value={form.priceVeryLarge} onChange={(v) => set({ priceVeryLarge: v })} />
         </div>
+
+        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Percentage of Order Value (%)</div>
+        <input
+          type="number"
+          value={form.orderValuePct}
+          onChange={(e) => set({ orderValuePct: e.target.value })}
+          placeholder="e.g. 2 — added on top of the size price above"
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-3 box-border"
+        />
 
         <div
           onClick={() => set({ usesDistancePricing: !form.usesDistancePricing })}

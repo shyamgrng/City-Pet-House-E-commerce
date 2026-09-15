@@ -31,6 +31,10 @@ export type Order = {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  /** Internal only -- what the courier actually cost us for this order's delivery. Never shown
+   * to the customer; used for delivery margin tracking in Admin Finance. */
+  courierCost?: number;
+  courierName?: string;
   status: OrderStatus;
   receiptPhoto: string;
   rejectReason?: string;

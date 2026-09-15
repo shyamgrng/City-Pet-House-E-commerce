@@ -95,6 +95,7 @@ export default function AccountsPage() {
       priceMedium: 0,
       priceLarge: 0,
       priceVeryLarge: 0,
+      orderValuePct: 0,
       usesDistancePricing: false,
       ratePerKg: 0,
       ratePerKm: 0,

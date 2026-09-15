@@ -6,17 +6,31 @@ import type { CourierPackageSize } from "@/lib/catalog-types";
 const STORAGE_KEY = "cph_delivery_settings";
 
 type DeliverySettings = {
-  standardFee: number;
+  /** City Pet House's own customer-facing delivery fee per tier -- independent of any courier's cost. */
+  customerFeeSmall: number;
+  customerFeeMedium: number;
+  customerFeeLarge: number;
+  customerFeeVeryLarge: number;
   puppyFee: number;
   freeDeliveryThreshold: number;
   /** Highest tier still eligible for the free-delivery waiver — "Medium" means Small & Medium qualify. */
   freeDeliveryMaxTier: CourierPackageSize;
 };
 
-const DEFAULT_SETTINGS: DeliverySettings = { standardFee: 150, puppyFee: 250, freeDeliveryThreshold: 10000, freeDeliveryMaxTier: "Medium" };
+const DEFAULT_SETTINGS: DeliverySettings = {
+  customerFeeSmall: 100,
+  customerFeeMedium: 150,
+  customerFeeLarge: 220,
+  customerFeeVeryLarge: 300,
+  puppyFee: 250,
+  freeDeliveryThreshold: 10000,
+  freeDeliveryMaxTier: "Medium",
+};
 
 type DeliverySettingsValue = DeliverySettings & {
   ready: boolean;
+  /** The 4 tier fees above, keyed for calculateDeliveryFee. */
+  customerFees: Record<CourierPackageSize, number>;
   setSettings: (settings: DeliverySettings) => void;
 };
 
@@ -28,7 +42,10 @@ function loadStored(): DeliverySettings {
   try {
     const parsed = JSON.parse(raw);
     return {
-      standardFee: Number(parsed.standardFee) || DEFAULT_SETTINGS.standardFee,
+      customerFeeSmall: Number(parsed.customerFeeSmall) || DEFAULT_SETTINGS.customerFeeSmall,
+      customerFeeMedium: Number(parsed.customerFeeMedium) || DEFAULT_SETTINGS.customerFeeMedium,
+      customerFeeLarge: Number(parsed.customerFeeLarge) || DEFAULT_SETTINGS.customerFeeLarge,
+      customerFeeVeryLarge: Number(parsed.customerFeeVeryLarge) || DEFAULT_SETTINGS.customerFeeVeryLarge,
       puppyFee: Number(parsed.puppyFee) || DEFAULT_SETTINGS.puppyFee,
       freeDeliveryThreshold: Number(parsed.freeDeliveryThreshold) || DEFAULT_SETTINGS.freeDeliveryThreshold,
       freeDeliveryMaxTier: parsed.freeDeliveryMaxTier === "Small" ? "Small" : DEFAULT_SETTINGS.freeDeliveryMaxTier,
@@ -54,10 +71,19 @@ export function DeliverySettingsProvider({ children }: { children: React.ReactNo
   return (
     <DeliverySettingsContext.Provider
       value={{
-        standardFee: state.standardFee,
+        customerFeeSmall: state.customerFeeSmall,
+        customerFeeMedium: state.customerFeeMedium,
+        customerFeeLarge: state.customerFeeLarge,
+        customerFeeVeryLarge: state.customerFeeVeryLarge,
         puppyFee: state.puppyFee,
         freeDeliveryThreshold: state.freeDeliveryThreshold,
         freeDeliveryMaxTier: state.freeDeliveryMaxTier,
+        customerFees: {
+          Small: state.customerFeeSmall,
+          Medium: state.customerFeeMedium,
+          Large: state.customerFeeLarge,
+          "Very Large": state.customerFeeVeryLarge,
+        },
         ready: state.ready,
         setSettings,
       }}
