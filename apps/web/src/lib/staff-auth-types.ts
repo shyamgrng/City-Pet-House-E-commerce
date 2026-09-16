@@ -1,3 +1,11 @@
+/** A legal acknowledgment of an issued document -- staff must scroll through the document and
+ * wait a minimum review time before this can be recorded, so it can't just be instantly clicked. */
+export type DocumentAcknowledgment = {
+  signatureDataUrl: string;
+  agreedAt: number;
+  userAgent: string;
+};
+
 /** A letter/form admin sends to the staff member -- appointment letter, job description, VOC
  * letter, or any other form -- the phase 2 counterpart of the documents staff uploads in phase 1. */
 export type IssuedDocument = {
@@ -5,6 +13,7 @@ export type IssuedDocument = {
   label: string;
   fileUrl: string;
   issuedAt: number;
+  acknowledgment?: DocumentAcknowledgment;
 };
 
 /** Common letters an admin can pick from when sending a document -- a custom label can be typed

@@ -2221,19 +2221,37 @@ function StaffDetailView({
           <div className="text-xs text-[#8A96A3] py-3">No documents sent yet.</div>
         ) : (
           staff.issuedDocuments.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
-              <div className="text-[#3A4652] font-semibold">{doc.label}</div>
-              <div className="flex items-center gap-3">
-                <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
-                  Preview
-                </a>
-                <a href={doc.fileUrl} download={doc.label.replace(/\s+/g, "_")} className="text-[11px] font-semibold text-primary cursor-pointer">
-                  Download
-                </a>
-                <button onClick={() => onRemoveIssuedDocument(doc.id)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
-                  Remove
-                </button>
+            <div key={doc.id} className="py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[#3A4652] font-semibold">{doc.label}</div>
+                  {doc.acknowledgment ? (
+                    <div className="text-[10px] text-[#1F7A4D] font-semibold mt-0.5">
+                      ✓ Signed by {staff.name} on {new Date(doc.acknowledgment.agreedAt).toLocaleString()}
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-[#8A6D1F] font-semibold mt-0.5">Awaiting signature</div>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
+                    Preview
+                  </a>
+                  <a href={doc.fileUrl} download={doc.label.replace(/\s+/g, "_")} className="text-[11px] font-semibold text-primary cursor-pointer">
+                    Download
+                  </a>
+                  <button onClick={() => onRemoveIssuedDocument(doc.id)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
+                    Remove
+                  </button>
+                </div>
               </div>
+              {doc.acknowledgment && (
+                <div className="flex items-center gap-2.5 mt-2 bg-[#F7F9FA] border border-[#E4E9EC] rounded-lg p-2.5">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={doc.acknowledgment.signatureDataUrl} alt="Signature" className="h-10 w-24 object-contain bg-white rounded border border-[#E4E9EC]" />
+                  <div className="text-[10px] text-[#8A96A3]">Signature on file — legally recorded acknowledgment.</div>
+                </div>
+              )}
             </div>
           ))
         )}

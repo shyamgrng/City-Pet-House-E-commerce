@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { notifyEvent } from "@/lib/notify-client";
-import { staffAccountSeed, type IssuedDocument, type StaffAccount } from "@/lib/staff-auth-types";
+import { staffAccountSeed, type DocumentAcknowledgment, type IssuedDocument, type StaffAccount } from "@/lib/staff-auth-types";
 
 const SESSION_KEY = "cph_staff_session_id";
 const OVERRIDES_KEY = "cph_staff_account_overrides";
@@ -26,6 +26,10 @@ type StaffAuthValue = {
   /** Staff confirms their required documents are all in -- a clear "done" signal separate from
    * the individual uploads, which save immediately on their own. */
   submitDocuments: () => void;
+  /** Records a signed acknowledgment of an issued document -- the staff portal only calls this
+   * once it's gated the review (scrolled the document, waited a minimum time, ticked the
+   * checkbox), so a call here means a legal signature just happened. */
+  acknowledgeDocument: (docId: string, signatureDataUrl: string) => void;
   /** Admin creates the account directly and emails the new hire a login link with a temporary
    * password -- staff never self-register. Returns the generated credentials so the caller can
    * send that email and show them on-screen as a fallback. */
@@ -245,6 +249,22 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const acknowledgeDocument = (docId: string, signatureDataUrl: string) => {
+    setState((s) => {
+      if (!s.staff) return s;
+      const acknowledgment: DocumentAcknowledgment = {
+        signatureDataUrl,
+        agreedAt: Date.now(),
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+      };
+      const issuedDocuments = s.staff.issuedDocuments.map((d) => (d.id === docId ? { ...d, acknowledgment } : d));
+      persistOverride(s.staff.staffId, { issuedDocuments });
+      const updated = { ...s.staff, issuedDocuments };
+      const accounts = s.accounts.map((a) => (a.staffId === updated.staffId ? updated : a));
+      return { accounts, staff: updated, ready: true };
+    });
+  };
+
   const adminUpdateAccount = (
     staffId: string,
     patch: Partial<
@@ -303,6 +323,7 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
         uploadPhoto,
         uploadDocument,
         submitDocuments,
+        acknowledgeDocument,
         addStaff,
         removeStaff,
         adminUpdateAccount,
