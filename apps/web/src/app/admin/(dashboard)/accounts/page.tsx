@@ -16,6 +16,7 @@ import { useDelivery } from "@/context/DeliveryContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { useOrder } from "@/context/OrderContext";
+import { useStaffAuth } from "@/context/StaffAuthContext";
 import { useVet } from "@/context/VetContext";
 import type { AdminUser } from "@/lib/admin-user-types";
 import type { AdoptionPost } from "@/lib/adoption-types";
@@ -40,6 +41,7 @@ import { notifyEvent } from "@/lib/notify-client";
 import type { Order } from "@/lib/order-types";
 import { isValidNepalPhone } from "@/lib/phone";
 import type { RefundRecord } from "@/lib/refund-types";
+import { STAFF_DOCUMENT_PRESETS, type StaffAccount } from "@/lib/staff-auth-types";
 import type { Doctor, VetBooking } from "@/lib/vet-types";
 import type { Account, Sex } from "@/lib/auth-types";
 
@@ -1910,6 +1912,8 @@ function StaffAccountTab({ users }: { users: AdminUser[] }) {
 
   return (
     <div>
+      <div className="text-[13px] font-bold text-[#1A2027] mb-1">Admin Panel Logins</div>
+      <div className="text-xs text-[#8A96A3] mb-3.5">Backend accounts with dashboard access — manage these under Users.</div>
       <SearchBox value={search} onChange={setSearch} placeholder="Search by name, email, or role..." />
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
         <div className="grid grid-cols-[1.2fr_1.4fr_0.8fr_0.7fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[500px]">
@@ -1938,6 +1942,367 @@ function StaffAccountTab({ users }: { users: AdminUser[] }) {
           ))
         )}
       </div>
+
+      <StaffProfilesSection />
+    </div>
+  );
+}
+
+const STAFF_STATUS_COLORS: Record<StaffAccount["status"], string> = {
+  Invited: "#8A6D1F",
+  Submitted: "#146A8C",
+  Approved: "#1F7A4D",
+};
+
+const emptyStaffForm = { name: "", email: "", phone: "", jobTitle: "" };
+
+/** Onboarding profiles -- admin invites a new hire, picks which documents they need to provide,
+ * shares the generated login, and reviews what comes back through the Staff Portal. Separate from
+ * the Admin Panel Logins above, which is about backend dashboard access, not paperwork. */
+function StaffProfilesSection() {
+  const { accounts, addStaff, removeStaff, adminUploadDocument, adminApprove, adminResetPassword } = useStaffAuth();
+  const [search, setSearch] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ staffId: string; password: string } | null>(null);
+
+  const q = search.trim().toLowerCase();
+  const visible = accounts.filter(
+    (a) => !q || a.name.toLowerCase().includes(q) || a.jobTitle.toLowerCase().includes(q) || a.staffId.toLowerCase().includes(q),
+  );
+  const selected = selectedId ? (accounts.find((a) => a.staffId === selectedId) ?? null) : null;
+
+  if (selected) {
+    return (
+      <div className="mt-8">
+        <StaffDetailView
+          staff={selected}
+          onBack={() => setSelectedId(null)}
+          onUploadDoc={(docId, dataUrl, fileName) => adminUploadDocument(selected.staffId, docId, dataUrl, fileName)}
+          onApprove={() => adminApprove(selected.staffId)}
+          onResetPassword={() => adminResetPassword(selected.staffId)}
+          onRemove={() => {
+            removeStaff(selected.staffId);
+            setSelectedId(null);
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-[13px] font-bold text-[#1A2027]">Staff Profiles</div>
+        <button
+          onClick={() => {
+            setShowAddForm((v) => !v);
+            setCreated(null);
+          }}
+          className="text-[11px] font-semibold text-primary cursor-pointer"
+        >
+          {showAddForm ? "Cancel" : "+ Add Staff"}
+        </button>
+      </div>
+      <div className="text-xs text-[#8A96A3] mb-3.5">
+        Invite a new hire, pick which documents you need from them, and review what they submit through the Staff Portal.
+      </div>
+
+      {showAddForm && (
+        <AddStaffForm
+          onCreate={(input) => {
+            const creds = addStaff(input);
+            setCreated(creds);
+            setShowAddForm(false);
+          }}
+        />
+      )}
+
+      {created && (
+        <div className="mb-4 bg-[#EAF4F9] border border-[#CFE6F1] rounded-lg p-3.5 text-xs">
+          <div className="font-bold text-[#146A8C] mb-1">Staff account created — share these with the new hire:</div>
+          <div className="text-[#3A4652]">
+            Staff ID: <strong>{created.staffId}</strong> · Password: <strong>{created.password}</strong>
+          </div>
+          <div className="text-[#3A4652] mt-1">
+            Portal link: <strong>{typeof window !== "undefined" ? window.location.origin : ""}/staff/login</strong>
+          </div>
+        </div>
+      )}
+
+      <SearchBox value={search} onChange={setSearch} placeholder="Search by name, job title, or Staff ID..." />
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
+        <div className="grid grid-cols-[1.2fr_1fr_1fr_0.8fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[560px]">
+          <div>Name</div>
+          <div>Job Title</div>
+          <div>Documents</div>
+          <div>Status</div>
+        </div>
+        {accounts.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No staff profiles yet</div>
+        ) : visible.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No staff match.</div>
+        ) : (
+          visible.map((a) => {
+            const uploaded = a.documents.filter((d) => d.fileUrl).length;
+            return (
+              <button
+                key={a.staffId}
+                onClick={() => setSelectedId(a.staffId)}
+                className="w-full grid grid-cols-[1.2fr_1fr_1fr_0.8fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[560px] text-left cursor-pointer hover:bg-[#F7F9FA]"
+              >
+                <div className="font-semibold text-[#1A2027]">{a.name}</div>
+                <div className="text-[#5B6773]">{a.jobTitle || "—"}</div>
+                <div className="text-[#5B6773]">
+                  {uploaded}/{a.documents.length} uploaded
+                </div>
+                <div className="font-semibold" style={{ color: STAFF_STATUS_COLORS[a.status] }}>
+                  {a.status}
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AddStaffForm({
+  onCreate,
+}: {
+  onCreate: (input: { name: string; email: string; phone: string; jobTitle: string; documentLabels: string[] }) => void;
+}) {
+  const [form, setForm] = useState(emptyStaffForm);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+  const [customDoc, setCustomDoc] = useState("");
+  const [error, setError] = useState("");
+  const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
+
+  const toggleDoc = (label: string) => setSelectedDocs((s) => (s.includes(label) ? s.filter((d) => d !== label) : [...s, label]));
+  const addCustomDoc = () => {
+    const label = customDoc.trim();
+    if (!label || selectedDocs.includes(label)) return;
+    setSelectedDocs((s) => [...s, label]);
+    setCustomDoc("");
+  };
+
+  const submit = () => {
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError("Please fill in name and phone number.");
+      return;
+    }
+    if (selectedDocs.length === 0) {
+      setError("Pick at least one required document.");
+      return;
+    }
+    onCreate({ ...form, documentLabels: selectedDocs });
+    setForm(emptyStaffForm);
+    setSelectedDocs([]);
+    setError("");
+  };
+
+  return (
+    <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Full Name *</div>
+          <input
+            value={form.name}
+            onChange={(e) => set({ name: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Job Title</div>
+          <input
+            value={form.jobTitle}
+            onChange={(e) => set({ jobTitle: e.target.value })}
+            placeholder="e.g. Store Assistant"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Email</div>
+          <input
+            value={form.email}
+            onChange={(e) => set({ email: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone Number *</div>
+          <input
+            value={form.phone}
+            onChange={(e) => set({ phone: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+      </div>
+
+      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Required Documents</div>
+      <div className="flex flex-wrap gap-2 mb-2.5">
+        {STAFF_DOCUMENT_PRESETS.map((label) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => toggleDoc(label)}
+            className="px-3 py-1.5 rounded-full text-[11px] font-semibold cursor-pointer border"
+            style={{
+              background: selectedDocs.includes(label) ? "#1996C8" : "#fff",
+              color: selectedDocs.includes(label) ? "#fff" : "#3A4652",
+              borderColor: selectedDocs.includes(label) ? "#1996C8" : "#E4E9EC",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+        {selectedDocs
+          .filter((d) => !STAFF_DOCUMENT_PRESETS.includes(d))
+          .map((label) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => toggleDoc(label)}
+              className="px-3 py-1.5 rounded-full text-[11px] font-semibold cursor-pointer border"
+              style={{ background: "#1996C8", color: "#fff", borderColor: "#1996C8" }}
+            >
+              {label} ×
+            </button>
+          ))}
+      </div>
+      <div className="flex gap-2 mb-3.5">
+        <input
+          value={customDoc}
+          onChange={(e) => setCustomDoc(e.target.value)}
+          placeholder="Add a custom document…"
+          onKeyDown={(e) => e.key === "Enter" && addCustomDoc()}
+          className="flex-1 px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+        />
+        <button type="button" onClick={addCustomDoc} className="px-4 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] font-semibold cursor-pointer">
+          Add
+        </button>
+      </div>
+
+      {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
+      <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+        Create Staff Account
+      </button>
+    </div>
+  );
+}
+
+function StaffDetailView({
+  staff,
+  onBack,
+  onUploadDoc,
+  onApprove,
+  onResetPassword,
+  onRemove,
+}: {
+  staff: StaffAccount;
+  onBack: () => void;
+  onUploadDoc: (docId: string, dataUrl: string, fileName: string) => void;
+  onApprove: () => void;
+  onResetPassword: () => string;
+  onRemove: () => void;
+}) {
+  const [resetMsg, setResetMsg] = useState("");
+  const uploadedCount = staff.documents.filter((d) => d.fileUrl).length;
+  const allUploaded = staff.documents.length > 0 && uploadedCount === staff.documents.length;
+
+  return (
+    <div>
+      <button onClick={onBack} className="text-[11px] font-semibold text-primary mb-3 cursor-pointer">
+        ← Back to Staff Profiles
+      </button>
+
+      <div className="flex items-start justify-between gap-3 mb-5 flex-wrap">
+        <div className="flex items-center gap-3">
+          {staff.photo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={staff.photo} alt="" className="w-14 h-14 rounded-full object-cover border border-[#E4E9EC]" />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-[#F0F2F4]" />
+          )}
+          <div>
+            <div className="font-heading font-bold text-base text-[#1A2027]">{staff.name}</div>
+            <div className="text-xs text-[#8A96A3]">
+              {staff.jobTitle || "No job title set"} · {staff.staffId}
+            </div>
+          </div>
+        </div>
+        <div
+          className="font-semibold text-xs px-3 py-1.5 rounded-full"
+          style={{ background: `${STAFF_STATUS_COLORS[staff.status]}20`, color: STAFF_STATUS_COLORS[staff.status] }}
+        >
+          {staff.status}
+        </div>
+      </div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+        <div className="text-[13px] font-bold text-[#1A2027] mb-3">Contact &amp; Bank</div>
+        <DetailRow label="Email" value={staff.email || "—"} />
+        <DetailRow label="Phone" value={staff.phone || "—"} />
+        <DetailRow label="Address" value={staff.address || "Not filled in yet"} />
+        <DetailRow
+          label="Bank"
+          value={staff.bankName ? `${staff.bankName} · ${staff.bankAccountHolder} · ${staff.bankAccountNumber}` : "Not filled in yet"}
+        />
+      </div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-[13px] font-bold text-[#1A2027]">Documents</div>
+          <div className="text-[11px] font-semibold text-[#8A96A3]">
+            {uploadedCount}/{staff.documents.length}
+          </div>
+        </div>
+        {staff.documents.length === 0 ? (
+          <div className="text-xs text-[#8A96A3] py-3">No documents were requested from this staff member.</div>
+        ) : (
+          staff.documents.map((doc) => (
+            <AdminDocumentRow key={doc.id} label={doc.label} value={doc.fileUrl} onUpload={(dataUrl) => onUploadDoc(doc.id, dataUrl, "")} />
+          ))
+        )}
+      </div>
+
+      <div className="flex gap-2.5 flex-wrap items-center">
+        {staff.status !== "Approved" && (
+          <button
+            disabled={!allUploaded}
+            onClick={onApprove}
+            className="bg-primary text-white px-4 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            title={allUploaded ? undefined : "Waiting on every document to be uploaded first"}
+          >
+            Approve
+          </button>
+        )}
+        <button
+          onClick={() => setResetMsg(`New temporary password: ${onResetPassword()}`)}
+          className="bg-white border border-[#E4E9EC] text-[#1A2027] px-4 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+        >
+          Reset Password
+        </button>
+        <button
+          onClick={() => {
+            if (confirm(`Remove ${staff.name}'s staff account? This can't be undone.`)) onRemove();
+          }}
+          className="text-[#D64545] px-4 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+        >
+          Remove
+        </button>
+      </div>
+      {resetMsg && <div className="text-xs text-[#146A8C] mt-2.5">{resetMsg}</div>}
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-3 py-2 border-b border-[#F0F2F4] last:border-0 text-xs">
+      <span className="text-[#8A96A3]">{label}</span>
+      <span className="font-semibold text-[#1A2027] text-right">{value}</span>
     </div>
   );
 }
