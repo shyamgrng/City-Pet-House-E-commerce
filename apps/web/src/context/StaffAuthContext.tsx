@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { notifyEvent } from "@/lib/notify-client";
-import { staffAccountSeed, type StaffAccount } from "@/lib/staff-auth-types";
+import { staffAccountSeed, type IssuedDocument, type StaffAccount } from "@/lib/staff-auth-types";
 
 const SESSION_KEY = "cph_staff_session_id";
 const OVERRIDES_KEY = "cph_staff_account_overrides";
@@ -38,6 +38,10 @@ type StaffAuthValue = {
     >
   ) => void;
   adminResetPassword: (staffId: string) => string;
+  /** Phase 2 -- admin sends a letter/form to the staff member (appointment letter, job
+   * description, VOC letter, or any other form) and emails them that it's ready to view. */
+  adminIssueDocument: (staffId: string, label: string, fileUrl: string) => void;
+  adminRemoveIssuedDocument: (staffId: string, docId: string) => void;
 };
 
 const StaffAuthContext = createContext<StaffAuthValue | null>(null);
@@ -93,11 +97,17 @@ function persistRemoved(ids: string[]) {
   window.localStorage.setItem(REMOVED_KEY, JSON.stringify(ids));
 }
 
+// Backfills fields introduced after an account may have been saved to localStorage by an older
+// build, so previously-created staff accounts don't crash the newer UI (e.g. issuedDocuments.map).
+function normalizeStaff(a: Omit<StaffAccount, "issuedDocuments"> & { issuedDocuments?: IssuedDocument[] }): StaffAccount {
+  return { issuedDocuments: [], ...a };
+}
+
 function loadAllAccounts(): StaffAccount[] {
   const removed = new Set(loadRemoved());
   const base = staffAccountSeed.filter((a) => !removed.has(a.staffId));
   const added = loadAdded().filter((a) => !removed.has(a.staffId));
-  return applyOverrides([...base, ...added], loadOverrides());
+  return applyOverrides([...base, ...added].map(normalizeStaff), loadOverrides());
 }
 
 export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
@@ -143,6 +153,7 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
       isActive: true,
       mustChangePassword: true,
       createdAt: Date.now(),
+      issuedDocuments: [],
     };
     const added = [...loadAdded(), account];
     persistAdded(added);
@@ -245,6 +256,24 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     return tempPassword;
   };
 
+  const adminIssueDocument = (staffId: string, label: string, fileUrl: string) => {
+    const account = state.accounts.find((a) => a.staffId === staffId);
+    if (!account) return;
+    const doc: IssuedDocument = { id: "doc-" + Math.random().toString(36).slice(2, 9), label, fileUrl, issuedAt: Date.now() };
+    const issuedDocuments = [...account.issuedDocuments, doc];
+    persistOverride(staffId, { issuedDocuments });
+    setState((s) => ({ ...s, accounts: s.accounts.map((a) => (a.staffId === staffId ? { ...a, issuedDocuments } : a)) }));
+    if (account.email) notifyEvent("staff_document_issued", account.email, account.name, { name: account.name, label });
+  };
+
+  const adminRemoveIssuedDocument = (staffId: string, docId: string) => {
+    const account = state.accounts.find((a) => a.staffId === staffId);
+    if (!account) return;
+    const issuedDocuments = account.issuedDocuments.filter((d) => d.id !== docId);
+    persistOverride(staffId, { issuedDocuments });
+    setState((s) => ({ ...s, accounts: s.accounts.map((a) => (a.staffId === staffId ? { ...a, issuedDocuments } : a)) }));
+  };
+
   return (
     <StaffAuthContext.Provider
       value={{
@@ -261,6 +290,8 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
         removeStaff,
         adminUpdateAccount,
         adminResetPassword,
+        adminIssueDocument,
+        adminRemoveIssuedDocument,
       }}
     >
       {children}

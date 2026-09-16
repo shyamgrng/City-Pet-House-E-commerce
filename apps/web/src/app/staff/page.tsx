@@ -193,6 +193,21 @@ function StaffPortalContent({ staff, signOut }: { staff: StaffAccount; signOut: 
           ))}
         </div>
 
+        {staff.issuedDocuments.length > 0 && (
+          <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-5">
+            <div className="text-[13px] font-bold text-[#1A2027] mb-1">Letters &amp; Forms</div>
+            <div className="text-xs text-[#8A96A3] mb-3.5">Sent to you by your admin.</div>
+            {staff.issuedDocuments.map((doc) => (
+              <div key={doc.id} className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
+                <div className="text-[#3A4652] font-semibold">{doc.label}</div>
+                <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
+                  View
+                </a>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-5">
           <div className="text-[13px] font-bold text-[#1A2027] mb-3.5">Change Password</div>
           <RegField label="New Password" value={newPassword} onChange={setNewPassword} placeholder="At least 6 characters" mb="mb-3" />

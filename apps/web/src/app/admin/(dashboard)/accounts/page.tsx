@@ -41,7 +41,7 @@ import { notifyEvent } from "@/lib/notify-client";
 import type { Order } from "@/lib/order-types";
 import { isValidNepalPhone } from "@/lib/phone";
 import type { RefundRecord } from "@/lib/refund-types";
-import type { StaffAccount } from "@/lib/staff-auth-types";
+import { ISSUED_DOCUMENT_PRESETS, type StaffAccount } from "@/lib/staff-auth-types";
 import type { Doctor, VetBooking } from "@/lib/vet-types";
 import type { Account, Sex } from "@/lib/auth-types";
 
@@ -1963,7 +1963,7 @@ const emptyStaffForm = { name: "", email: "", phone: "", jobTitle: "" };
  * the business rule that staff never self-register. Separate from the Admin Panel Logins above,
  * which is about backend dashboard access, not paperwork. */
 function StaffProfilesSection({ onCreated }: { onCreated: (creds: { name: string; role: string; loginId: string; password: string; verb?: string }) => void }) {
-  const { accounts, addStaff, removeStaff, adminUpdateAccount, adminResetPassword } = useStaffAuth();
+  const { accounts, addStaff, removeStaff, adminUpdateAccount, adminResetPassword, adminIssueDocument, adminRemoveIssuedDocument } = useStaffAuth();
   const [search, setSearch] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -1986,6 +1986,8 @@ function StaffProfilesSection({ onCreated }: { onCreated: (creds: { name: string
             removeStaff(selected.staffId);
             setSelectedId(null);
           }}
+          onIssueDocument={(label, fileUrl) => adminIssueDocument(selected.staffId, label, fileUrl)}
+          onRemoveIssuedDocument={(docId) => adminRemoveIssuedDocument(selected.staffId, docId)}
         />
       </div>
     );
@@ -2121,14 +2123,19 @@ function StaffDetailView({
   onUpdate,
   onResetPassword,
   onRemove,
+  onIssueDocument,
+  onRemoveIssuedDocument,
 }: {
   staff: StaffAccount;
   onBack: () => void;
   onUpdate: (patch: Partial<Pick<StaffAccount, "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense" | "isActive">>) => void;
   onResetPassword: () => string;
   onRemove: () => void;
+  onIssueDocument: (label: string, fileUrl: string) => void;
+  onRemoveIssuedDocument: (docId: string) => void;
 }) {
   const [resetMsg, setResetMsg] = useState("");
+  const [showSendForm, setShowSendForm] = useState(false);
 
   return (
     <div>
@@ -2183,6 +2190,48 @@ function StaffDetailView({
         <AdminDocumentRow label="Driving License" value={staff.drivingLicense} onUpload={(dataUrl) => onUpdate({ drivingLicense: dataUrl })} />
       </div>
 
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-[13px] font-bold text-[#1A2027]">Documents to Staff</div>
+          <button onClick={() => setShowSendForm((v) => !v)} className="text-[11px] font-semibold text-primary cursor-pointer">
+            {showSendForm ? "Cancel" : "+ Send Document"}
+          </button>
+        </div>
+        <div className="text-xs text-[#8A96A3] mb-2">
+          Appointment letter, job description, VOC letter, or any other form — sent to {staff.name.split(" ")[0]} and emailed as a notification.
+        </div>
+
+        {showSendForm && (
+          <IssueDocumentForm
+            onSend={(label, fileUrl) => {
+              onIssueDocument(label, fileUrl);
+              setShowSendForm(false);
+            }}
+          />
+        )}
+
+        {staff.issuedDocuments.length === 0 ? (
+          <div className="text-xs text-[#8A96A3] py-3">No documents sent yet.</div>
+        ) : (
+          staff.issuedDocuments.map((doc) => (
+            <div key={doc.id} className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
+              <div className="text-[#3A4652] font-semibold">{doc.label}</div>
+              <div className="flex items-center gap-3">
+                <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
+                  Preview
+                </a>
+                <a href={doc.fileUrl} download={doc.label.replace(/\s+/g, "_")} className="text-[11px] font-semibold text-primary cursor-pointer">
+                  Download
+                </a>
+                <button onClick={() => onRemoveIssuedDocument(doc.id)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       <div className="flex gap-2.5 flex-wrap items-center">
         <button
           onClick={() => onUpdate({ isActive: !staff.isActive })}
@@ -2206,6 +2255,113 @@ function StaffDetailView({
         </button>
       </div>
       {resetMsg && <div className="text-xs text-[#146A8C] mt-2.5">{resetMsg}</div>}
+    </div>
+  );
+}
+
+function IssueDocumentForm({ onSend }: { onSend: (label: string, fileUrl: string) => void }) {
+  const [label, setLabel] = useState("");
+  const [customLabel, setCustomLabel] = useState("");
+  const [fileUrl, setFileUrl] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (isAllowedDocumentFile(file) && !isAllowedImageFile(file)) {
+      setBusy(true);
+      try {
+        setFileUrl(await readDocumentFile(file));
+        setFileName(file.name);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not process that file — try a different one.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    if (!isAllowedImageFile(file)) {
+      setError("Please choose a PNG or JPG photo, a PDF, or a Word document.");
+      return;
+    }
+    setBusy(true);
+    try {
+      setFileUrl(await resizeImageFile(file, 1000, 1400));
+      setFileName(file.name);
+    } catch {
+      setError("Could not process that file — try a different one.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submit = () => {
+    const finalLabel = (label === "Other" ? customLabel : label).trim();
+    if (!finalLabel) {
+      setError("Pick or enter a document name.");
+      return;
+    }
+    if (!fileUrl) {
+      setError("Attach the file to send.");
+      return;
+    }
+    onSend(finalLabel, fileUrl);
+  };
+
+  return (
+    <div className="border border-[#E4E9EC] rounded-lg p-3.5 mb-3.5">
+      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Document Name</div>
+      <div className="flex flex-wrap gap-2 mb-2.5">
+        {[...ISSUED_DOCUMENT_PRESETS, "Other"].map((preset) => (
+          <button
+            key={preset}
+            type="button"
+            onClick={() => setLabel(preset)}
+            className="px-3 py-1.5 rounded-full text-[11px] font-semibold cursor-pointer border"
+            style={{
+              background: label === preset ? "#1996C8" : "#fff",
+              color: label === preset ? "#fff" : "#3A4652",
+              borderColor: label === preset ? "#1996C8" : "#E4E9EC",
+            }}
+          >
+            {preset}
+          </button>
+        ))}
+      </div>
+      {label === "Other" && (
+        <input
+          value={customLabel}
+          onChange={(e) => setCustomLabel(e.target.value)}
+          placeholder="e.g. Salary Certificate"
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5 box-border"
+        />
+      )}
+
+      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">File</div>
+      <input ref={inputRef} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+      <div
+        onClick={() => inputRef.current?.click()}
+        className="w-full min-h-[70px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer mb-2.5 px-2 text-center py-2"
+      >
+        {busy ? (
+          <div className="text-[11px] font-semibold text-[#5B6773]">Processing…</div>
+        ) : fileUrl ? (
+          <div className="text-[11px] font-semibold text-[#1A2027]">{fileName || "File attached"} — tap to replace</div>
+        ) : (
+          <>
+            <div className="text-[11px] font-semibold text-[#5B6773]">Attach the document</div>
+            <div className="text-[10px] text-primary underline">photo, PDF, or Word — browse files</div>
+          </>
+        )}
+      </div>
+
+      {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
+      <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+        Send to Staff
+      </button>
     </div>
   );
 }

@@ -18,7 +18,8 @@ export type EmailEvent =
   | "doctor_registration_approved"
   | "partner_registration_received"
   | "partner_registration_approved"
-  | "staff_account_invited";
+  | "staff_account_invited"
+  | "staff_document_issued";
 
 type Rendered = { subject: string; html: string };
 
@@ -309,6 +310,16 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
           <div style="font-size:14px;margin-bottom:14px;"><strong>Temporary Password:</strong> ${password}</div>
           <a href="${loginUrl}" style="display:inline-block;background:#1996C8;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700;">Sign In to the Staff Portal</a><br /><br />
           Please sign in and set your own password, then upload your National Identity Card, Degree Certificate, and NVC Card (Driving License is optional).`
+        ),
+      };
+    }
+    case "staff_document_issued": {
+      const { name, label } = data as { name: string; label: string };
+      return {
+        subject: `New document from ${siteSettings.shortName} — ${label}`,
+        html: shell(
+          "A new document is ready",
+          `Hi ${name}, your admin has added a document to your Staff Portal: <strong>${label}</strong>. Sign in to the Staff Portal to view and download it.`
         ),
       };
     }
