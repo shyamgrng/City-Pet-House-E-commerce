@@ -23,6 +23,9 @@ type StaffAuthValue = {
   changePassword: (newPassword: string) => void;
   uploadPhoto: (dataUrl: string) => void;
   uploadDocument: (field: "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense", dataUrl: string) => void;
+  /** Staff confirms their required documents are all in -- a clear "done" signal separate from
+   * the individual uploads, which save immediately on their own. */
+  submitDocuments: () => void;
   /** Admin creates the account directly and emails the new hire a login link with a temporary
    * password -- staff never self-register. Returns the generated credentials so the caller can
    * send that email and show them on-screen as a fallback. */
@@ -222,8 +225,21 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
   const uploadDocument = (field: "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense", dataUrl: string) => {
     setState((s) => {
       if (!s.staff) return s;
-      persistOverride(s.staff.staffId, { [field]: dataUrl });
-      const updated = { ...s.staff, [field]: dataUrl };
+      // Replacing a document after submitting needs a fresh confirmation, so clear it here.
+      const patch = { [field]: dataUrl, documentsSubmittedAt: undefined };
+      persistOverride(s.staff.staffId, patch);
+      const updated = { ...s.staff, ...patch };
+      const accounts = s.accounts.map((a) => (a.staffId === updated.staffId ? updated : a));
+      return { accounts, staff: updated, ready: true };
+    });
+  };
+
+  const submitDocuments = () => {
+    setState((s) => {
+      if (!s.staff) return s;
+      const patch = { documentsSubmittedAt: Date.now() };
+      persistOverride(s.staff.staffId, patch);
+      const updated = { ...s.staff, ...patch };
       const accounts = s.accounts.map((a) => (a.staffId === updated.staffId ? updated : a));
       return { accounts, staff: updated, ready: true };
     });
@@ -286,6 +302,7 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
         changePassword,
         uploadPhoto,
         uploadDocument,
+        submitDocuments,
         addStaff,
         removeStaff,
         adminUpdateAccount,

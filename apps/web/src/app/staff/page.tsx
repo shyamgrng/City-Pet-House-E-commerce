@@ -33,7 +33,7 @@ export default function StaffPortalPage() {
 }
 
 function StaffPortalContent({ staff, signOut }: { staff: StaffAccount; signOut: () => void }) {
-  const { updateProfile, changePassword, uploadPhoto, uploadDocument } = useStaffAuth();
+  const { updateProfile, changePassword, uploadPhoto, uploadDocument, submitDocuments } = useStaffAuth();
   const { settings } = useSiteSettings();
   const router = useRouter();
 
@@ -49,12 +49,21 @@ function StaffPortalContent({ staff, signOut }: { staff: StaffAccount; signOut: 
   const [photoError, setPhotoError] = useState("");
   const [busyDoc, setBusyDoc] = useState<Record<string, boolean>>({});
   const [docError, setDocError] = useState<Record<string, string>>({});
+  const [justSubmitted, setJustSubmitted] = useState(false);
+
+  const allRequiredUploaded = STAFF_DOCUMENTS.filter((d) => d.required).every((d) => staff[d.field]);
 
   const saveProfile = () => {
     if (phone && !isValidNepalPhone(phone)) return;
     updateProfile({ phone, address, bankName, bankAccountHolder, bankAccountNumber });
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handleSubmitDocuments = () => {
+    submitDocuments();
+    setJustSubmitted(true);
+    setTimeout(() => setJustSubmitted(false), 2500);
   };
 
   const savePassword = () => {
@@ -191,6 +200,22 @@ function StaffPortalContent({ staff, signOut }: { staff: StaffAccount; signOut: 
               onFile={(f) => handleDoc(doc.field, f)}
             />
           ))}
+
+          <button
+            onClick={handleSubmitDocuments}
+            disabled={!allRequiredUploaded}
+            className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {justSubmitted ? "Submitted ✓" : "Submit Documents"}
+          </button>
+          {!allRequiredUploaded && (
+            <div className="text-[11px] text-[#8A96A3] mt-2">Upload every required document above before submitting.</div>
+          )}
+          {staff.documentsSubmittedAt && !justSubmitted && (
+            <div className="text-[11px] text-[#1F7A4D] font-semibold mt-2">
+              ✓ Submitted {new Date(staff.documentsSubmittedAt).toLocaleDateString()} — visible to your admin now.
+            </div>
+          )}
         </div>
 
         {staff.issuedDocuments.length > 0 && (

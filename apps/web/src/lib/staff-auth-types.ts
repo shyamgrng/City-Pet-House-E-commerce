@@ -40,6 +40,11 @@ export type StaffAccount = {
   securityLog?: { text: string; time: number }[];
   /** Letters/forms admin has sent this staff member -- phase 2, after their documents are on file. */
   issuedDocuments: IssuedDocument[];
+  /** Set when the staff member explicitly confirms their required documents are all in --
+   * distinct from each individual upload (which saves immediately) so both sides get a clear
+   * "done" signal rather than just inferring it from the checklist. Cleared if they replace a
+   * document afterward, since that needs a fresh confirmation. */
+  documentsSubmittedAt?: number;
 };
 
 export const staffAccountSeed: StaffAccount[] = [

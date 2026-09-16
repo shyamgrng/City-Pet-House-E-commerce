@@ -2178,7 +2178,14 @@ function StaffDetailView({
       </div>
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
-        <div className="text-[13px] font-bold text-[#1A2027] mb-1">Documents</div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-[13px] font-bold text-[#1A2027]">Documents</div>
+          {staff.documentsSubmittedAt ? (
+            <div className="text-[11px] font-semibold text-[#1F7A4D]">✓ Submitted {new Date(staff.documentsSubmittedAt).toLocaleDateString()}</div>
+          ) : (
+            <div className="text-[11px] font-semibold text-[#8A6D1F]">Not yet submitted</div>
+          )}
+        </div>
         <div className="text-xs text-[#8A96A3] mb-2">Uploaded by the staff member from their portal — replace a file here if they need to fix something.</div>
         <AdminDocumentRow label="National Identity Card" value={staff.nationalId} onUpload={(dataUrl) => onUpdate({ nationalId: dataUrl })} />
         <AdminDocumentRow
