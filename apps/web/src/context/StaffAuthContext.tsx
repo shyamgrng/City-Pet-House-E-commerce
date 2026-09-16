@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { notifyEvent } from "@/lib/notify-client";
-import { staffAccountSeed, type StaffAccount, type StaffDocumentSlot } from "@/lib/staff-auth-types";
+import { staffAccountSeed, type StaffAccount } from "@/lib/staff-auth-types";
 
 const SESSION_KEY = "cph_staff_session_id";
 const OVERRIDES_KEY = "cph_staff_account_overrides";
@@ -13,18 +13,6 @@ const SECURITY_LOG_LIMIT = 20;
 type Result = { ok: true } | { ok: false; error: string };
 type Overrides = Record<string, Partial<StaffAccount>>;
 
-function normalizeStaff(a: Partial<StaffAccount> & Pick<StaffAccount, "staffId" | "name" | "password" | "email" | "phone" | "jobTitle">): StaffAccount {
-  return {
-    address: "",
-    photo: "",
-    documents: [],
-    status: "Invited",
-    isActive: true,
-    createdAt: Date.now(),
-    ...a,
-  };
-}
-
 type StaffAuthValue = {
   staff: StaffAccount | null;
   accounts: StaffAccount[];
@@ -34,15 +22,19 @@ type StaffAuthValue = {
   updateProfile: (patch: { phone: string; address: string; bankName: string; bankAccountHolder: string; bankAccountNumber: string }) => void;
   changePassword: (newPassword: string) => void;
   uploadPhoto: (dataUrl: string) => void;
-  uploadDocument: (docId: string, fileUrl: string, fileName: string) => void;
-  addStaff: (input: { name: string; email: string; phone: string; jobTitle: string; documentLabels: string[] }) => {
-    staffId: string;
-    password: string;
-  };
+  /** Creates the account itself -- used once a StaffRegistration is approved, mirroring how
+   * doctor/courier/b2b accounts only come into existence after admin approves an application. */
+  addAccount: (account: Omit<StaffAccount, "createdAt">) => boolean;
   removeStaff: (staffId: string) => void;
-  adminUpdateAccount: (staffId: string, patch: Partial<Pick<StaffAccount, "name" | "email" | "phone" | "jobTitle" | "address" | "isActive">>) => void;
-  adminUploadDocument: (staffId: string, docId: string, fileUrl: string, fileName: string) => void;
-  adminApprove: (staffId: string) => void;
+  adminUpdateAccount: (
+    staffId: string,
+    patch: Partial<
+      Pick<
+        StaffAccount,
+        "name" | "email" | "phone" | "jobTitle" | "address" | "isActive" | "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense"
+      >
+    >
+  ) => void;
   adminResetPassword: (staffId: string) => string;
 };
 
@@ -75,7 +67,7 @@ function loadAdded(): StaffAccount[] {
   try {
     const raw = window.localStorage.getItem(ADDED_KEY);
     const parsed = raw ? (JSON.parse(raw) as StaffAccount[]) : [];
-    return Array.isArray(parsed) ? parsed.map(normalizeStaff) : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
@@ -101,14 +93,9 @@ function persistRemoved(ids: string[]) {
 
 function loadAllAccounts(): StaffAccount[] {
   const removed = new Set(loadRemoved());
-  const base = staffAccountSeed.map(normalizeStaff).filter((a) => !removed.has(a.staffId));
+  const base = staffAccountSeed.filter((a) => !removed.has(a.staffId));
   const added = loadAdded().filter((a) => !removed.has(a.staffId));
   return applyOverrides([...base, ...added], loadOverrides());
-}
-
-/** Every document has a file: "Submitted" means the checklist is complete and ready for admin review. */
-function allDocumentsUploaded(documents: StaffDocumentSlot[]): boolean {
-  return documents.length > 0 && documents.every((d) => d.fileUrl);
 }
 
 export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
@@ -135,19 +122,12 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     securityLog: [...(a.securityLog ?? []), { text, time: Date.now() }].slice(-SECURITY_LOG_LIMIT),
   });
 
-  const addStaff = (input: { name: string; email: string; phone: string; jobTitle: string; documentLabels: string[] }) => {
-    const staffId = "ST-" + Math.floor(2000 + Math.random() * 8000);
-    const password = "cph" + Math.floor(1000 + Math.random() * 9000);
-    const account: StaffAccount = normalizeStaff({
-      ...input,
-      staffId,
-      password,
-      documents: input.documentLabels.map((label, i) => ({ id: `doc-${i}-${Math.random().toString(36).slice(2, 7)}`, label, fileUrl: "", fileName: "" })),
-    });
-    const added = [...loadAdded(), account];
+  const addAccount = (account: Omit<StaffAccount, "createdAt">): boolean => {
+    const full: StaffAccount = { ...account, createdAt: Date.now() };
+    const added = [...loadAdded(), full];
     persistAdded(added);
-    setState((s) => ({ ...s, accounts: [...s.accounts, account] }));
-    return { staffId, password };
+    setState((s) => ({ ...s, accounts: [...s.accounts, full] }));
+    return true;
   };
 
   const removeStaff = (staffId: string) => {
@@ -208,23 +188,14 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const uploadDocument = (docId: string, fileUrl: string, fileName: string) => {
-    setState((s) => {
-      if (!s.staff) return s;
-      const documents = s.staff.documents.map((d) => (d.id === docId ? { ...d, fileUrl, fileName } : d));
-      const status: StaffAccount["status"] = allDocumentsUploaded(documents) ? "Submitted" : s.staff.status;
-      const submittedAt = status === "Submitted" && s.staff.status === "Invited" ? Date.now() : s.staff.submittedAt;
-      const patch = { documents, status, submittedAt };
-      persistOverride(s.staff.staffId, patch);
-      const updated = { ...s.staff, ...patch };
-      const accounts = s.accounts.map((a) => (a.staffId === updated.staffId ? updated : a));
-      return { accounts, staff: updated, ready: true };
-    });
-  };
-
   const adminUpdateAccount = (
     staffId: string,
-    patch: Partial<Pick<StaffAccount, "name" | "email" | "phone" | "jobTitle" | "address" | "isActive">>
+    patch: Partial<
+      Pick<
+        StaffAccount,
+        "name" | "email" | "phone" | "jobTitle" | "address" | "isActive" | "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense"
+      >
+    >
   ) => {
     persistOverride(staffId, patch);
     setState((s) => ({
@@ -232,24 +203,6 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
       accounts: s.accounts.map((a) => (a.staffId === staffId ? { ...a, ...patch } : a)),
       staff: s.staff?.staffId === staffId ? { ...s.staff, ...patch } : s.staff,
     }));
-  };
-
-  const adminUploadDocument = (staffId: string, docId: string, fileUrl: string, fileName: string) => {
-    setState((s) => {
-      const account = s.accounts.find((a) => a.staffId === staffId);
-      if (!account) return s;
-      const documents = account.documents.map((d) => (d.id === docId ? { ...d, fileUrl, fileName } : d));
-      const status: StaffAccount["status"] = allDocumentsUploaded(documents) && account.status === "Invited" ? "Submitted" : account.status;
-      const patch = { documents, status };
-      persistOverride(staffId, patch);
-      return { ...s, accounts: s.accounts.map((a) => (a.staffId === staffId ? { ...a, ...patch } : a)) };
-    });
-  };
-
-  const adminApprove = (staffId: string) => {
-    const patch = { status: "Approved" as const, approvedAt: Date.now() };
-    persistOverride(staffId, patch);
-    setState((s) => ({ ...s, accounts: s.accounts.map((a) => (a.staffId === staffId ? { ...a, ...patch } : a)) }));
   };
 
   const adminResetPassword = (staffId: string): string => {
@@ -273,12 +226,9 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         changePassword,
         uploadPhoto,
-        uploadDocument,
-        addStaff,
+        addAccount,
         removeStaff,
         adminUpdateAccount,
-        adminUploadDocument,
-        adminApprove,
         adminResetPassword,
       }}
     >

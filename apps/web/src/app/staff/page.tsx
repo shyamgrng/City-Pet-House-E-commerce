@@ -4,64 +4,49 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { DocDrop, PhotoDrop, RegField } from "@/components/registration/RegistrationFields";
+import { PhotoDrop, RegField } from "@/components/registration/RegistrationFields";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { useStaffAuth } from "@/context/StaffAuthContext";
-import { isAllowedDocumentFile, isAllowedImageFile, readDocumentFile, resizeImageFile } from "@/lib/image-upload";
+import type { StaffAccount } from "@/lib/staff-auth-types";
+import { isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 import PhoneInput from "@/components/PhoneInput";
 
-const STATUS_COPY: Record<string, { title: string; body: string; color: string }> = {
-  Invited: {
-    title: "Complete your profile",
-    body: "Fill in your details and upload every document on the checklist below. Once everything is uploaded, your admin will review and approve your account.",
-    color: "#8A6D1F",
-  },
-  Submitted: {
-    title: "Submitted — under review",
-    body: "Thanks! Your documents are with your admin for review. You can still replace a file below if you need to fix something.",
-    color: "#146A8C",
-  },
-  Approved: {
-    title: "Approved",
-    body: "Your profile has been reviewed and approved. Contact your admin if anything needs to change.",
-    color: "#1F7A4D",
-  },
-};
+const STAFF_DOCUMENTS: { field: "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense"; label: string }[] = [
+  { field: "nationalId", label: "National Identity Card" },
+  { field: "degreeCertificate", label: "Degree Certificate" },
+  { field: "nvcCard", label: "NVC Card" },
+  { field: "drivingLicense", label: "Driving License" },
+];
 
 export default function StaffPortalPage() {
-  const { staff, ready, signOut, updateProfile, changePassword, uploadPhoto, uploadDocument } = useStaffAuth();
-  const { settings } = useSiteSettings();
+  const { staff, ready, signOut } = useStaffAuth();
   const router = useRouter();
-
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [bankAccountHolder, setBankAccountHolder] = useState("");
-  const [bankAccountNumber, setBankAccountNumber] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [pwSaved, setPwSaved] = useState(false);
-  const [busyDoc, setBusyDoc] = useState<Record<string, boolean>>({});
-  const [docError, setDocError] = useState<Record<string, string>>({});
-  const [photoBusy, setPhotoBusy] = useState(false);
-  const [photoError, setPhotoError] = useState("");
 
   useEffect(() => {
     if (ready && !staff) router.replace("/staff/login");
   }, [ready, staff, router]);
 
-  useEffect(() => {
-    if (staff) {
-      setPhone(staff.phone);
-      setAddress(staff.address);
-      setBankName(staff.bankName ?? "");
-      setBankAccountHolder(staff.bankAccountHolder ?? "");
-      setBankAccountNumber(staff.bankAccountNumber ?? "");
-    }
-  }, [staff]);
-
   if (!ready || !staff) return null;
+
+  return <StaffPortalContent staff={staff} signOut={signOut} />;
+}
+
+function StaffPortalContent({ staff, signOut }: { staff: StaffAccount; signOut: () => void }) {
+  const { updateProfile, changePassword, uploadPhoto } = useStaffAuth();
+  const { settings } = useSiteSettings();
+  const router = useRouter();
+
+  const [phone, setPhone] = useState(staff.phone);
+  const [address, setAddress] = useState(staff.address);
+  const [bankName, setBankName] = useState(staff.bankName ?? "");
+  const [bankAccountHolder, setBankAccountHolder] = useState(staff.bankAccountHolder ?? "");
+  const [bankAccountNumber, setBankAccountNumber] = useState(staff.bankAccountNumber ?? "");
+  const [saved, setSaved] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [pwSaved, setPwSaved] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState("");
 
   const saveProfile = () => {
     if (phone && !isValidNepalPhone(phone)) return;
@@ -94,37 +79,6 @@ export default function StaffPortalPage() {
       setPhotoBusy(false);
     }
   };
-
-  const handleDoc = async (docId: string, file: File | undefined) => {
-    if (!file) return;
-    setDocError((s) => ({ ...s, [docId]: "" }));
-    if (isAllowedDocumentFile(file) && !isAllowedImageFile(file)) {
-      setBusyDoc((s) => ({ ...s, [docId]: true }));
-      try {
-        uploadDocument(docId, await readDocumentFile(file), file.name);
-      } catch (err) {
-        setDocError((s) => ({ ...s, [docId]: err instanceof Error ? err.message : "Could not process that file — try a different one." }));
-      } finally {
-        setBusyDoc((s) => ({ ...s, [docId]: false }));
-      }
-      return;
-    }
-    if (!isAllowedImageFile(file)) {
-      setDocError((s) => ({ ...s, [docId]: "Please choose a PNG or JPG photo, a PDF, or a Word document." }));
-      return;
-    }
-    setBusyDoc((s) => ({ ...s, [docId]: true }));
-    try {
-      uploadDocument(docId, await resizeImageFile(file, 1000, 1400), file.name);
-    } catch {
-      setDocError((s) => ({ ...s, [docId]: "Could not process that file — try a different one." }));
-    } finally {
-      setBusyDoc((s) => ({ ...s, [docId]: false }));
-    }
-  };
-
-  const statusCopy = STATUS_COPY[staff.status];
-  const uploadedCount = staff.documents.filter((d) => d.fileUrl).length;
 
   return (
     <div className="min-h-screen bg-[#F7F9FA]">
@@ -160,13 +114,6 @@ export default function StaffPortalPage() {
           {staff.jobTitle} · Staff ID {staff.staffId}
         </div>
 
-        <div className="rounded-xl p-4 mb-6" style={{ background: `${statusCopy.color}14`, border: `1px solid ${statusCopy.color}40` }}>
-          <div className="text-sm font-bold mb-1" style={{ color: statusCopy.color }}>
-            {statusCopy.title}
-          </div>
-          <div className="text-xs text-[#5B6773] leading-relaxed">{statusCopy.body}</div>
-        </div>
-
         <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-5">
           <div className="text-[13px] font-bold text-[#1A2027] mb-3.5">Your Details</div>
 
@@ -194,30 +141,31 @@ export default function StaffPortalPage() {
         </div>
 
         <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-5">
-          <div className="flex items-center justify-between mb-1">
-            <div className="text-[13px] font-bold text-[#1A2027]">Required Documents</div>
-            <div className="text-[11px] font-semibold text-[#8A96A3]">
-              {uploadedCount}/{staff.documents.length} uploaded
-            </div>
-          </div>
-          <div className="text-xs text-[#8A96A3] mb-3.5">Your admin requested these documents — upload each one below.</div>
-
-          {staff.documents.length === 0 ? (
-            <div className="text-xs text-[#8A96A3] py-3">No documents requested yet.</div>
-          ) : (
-            staff.documents.map((doc) => (
-              <DocDrop
-                key={doc.id}
-                label={doc.label}
-                required
-                value={doc.fileUrl}
-                fileName={doc.fileName}
-                error={docError[doc.id]}
-                busy={busyDoc[doc.id]}
-                onFile={(f) => handleDoc(doc.id, f)}
-              />
-            ))
-          )}
+          <div className="text-[13px] font-bold text-[#1A2027] mb-1">Documents on File</div>
+          <div className="text-xs text-[#8A96A3] mb-3.5">Submitted with your application and reviewed by your admin. Contact your admin to replace one.</div>
+          {STAFF_DOCUMENTS.map((doc) => {
+            const value = staff[doc.field];
+            return (
+              <div key={doc.field} className="flex items-center justify-between py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <span
+                    className="w-[16px] h-[16px] rounded-[4px] shrink-0 flex items-center justify-center text-[10px] font-bold"
+                    style={{ background: value ? "#1F7A4D" : "#fff", border: `1.5px solid ${value ? "#1F7A4D" : "#C7CDD3"}`, color: "#fff" }}
+                  >
+                    {value && "✓"}
+                  </span>
+                  <div className="text-[#3A4652]">{doc.label}</div>
+                </div>
+                {value ? (
+                  <a href={value} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
+                    Preview
+                  </a>
+                ) : (
+                  <span className="text-[11px] text-[#8A96A3]">Not on file</span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-5">

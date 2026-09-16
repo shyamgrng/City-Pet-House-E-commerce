@@ -53,8 +53,11 @@ export default function StaffLoginPage() {
         <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-bold cursor-pointer">
           Sign In
         </button>
-        <div className="text-[10px] text-[#8A96A3] mt-3.5 leading-relaxed">
-          New staff member? Your admin creates your account and sends you your Staff ID and password directly.
+        <div className="text-center text-[11px] text-[#8A96A3] mt-3.5">
+          New staff member?{" "}
+          <Link href="/staff/register" className="text-primary font-semibold">
+            Apply here
+          </Link>
         </div>
       </div>
     </div>
