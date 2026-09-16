@@ -1,9 +1,12 @@
-/** A legal acknowledgment of an issued document -- staff must scroll through the document and
- * wait a minimum review time before this can be recorded, so it can't just be instantly clicked. */
+/** A single legal acknowledgment covering every issued document listed at the time it was
+ * signed -- one checklist, one date, one signature for the whole batch rather than a separate
+ * sign-off per document. A document issued later isn't covered until a fresh acknowledgment is
+ * recorded (its id won't be in documentIds yet). */
 export type DocumentAcknowledgment = {
   signatureDataUrl: string;
   agreedAt: number;
   userAgent: string;
+  documentIds: string[];
 };
 
 /** A letter/form admin sends to the staff member -- appointment letter, job description, VOC
@@ -13,7 +16,6 @@ export type IssuedDocument = {
   label: string;
   fileUrl: string;
   issuedAt: number;
-  acknowledgment?: DocumentAcknowledgment;
 };
 
 /** Common letters an admin can pick from when sending a document -- a custom label can be typed
@@ -49,12 +51,19 @@ export type StaffAccount = {
   securityLog?: { text: string; time: number }[];
   /** Letters/forms admin has sent this staff member -- phase 2, after their documents are on file. */
   issuedDocuments: IssuedDocument[];
+  /** Batch sign-offs of issuedDocuments -- see DocumentAcknowledgment. */
+  acknowledgments: DocumentAcknowledgment[];
   /** Set when the staff member explicitly confirms their required documents are all in --
    * distinct from each individual upload (which saves immediately) so both sides get a clear
    * "done" signal rather than just inferring it from the checklist. Cleared if they replace a
    * document afterward, since that needs a fresh confirmation. */
   documentsSubmittedAt?: number;
 };
+
+/** The acknowledgment record that covers this document, if it's been signed yet. */
+export function findAcknowledgment(staff: StaffAccount, docId: string): DocumentAcknowledgment | undefined {
+  return staff.acknowledgments.find((a) => a.documentIds.includes(docId));
+}
 
 export const staffAccountSeed: StaffAccount[] = [
   {
@@ -73,5 +82,6 @@ export const staffAccountSeed: StaffAccount[] = [
     isActive: true,
     createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
     issuedDocuments: [],
+    acknowledgments: [],
   },
 ];
