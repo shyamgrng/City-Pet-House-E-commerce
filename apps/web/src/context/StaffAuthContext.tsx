@@ -22,9 +22,11 @@ type StaffAuthValue = {
   updateProfile: (patch: { phone: string; address: string; bankName: string; bankAccountHolder: string; bankAccountNumber: string }) => void;
   changePassword: (newPassword: string) => void;
   uploadPhoto: (dataUrl: string) => void;
-  /** Creates the account itself -- used once a StaffRegistration is approved, mirroring how
-   * doctor/courier/b2b accounts only come into existence after admin approves an application. */
-  addAccount: (account: Omit<StaffAccount, "createdAt">) => boolean;
+  uploadDocument: (field: "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense", dataUrl: string) => void;
+  /** Admin creates the account directly and emails the new hire a login link with a temporary
+   * password -- staff never self-register. Returns the generated credentials so the caller can
+   * send that email and show them on-screen as a fallback. */
+  addStaff: (input: { name: string; email: string; phone: string; jobTitle: string }) => { staffId: string; password: string };
   removeStaff: (staffId: string) => void;
   adminUpdateAccount: (
     staffId: string,
@@ -122,12 +124,30 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     securityLog: [...(a.securityLog ?? []), { text, time: Date.now() }].slice(-SECURITY_LOG_LIMIT),
   });
 
-  const addAccount = (account: Omit<StaffAccount, "createdAt">): boolean => {
-    const full: StaffAccount = { ...account, createdAt: Date.now() };
-    const added = [...loadAdded(), full];
+  const addStaff = (input: { name: string; email: string; phone: string; jobTitle: string }): { staffId: string; password: string } => {
+    const staffId = "ST-" + Math.floor(2000 + Math.random() * 8000);
+    const password = "cph" + Math.floor(1000 + Math.random() * 9000);
+    const account: StaffAccount = {
+      staffId,
+      password,
+      name: input.name,
+      email: input.email,
+      phone: input.phone,
+      jobTitle: input.jobTitle,
+      address: "",
+      photo: "",
+      nationalId: "",
+      degreeCertificate: "",
+      nvcCard: "",
+      drivingLicense: "",
+      isActive: true,
+      mustChangePassword: true,
+      createdAt: Date.now(),
+    };
+    const added = [...loadAdded(), account];
     persistAdded(added);
-    setState((s) => ({ ...s, accounts: [...s.accounts, full] }));
-    return true;
+    setState((s) => ({ ...s, accounts: [...s.accounts, account] }));
+    return { staffId, password };
   };
 
   const removeStaff = (staffId: string) => {
@@ -188,6 +208,16 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const uploadDocument = (field: "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense", dataUrl: string) => {
+    setState((s) => {
+      if (!s.staff) return s;
+      persistOverride(s.staff.staffId, { [field]: dataUrl });
+      const updated = { ...s.staff, [field]: dataUrl };
+      const accounts = s.accounts.map((a) => (a.staffId === updated.staffId ? updated : a));
+      return { accounts, staff: updated, ready: true };
+    });
+  };
+
   const adminUpdateAccount = (
     staffId: string,
     patch: Partial<
@@ -226,7 +256,8 @@ export function StaffAuthProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         changePassword,
         uploadPhoto,
-        addAccount,
+        uploadDocument,
+        addStaff,
         removeStaff,
         adminUpdateAccount,
         adminResetPassword,

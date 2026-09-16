@@ -7,8 +7,8 @@ export type StaffAccount = {
   jobTitle: string;
   address: string;
   photo: string;
-  /** Submitted during the staff application, before login credentials existed -- reviewed and
-   * approved by admin. Image/PDF/Word data URL, or "" if never provided. */
+  /** Uploaded by the staff member from the Staff Portal after their first sign-in. Image/PDF/Word
+   * data URL, or "" if not yet provided. */
   nationalId: string;
   degreeCertificate: string;
   nvcCard: string;

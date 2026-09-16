@@ -17,7 +17,6 @@ import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { useOrder } from "@/context/OrderContext";
 import { useStaffAuth } from "@/context/StaffAuthContext";
-import { useStaffRegistration } from "@/context/StaffRegistrationContext";
 import { useVet } from "@/context/VetContext";
 import type { AdminUser } from "@/lib/admin-user-types";
 import type { AdoptionPost } from "@/lib/adoption-types";
@@ -43,7 +42,6 @@ import type { Order } from "@/lib/order-types";
 import { isValidNepalPhone } from "@/lib/phone";
 import type { RefundRecord } from "@/lib/refund-types";
 import type { StaffAccount } from "@/lib/staff-auth-types";
-import { generateStaffId, type StaffRegistration } from "@/lib/staff-registration-types";
 import type { Doctor, VetBooking } from "@/lib/vet-types";
 import type { Account, Sex } from "@/lib/auth-types";
 
@@ -51,7 +49,7 @@ const subTabs = ["Overview", "Client Account", "Doctor Account", "Courier Accoun
 
 type PendingRow = {
   id: string;
-  kind: "Doctor" | "Courier" | "B2B" | "Staff";
+  kind: "Doctor" | "Courier" | "B2B";
   title: string;
   subtitle: string;
   contact: string;
@@ -65,18 +63,16 @@ type PendingRow = {
 export default function AccountsPage() {
   const [tab, setTab] = useState("Overview");
   const [reviewingId, setReviewingId] = useState<string | null>(null);
-  const [approvedCreds, setApprovedCreds] = useState<{ name: string; role: string; loginId: string; password: string } | null>(null);
+  const [approvedCreds, setApprovedCreds] = useState<{ name: string; role: string; loginId: string; password: string; verb?: string } | null>(null);
   const { accounts } = useAuth();
   const { users: adminUsers } = useAdminAuth();
   const { accounts: courierAccounts, addCourier } = useCourierAuth();
   const { accounts: b2bAccounts, addSupplier } = useB2BAuth();
   const { accounts: doctorAccounts, addAccount: addDoctorAccount, saveError: doctorSaveError } = useDoctorAuth();
-  const { accounts: staffAccounts, addAccount: addStaffAccount } = useStaffAuth();
   const { addDoctor } = useVet();
   const { registrations: doctorRegs, setRegistrationStatus: setDoctorRegStatus, saveError: doctorRegSaveError } = useDoctorRegistration();
   const { registrations: courierRegs, setRegistrationStatus: setCourierRegStatus, saveError: courierRegSaveError } = useCourierRegistration();
   const { registrations: b2bRegs, setRegistrationStatus: setB2bRegStatus, saveError: b2bRegSaveError } = useB2BRegistration();
-  const { registrations: staffRegs, setRegistrationStatus: setStaffRegStatus, saveError: staffRegSaveError } = useStaffRegistration();
   const accountCouriers = courierAccounts.map((a) => ({ name: a.companyName, status: "Active" }));
   const accountDoctors = doctorAccounts.map((d) => ({ name: d.name, status: "Active" }));
   const accountB2b = b2bAccounts.map((a) => ({ name: a.companyName, status: "Active" }));
@@ -173,30 +169,6 @@ export default function AccountsPage() {
     setApprovedCreds({ name: reg.contactPerson || reg.companyName, role: "B2B Supplier", loginId: b2bId, password });
   };
 
-  const approveStaff = (reg: StaffRegistration) => {
-    const staffId = generateStaffId(staffAccounts);
-    const password = generateTempPassword();
-    const account: Omit<StaffAccount, "createdAt"> = {
-      staffId,
-      name: reg.fullName,
-      password,
-      email: reg.email,
-      phone: reg.phone,
-      jobTitle: reg.jobTitle,
-      address: "",
-      photo: "",
-      nationalId: reg.nationalId,
-      degreeCertificate: reg.degreeCertificate,
-      nvcCard: reg.nvcCard,
-      drivingLicense: reg.drivingLicense,
-      isActive: true,
-    };
-    if (!addStaffAccount(account)) return;
-    setStaffRegStatus(reg.id, "Approved");
-    notifyEvent("partner_registration_approved", reg.email, reg.fullName, { name: reg.fullName, role: "Staff", loginId: staffId, password });
-    setApprovedCreds({ name: reg.fullName, role: "Staff", loginId: staffId, password });
-  };
-
   const pendingRows: PendingRow[] = [
     ...doctorRegs
       .filter((r) => r.status === "Pending")
@@ -262,28 +234,9 @@ export default function AccountsPage() {
         onApprove: () => approveB2B(r),
         onReject: () => setB2bRegStatus(r.id, "Rejected"),
       })),
-    ...staffRegs
-      .filter((r) => r.status === "Pending")
-      .map((r): PendingRow => ({
-        id: r.id,
-        kind: "Staff",
-        title: r.fullName,
-        subtitle: r.jobTitle,
-        contact: `${r.email} · ${r.phone}`,
-        submittedAt: r.submittedAt,
-        details: [],
-        documents: [
-          { label: "National Identity Card", value: r.nationalId },
-          { label: "Degree Certificate", value: r.degreeCertificate },
-          { label: "NVC Card", value: r.nvcCard },
-          { label: "Driving License", value: r.drivingLicense },
-        ],
-        onApprove: () => approveStaff(r),
-        onReject: () => setStaffRegStatus(r.id, "Rejected"),
-      })),
   ].sort((a, b) => a.submittedAt - b.submittedAt);
 
-  const registrationSaveError = doctorRegSaveError || courierRegSaveError || b2bRegSaveError || staffRegSaveError;
+  const registrationSaveError = doctorRegSaveError || courierRegSaveError || b2bRegSaveError;
   const reviewingRow = reviewingId ? (pendingRows.find((r) => r.id === reviewingId) ?? null) : null;
 
   return (
@@ -357,7 +310,7 @@ export default function AccountsPage() {
       {tab === "Doctor Account" && <DoctorAccountTab doctors={doctorAccounts} />}
       {tab === "Courier Account" && <CourierAccountTab couriers={courierAccounts} />}
       {tab === "B2B Account" && <B2BAccountTab suppliers={b2bAccounts} />}
-      {tab === "Staff Account" && <StaffAccountTab users={adminUsers} />}
+      {tab === "Staff Account" && <StaffAccountTab users={adminUsers} onCreated={setApprovedCreds} />}
 
       {reviewingRow && (
         <PendingRegistrationModal
@@ -377,7 +330,9 @@ export default function AccountsPage() {
       {approvedCreds && (
         <div onClick={() => setApprovedCreds(null)} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-[400px]">
-            <div className="text-[15px] font-bold text-[#1A2027] mb-1">✓ {approvedCreds.role} approved</div>
+            <div className="text-[15px] font-bold text-[#1A2027] mb-1">
+              ✓ {approvedCreds.role} {approvedCreds.verb ?? "approved"}
+            </div>
             <div className="text-xs text-[#5B6773] mb-4">
               We&apos;ve emailed these sign-in details to {approvedCreds.name}. Email delivery isn&apos;t always guaranteed to arrive — save these now
               in case you need to share them directly.
@@ -1950,7 +1905,13 @@ function B2BAccountTab({ suppliers }: { suppliers: B2BAccount[] }) {
   );
 }
 
-function StaffAccountTab({ users }: { users: AdminUser[] }) {
+function StaffAccountTab({
+  users,
+  onCreated,
+}: {
+  users: AdminUser[];
+  onCreated: (creds: { name: string; role: string; loginId: string; password: string; verb?: string }) => void;
+}) {
   const [search, setSearch] = useState("");
   const q = search.trim().toLowerCase();
   const visible = users.filter(
@@ -1990,18 +1951,21 @@ function StaffAccountTab({ users }: { users: AdminUser[] }) {
         )}
       </div>
 
-      <StaffProfilesSection />
+      <StaffProfilesSection onCreated={onCreated} />
     </div>
   );
 }
 
-/** Staff Profiles are onboarding accounts, created from an approved application at
- * /staff/register (reviewed in the Pending Registrations queue on Overview, same as
- * Doctor/Courier/B2B) -- separate from the Admin Panel Logins above, which is about backend
- * dashboard access, not paperwork. */
-function StaffProfilesSection() {
-  const { accounts, removeStaff, adminUpdateAccount, adminResetPassword } = useStaffAuth();
+const emptyStaffForm = { name: "", email: "", phone: "", jobTitle: "" };
+
+/** Onboarding profiles -- admin creates the account and picks nothing else; a Staff ID and
+ * temporary password are generated immediately and emailed to the new hire as a sign-in link, per
+ * the business rule that staff never self-register. Separate from the Admin Panel Logins above,
+ * which is about backend dashboard access, not paperwork. */
+function StaffProfilesSection({ onCreated }: { onCreated: (creds: { name: string; role: string; loginId: string; password: string; verb?: string }) => void }) {
+  const { accounts, addStaff, removeStaff, adminUpdateAccount, adminResetPassword } = useStaffAuth();
   const [search, setSearch] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const q = search.trim().toLowerCase();
@@ -2029,11 +1993,28 @@ function StaffProfilesSection() {
 
   return (
     <div className="mt-8">
-      <div className="text-[13px] font-bold text-[#1A2027] mb-1">Staff Profiles</div>
-      <div className="text-xs text-[#8A96A3] mb-3.5">
-        A new hire applies at <strong>/staff/register</strong> with their documents — approve their application from Overview → Pending
-        Registrations to issue a Staff ID and password. Approved profiles show up here.
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-[13px] font-bold text-[#1A2027]">Staff Profiles</div>
+        <button onClick={() => setShowAddForm((v) => !v)} className="text-[11px] font-semibold text-primary cursor-pointer">
+          {showAddForm ? "Cancel" : "+ Add Staff"}
+        </button>
       </div>
+      <div className="text-xs text-[#8A96A3] mb-3.5">
+        Create a staff account and we&apos;ll email the new hire a sign-in link with their Staff ID and a temporary password — they upload their
+        documents once they sign in.
+      </div>
+
+      {showAddForm && (
+        <AddStaffForm
+          onCreate={(input) => {
+            const { staffId, password } = addStaff(input);
+            const loginUrl = `${window.location.origin}/staff/login`;
+            notifyEvent("staff_account_invited", input.email, input.name, { name: input.name, staffId, password, loginUrl });
+            onCreated({ name: input.name, role: "Staff", loginId: staffId, password, verb: "account created" });
+            setShowAddForm(false);
+          }}
+        />
+      )}
 
       <SearchBox value={search} onChange={setSearch} placeholder="Search by name, job title, or Staff ID..." />
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
@@ -2064,6 +2045,72 @@ function StaffProfilesSection() {
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+function AddStaffForm({ onCreate }: { onCreate: (input: { name: string; email: string; phone: string; jobTitle: string }) => void }) {
+  const [form, setForm] = useState(emptyStaffForm);
+  const [error, setError] = useState("");
+  const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
+
+  const submit = () => {
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError("Please fill in name and phone number.");
+      return;
+    }
+    if (!form.email.trim() || !isValidEmail(form.email)) {
+      setError("Enter a valid email — that's where the sign-in link and temporary password get sent.");
+      return;
+    }
+    onCreate(form);
+    setForm(emptyStaffForm);
+    setError("");
+  };
+
+  return (
+    <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Full Name *</div>
+          <input
+            value={form.name}
+            onChange={(e) => set({ name: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Job Title</div>
+          <input
+            value={form.jobTitle}
+            onChange={(e) => set({ jobTitle: e.target.value })}
+            placeholder="e.g. Store Assistant"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Email *</div>
+          <input
+            value={form.email}
+            onChange={(e) => set({ email: e.target.value })}
+            placeholder="Where their sign-in link is sent"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone Number *</div>
+          <input
+            value={form.phone}
+            onChange={(e) => set({ phone: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+      </div>
+
+      {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
+      <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+        Create Staff Account &amp; Send Invite
+      </button>
     </div>
   );
 }
@@ -2125,7 +2172,7 @@ function StaffDetailView({
 
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
         <div className="text-[13px] font-bold text-[#1A2027] mb-1">Documents</div>
-        <div className="text-xs text-[#8A96A3] mb-2">Submitted with their application — replace a file here if they need to fix something.</div>
+        <div className="text-xs text-[#8A96A3] mb-2">Uploaded by the staff member from their portal — replace a file here if they need to fix something.</div>
         <AdminDocumentRow label="National Identity Card" value={staff.nationalId} onUpload={(dataUrl) => onUpdate({ nationalId: dataUrl })} />
         <AdminDocumentRow
           label="Degree Certificate"

@@ -34,7 +34,6 @@ import { PaymentMethodsProvider } from "@/context/PaymentMethodsContext";
 import { ServiceProvider } from "@/context/ServiceContext";
 import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
 import { StaffAuthProvider } from "@/context/StaffAuthContext";
-import { StaffRegistrationProvider } from "@/context/StaffRegistrationContext";
 import { TestimonialProvider } from "@/context/TestimonialContext";
 import { VetProvider } from "@/context/VetContext";
 import { WishlistProvider } from "@/context/WishlistContext";
@@ -69,7 +68,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AuthProvider>
         <AdminAuthProvider>
         <StaffAuthProvider>
-        <StaffRegistrationProvider>
           <DoctorAuthProvider>
           <DoctorRegistrationProvider>
             <B2BAuthProvider>
@@ -129,7 +127,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </B2BAuthProvider>
           </DoctorRegistrationProvider>
           </DoctorAuthProvider>
-        </StaffRegistrationProvider>
         </StaffAuthProvider>
         </AdminAuthProvider>
         </AuthProvider>

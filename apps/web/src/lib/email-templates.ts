@@ -17,7 +17,8 @@ export type EmailEvent =
   | "doctor_registration_received"
   | "doctor_registration_approved"
   | "partner_registration_received"
-  | "partner_registration_approved";
+  | "partner_registration_approved"
+  | "staff_account_invited";
 
 type Rendered = { subject: string; html: string };
 
@@ -294,6 +295,20 @@ export function buildEmail(event: EmailEvent, data: Record<string, unknown>): Re
           <div style="font-size:14px;"><strong>ID:</strong> ${loginId}</div>
           <div style="font-size:14px;margin-bottom:10px;"><strong>Password:</strong> ${password}</div>
           Please sign in and change your password from your profile.`
+        ),
+      };
+    }
+    case "staff_account_invited": {
+      const { name, staffId, password, loginUrl } = data as { name: string; staffId: string; password: string; loginUrl: string };
+      return {
+        subject: `You've been added as staff — ${siteSettings.shortName}`,
+        html: shell(
+          "Welcome to the team",
+          `Hi ${name}, an admin has created a staff account for you at ${siteSettings.shortName}. Sign in with:<br /><br />
+          <div style="font-size:14px;"><strong>Staff ID:</strong> ${staffId}</div>
+          <div style="font-size:14px;margin-bottom:14px;"><strong>Temporary Password:</strong> ${password}</div>
+          <a href="${loginUrl}" style="display:inline-block;background:#1996C8;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700;">Sign In to the Staff Portal</a><br /><br />
+          Please sign in and set your own password, then upload your National Identity Card, Degree Certificate, and NVC Card (Driving License is optional).`
         ),
       };
     }
