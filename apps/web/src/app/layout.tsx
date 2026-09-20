@@ -33,6 +33,7 @@ import { PetTagProvider } from "@/context/PetTagContext";
 import { PaymentMethodsProvider } from "@/context/PaymentMethodsContext";
 import { ServiceProvider } from "@/context/ServiceContext";
 import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
+import { StaffAuthProvider } from "@/context/StaffAuthContext";
 import { TestimonialProvider } from "@/context/TestimonialContext";
 import { VetProvider } from "@/context/VetContext";
 import { WishlistProvider } from "@/context/WishlistContext";
@@ -66,6 +67,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <DeliverySettingsProvider>
         <AuthProvider>
         <AdminAuthProvider>
+        <StaffAuthProvider>
           <DoctorAuthProvider>
           <DoctorRegistrationProvider>
             <B2BAuthProvider>
@@ -125,6 +127,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </B2BAuthProvider>
           </DoctorRegistrationProvider>
           </DoctorAuthProvider>
+        </StaffAuthProvider>
         </AdminAuthProvider>
         </AuthProvider>
         </DeliverySettingsProvider>

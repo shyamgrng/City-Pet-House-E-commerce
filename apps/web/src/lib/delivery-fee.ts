@@ -11,7 +11,9 @@ export type DeliveryFeeTier = {
   active: boolean;
 };
 
-/** The no-courier fallback rate, per package size -- same shape as a courier's own rate card. */
+/** City Pet House's own customer-facing fee per package size, set by CPH directly. This is
+ * completely independent of any courier's rate card -- what a courier costs us is tracked
+ * separately via calculateCourierCost and never shown to the customer. */
 export type StandardRates = {
   standardFeeSmall: number;
   standardFeeMedium: number;
@@ -19,10 +21,11 @@ export type StandardRates = {
   standardFeeVeryLarge: number;
 };
 
+export type DeliveryFeeItem = { subtotal: number; tier: CourierPackageSize };
+
 export type DeliveryFeeInput = {
   /** One entry per distinct product in the cart, with its line subtotal and package size. */
-  items: { subtotal: number; tier: CourierPackageSize }[];
-  courier: CourierAccount | null;
+  items: DeliveryFeeItem[];
   standardRates: StandardRates;
   feeTiers: DeliveryFeeTier[];
   /** The highest package tier still eligible for a value-tier discount (e.g. "Medium" = Small & Medium qualify; Large/Very Large always pay the full size-based fee). */
@@ -33,8 +36,7 @@ export type DeliveryFeeResult = {
   /** The fee actually charged -- whichever of sizeFee/valueTierFee applies. */
   fee: number;
   tier: CourierPackageSize | null;
-  courierName: string;
-  /** The size-based fee (courier's rate card, or the standard fallback rate for this tier). */
+  /** The size-based fee, from City Pet House's own standard rates for this tier. */
   sizeFee: number;
   /** The subtotal-value tier's fee, or null if no tier matched at all. */
   valueTierFee: number | null;
@@ -73,6 +75,12 @@ function standardRateForTier(rates: StandardRates, tier: CourierPackageSize): nu
   }
 }
 
+/** The single largest package tier across every distinct item in the cart -- one order gets one
+ * delivery fee, sized to its biggest item, not a fee per item. */
+function highestTier(items: DeliveryFeeItem[]): CourierPackageSize {
+  return items.reduce<CourierPackageSize>((highest, i) => (tierRank(i.tier) > tierRank(highest) ? i.tier : highest), "Small");
+}
+
 /** The subtotal-value bracket an amount falls into. Active tiers should be contiguous, but if the
  * amount falls below the lowest tier's minAmount (or into a gap), fall back to the nearest active
  * tier rather than leaving the delivery fee undefined. */
@@ -96,19 +104,21 @@ function amountToUnlockFreeTier(tiers: DeliveryFeeTier[], subtotal: number): num
 }
 
 /**
- * Combines two independent pricing dimensions: a package-size-based fee (the active courier's rate
- * card, or the standard fallback rates when no courier is active) and a subtotal-value tier table
- * (e.g. "Rs. 6,000+ ships free"). The cart is charged whichever is cheaper, except oversized items
- * (above `freeDeliveryMaxTier`) never qualify for the value-tier discount -- they always pay the
- * full size-based fee, the same protection the old single free-delivery threshold gave couriers
- * against under-charging for large/heavy packages.
+ * What the CUSTOMER is charged for delivery. Combines two independent pricing dimensions: a
+ * package-size-based fee (City Pet House's own standard rates -- never a courier's rate card) and
+ * a subtotal-value tier table (e.g. "Rs. 6,000+ ships free"). The cart is charged whichever is
+ * cheaper, except oversized items (above `freeDeliveryMaxTier`) never qualify for the value-tier
+ * discount -- they always pay the full size-based fee, the same protection the old single free-
+ * delivery threshold gave against under-charging for large/heavy packages.
+ *
+ * What a courier actually costs City Pet House is a separate, internal-only number -- see
+ * calculateCourierCost below.
  */
-export function calculateDeliveryFee({ items, courier, standardRates, feeTiers, freeDeliveryMaxTier }: DeliveryFeeInput): DeliveryFeeResult {
+export function calculateDeliveryFee({ items, standardRates, feeTiers, freeDeliveryMaxTier }: DeliveryFeeInput): DeliveryFeeResult {
   if (items.length === 0) {
     return {
       fee: 0,
       tier: null,
-      courierName: "",
       sizeFee: 0,
       valueTierFee: null,
       valueTierApplied: false,
@@ -118,12 +128,9 @@ export function calculateDeliveryFee({ items, courier, standardRates, feeTiers, 
     };
   }
 
-  const tier = items.reduce<CourierPackageSize>((highest, i) => (tierRank(i.tier) > tierRank(highest) ? i.tier : highest), "Small");
+  const tier = highestTier(items);
   const subtotal = items.reduce((sum, i) => sum + i.subtotal, 0);
-
-  const courierRate = courier ? rateForTier(courier, tier) : 0;
-  const sizeFee = courier && courierRate > 0 ? courierRate : standardRateForTier(standardRates, tier);
-  const courierName = courier ? courier.companyName : "Standard";
+  const sizeFee = standardRateForTier(standardRates, tier);
 
   const oversized = tierRank(tier) > tierRank(freeDeliveryMaxTier);
   const matchedValueTier = matchFeeTier(feeTiers, subtotal);
@@ -134,7 +141,6 @@ export function calculateDeliveryFee({ items, courier, standardRates, feeTiers, 
     return {
       fee: sizeFee,
       tier,
-      courierName,
       sizeFee,
       valueTierFee,
       valueTierApplied: false,
@@ -150,7 +156,6 @@ export function calculateDeliveryFee({ items, courier, standardRates, feeTiers, 
   return {
     fee: valueTierFee,
     tier,
-    courierName,
     sizeFee,
     valueTierFee,
     valueTierApplied: true,
@@ -158,4 +163,20 @@ export function calculateDeliveryFee({ items, courier, standardRates, feeTiers, 
     freeDeliveryBlockedReason: null,
     amountToUnlockFreeDelivery: null,
   };
+}
+
+export type CourierCostResult = { cost: number; tier: CourierPackageSize | null; courierName: string };
+
+/** What the COURIER costs us for this order -- their tier rate plus their percentage of the
+ * order's subtotal. Purely internal: never shown to the customer, and unaffected by any free
+ * delivery or value-tier discount we give the customer (we still pay the courier their real
+ * cost regardless of what we charged for delivery). */
+export function calculateCourierCost(items: DeliveryFeeItem[], courier: CourierAccount | null): CourierCostResult {
+  if (!courier || items.length === 0) {
+    return { cost: 0, tier: null, courierName: "" };
+  }
+  const tier = highestTier(items);
+  const subtotal = items.reduce((sum, i) => sum + i.subtotal, 0);
+  const pctCharge = Math.round((subtotal * courier.orderValuePct) / 100);
+  return { cost: rateForTier(courier, tier) + pctCharge, tier, courierName: courier.companyName };
 }

@@ -15,7 +15,7 @@ import { usePaymentMethods } from "@/context/PaymentMethodsContext";
 import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import type { CartItem } from "@/lib/cart-types";
-import { calculateDeliveryFee, type DeliveryFeeResult } from "@/lib/delivery-fee";
+import { calculateCourierCost, calculateDeliveryFee, type CourierCostResult, type DeliveryFeeResult } from "@/lib/delivery-fee";
 import { IMAGE_ACCEPT, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
@@ -31,7 +31,10 @@ function useCartDeliveryFee(items: CartItem[]) {
   const activeCourier = couriers.find((c) => c.isActive) ?? null;
   const standardRates = { standardFeeSmall, standardFeeMedium, standardFeeLarge, standardFeeVeryLarge };
 
-  return calculateDeliveryFee({ items: feeItems, courier: activeCourier, standardRates, feeTiers, freeDeliveryMaxTier });
+  const deliveryResult = calculateDeliveryFee({ items: feeItems, standardRates, feeTiers, freeDeliveryMaxTier });
+  const courierResult = calculateCourierCost(feeItems, activeCourier);
+
+  return { deliveryResult, courierResult };
 }
 
 export default function CartPage() {
@@ -39,7 +42,7 @@ export default function CartPage() {
   const { items, subtotal, inc, dec, remove, clear } = useCart();
   const { products } = useCatalog();
   const { placeOrder, saveError, clearSaveError } = useOrder();
-  const deliveryResult = useCartDeliveryFee(items);
+  const { deliveryResult, courierResult } = useCartDeliveryFee(items);
 
   if (!ready) return null;
 
@@ -114,6 +117,7 @@ export default function CartPage() {
           subtotal={subtotal}
           total={total}
           deliveryResult={deliveryResult}
+          courierResult={courierResult}
           placeOrder={placeOrder}
           saveError={saveError}
           clearSaveError={clearSaveError}
@@ -130,6 +134,7 @@ function CheckoutSection({
   subtotal,
   total,
   deliveryResult,
+  courierResult,
   placeOrder,
   saveError,
   clearSaveError,
@@ -140,6 +145,7 @@ function CheckoutSection({
   subtotal: number;
   total: number;
   deliveryResult: DeliveryFeeResult;
+  courierResult: CourierCostResult;
   placeOrder: ReturnType<typeof useOrder>["placeOrder"];
   saveError: string | null;
   clearSaveError: () => void;
@@ -208,6 +214,8 @@ function CheckoutSection({
       items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, qty: i.qty })),
       subtotal,
       deliveryFee: DELIVERY_FEE,
+      courierCost: courierResult.cost,
+      courierName: courierResult.courierName,
       total,
       receiptPhoto,
     });
@@ -227,10 +235,7 @@ function CheckoutSection({
         />
         <div className="text-xs font-semibold text-[#3A4652] mb-1.5">📞 Phone</div>
         <PhoneInput value={phone} onChange={setPhone} className="" />
-        <div className="text-[11px] text-[#8A96A3] mt-2.5">
-          Delivery — {deliveryResult.freeDeliveryApplied ? "Free" : formatRs(DELIVERY_FEE)}
-          {deliveryResult.courierName && ` via ${deliveryResult.courierName}`}
-        </div>
+        <div className="text-[11px] text-[#8A96A3] mt-2.5">Delivery — {deliveryResult.freeDeliveryApplied ? "Free" : formatRs(DELIVERY_FEE)}</div>
       </div>
 
       <div className="border border-[#E4E9EC] rounded-xl p-4 mb-6">

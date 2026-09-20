@@ -96,7 +96,7 @@ export default function SettingsPage() {
 
       <Card
         title="Delivery"
-        subtitle="Standard size-based rates and subtotal-value discount tiers are managed in Shop → Delivery Setting, alongside courier rate cards."
+        subtitle="Customer delivery fees (by size, plus subtotal-value discount tiers) and courier cost rates are set separately in Shop → Delivery Setting."
       >
         <Field label="Puppy Delivery Fee (Rs.)" value={String(puppyFee)} onChange={(v) => setPuppyFee(Number(v) || 0)} />
       </Card>

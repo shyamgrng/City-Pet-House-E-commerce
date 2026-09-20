@@ -27,6 +27,7 @@ type Overrides = Record<
       | "priceMedium"
       | "priceLarge"
       | "priceVeryLarge"
+      | "orderValuePct"
       | "usesDistancePricing"
       | "ratePerKg"
       | "ratePerKm"
@@ -54,6 +55,7 @@ function normalizeCourier(
     priceMedium: 0,
     priceLarge: 0,
     priceVeryLarge: 0,
+    orderValuePct: 0,
     usesDistancePricing: false,
     ratePerKg: 0,
     ratePerKm: 0,

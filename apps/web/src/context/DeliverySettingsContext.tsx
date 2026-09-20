@@ -6,7 +6,8 @@ import type { DeliveryFeeTier } from "@/lib/delivery-fee";
 
 const STORAGE_KEY = "cph_delivery_settings";
 
-/** The no-courier fallback rate, per package size — same shape as a courier's own rate card. */
+/** City Pet House's own customer-facing delivery fee per package size -- set by CPH directly and
+ * completely independent of any courier's rate card or cost. */
 type StandardRates = {
   standardFeeSmall: number;
   standardFeeMedium: number;

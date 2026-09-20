@@ -16,6 +16,7 @@ import { useDelivery } from "@/context/DeliveryContext";
 import { useDoctorAuth } from "@/context/DoctorAuthContext";
 import { useDoctorRegistration } from "@/context/DoctorRegistrationContext";
 import { useOrder } from "@/context/OrderContext";
+import { useStaffAuth } from "@/context/StaffAuthContext";
 import { useVet } from "@/context/VetContext";
 import type { AdminUser } from "@/lib/admin-user-types";
 import type { AdoptionPost } from "@/lib/adoption-types";
@@ -40,6 +41,7 @@ import { notifyEvent } from "@/lib/notify-client";
 import type { Order } from "@/lib/order-types";
 import { isValidNepalPhone } from "@/lib/phone";
 import type { RefundRecord } from "@/lib/refund-types";
+import { findAcknowledgment, ISSUED_DOCUMENT_PRESETS, type StaffAccount } from "@/lib/staff-auth-types";
 import type { Doctor, VetBooking } from "@/lib/vet-types";
 import type { Account, Sex } from "@/lib/auth-types";
 
@@ -61,7 +63,7 @@ type PendingRow = {
 export default function AccountsPage() {
   const [tab, setTab] = useState("Overview");
   const [reviewingId, setReviewingId] = useState<string | null>(null);
-  const [approvedCreds, setApprovedCreds] = useState<{ name: string; role: string; loginId: string; password: string } | null>(null);
+  const [approvedCreds, setApprovedCreds] = useState<{ name: string; role: string; loginId: string; password: string; verb?: string } | null>(null);
   const { accounts } = useAuth();
   const { users: adminUsers } = useAdminAuth();
   const { accounts: courierAccounts, addCourier } = useCourierAuth();
@@ -129,6 +131,7 @@ export default function AccountsPage() {
       priceMedium: 0,
       priceLarge: 0,
       priceVeryLarge: 0,
+      orderValuePct: 0,
       usesDistancePricing: false,
       ratePerKg: 0,
       ratePerKm: 0,
@@ -307,7 +310,7 @@ export default function AccountsPage() {
       {tab === "Doctor Account" && <DoctorAccountTab doctors={doctorAccounts} />}
       {tab === "Courier Account" && <CourierAccountTab couriers={courierAccounts} />}
       {tab === "B2B Account" && <B2BAccountTab suppliers={b2bAccounts} />}
-      {tab === "Staff Account" && <StaffAccountTab users={adminUsers} />}
+      {tab === "Staff Account" && <StaffAccountTab users={adminUsers} onCreated={setApprovedCreds} />}
 
       {reviewingRow && (
         <PendingRegistrationModal
@@ -327,7 +330,9 @@ export default function AccountsPage() {
       {approvedCreds && (
         <div onClick={() => setApprovedCreds(null)} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-[400px]">
-            <div className="text-[15px] font-bold text-[#1A2027] mb-1">✓ {approvedCreds.role} approved</div>
+            <div className="text-[15px] font-bold text-[#1A2027] mb-1">
+              ✓ {approvedCreds.role} {approvedCreds.verb ?? "approved"}
+            </div>
             <div className="text-xs text-[#5B6773] mb-4">
               We&apos;ve emailed these sign-in details to {approvedCreds.name}. Email delivery isn&apos;t always guaranteed to arrive — save these now
               in case you need to share them directly.
@@ -1900,7 +1905,13 @@ function B2BAccountTab({ suppliers }: { suppliers: B2BAccount[] }) {
   );
 }
 
-function StaffAccountTab({ users }: { users: AdminUser[] }) {
+function StaffAccountTab({
+  users,
+  onCreated,
+}: {
+  users: AdminUser[];
+  onCreated: (creds: { name: string; role: string; loginId: string; password: string; verb?: string }) => void;
+}) {
   const [search, setSearch] = useState("");
   const q = search.trim().toLowerCase();
   const visible = users.filter(
@@ -1909,6 +1920,8 @@ function StaffAccountTab({ users }: { users: AdminUser[] }) {
 
   return (
     <div>
+      <div className="text-[13px] font-bold text-[#1A2027] mb-1">Admin Panel Logins</div>
+      <div className="text-xs text-[#8A96A3] mb-3.5">Backend accounts with dashboard access — manage these under Users.</div>
       <SearchBox value={search} onChange={setSearch} placeholder="Search by name, email, or role..." />
       <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
         <div className="grid grid-cols-[1.2fr_1.4fr_0.8fr_0.7fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[500px]">
@@ -1937,6 +1950,457 @@ function StaffAccountTab({ users }: { users: AdminUser[] }) {
           ))
         )}
       </div>
+
+      <StaffProfilesSection onCreated={onCreated} />
+    </div>
+  );
+}
+
+const emptyStaffForm = { name: "", email: "", phone: "", jobTitle: "" };
+
+/** Onboarding profiles -- admin creates the account and picks nothing else; a Staff ID and
+ * temporary password are generated immediately and emailed to the new hire as a sign-in link, per
+ * the business rule that staff never self-register. Separate from the Admin Panel Logins above,
+ * which is about backend dashboard access, not paperwork. */
+function StaffProfilesSection({ onCreated }: { onCreated: (creds: { name: string; role: string; loginId: string; password: string; verb?: string }) => void }) {
+  const { accounts, addStaff, removeStaff, adminUpdateAccount, adminResetPassword, adminIssueDocument, adminRemoveIssuedDocument } = useStaffAuth();
+  const [search, setSearch] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const q = search.trim().toLowerCase();
+  const visible = accounts.filter(
+    (a) => !q || a.name.toLowerCase().includes(q) || a.jobTitle.toLowerCase().includes(q) || a.staffId.toLowerCase().includes(q),
+  );
+  const selected = selectedId ? (accounts.find((a) => a.staffId === selectedId) ?? null) : null;
+
+  if (selected) {
+    return (
+      <div className="mt-8">
+        <StaffDetailView
+          staff={selected}
+          onBack={() => setSelectedId(null)}
+          onUpdate={(patch) => adminUpdateAccount(selected.staffId, patch)}
+          onResetPassword={() => adminResetPassword(selected.staffId)}
+          onRemove={() => {
+            removeStaff(selected.staffId);
+            setSelectedId(null);
+          }}
+          onIssueDocument={(label, fileUrl) => adminIssueDocument(selected.staffId, label, fileUrl)}
+          onRemoveIssuedDocument={(docId) => adminRemoveIssuedDocument(selected.staffId, docId)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-[13px] font-bold text-[#1A2027]">Staff Profiles</div>
+        <button onClick={() => setShowAddForm((v) => !v)} className="text-[11px] font-semibold text-primary cursor-pointer">
+          {showAddForm ? "Cancel" : "+ Add Staff"}
+        </button>
+      </div>
+      <div className="text-xs text-[#8A96A3] mb-3.5">
+        Create a staff account and we&apos;ll email the new hire a sign-in link with their Staff ID and a temporary password — they upload their
+        documents once they sign in.
+      </div>
+
+      {showAddForm && (
+        <AddStaffForm
+          onCreate={(input) => {
+            const { staffId, password } = addStaff(input);
+            const loginUrl = `${window.location.origin}/staff/login`;
+            notifyEvent("staff_account_invited", input.email, input.name, { name: input.name, staffId, password, loginUrl });
+            onCreated({ name: input.name, role: "Staff", loginId: staffId, password, verb: "account created" });
+            setShowAddForm(false);
+          }}
+        />
+      )}
+
+      <SearchBox value={search} onChange={setSearch} placeholder="Search by name, job title, or Staff ID..." />
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-x-auto">
+        <div className="grid grid-cols-[1.2fr_1fr_1fr_0.8fr] gap-2 px-4 py-2.5 text-[11px] font-bold text-[#8A96A3] uppercase border-b border-[#E4E9EC] min-w-[500px]">
+          <div>Name</div>
+          <div>Job Title</div>
+          <div>Phone</div>
+          <div>Status</div>
+        </div>
+        {accounts.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No staff profiles yet</div>
+        ) : visible.length === 0 ? (
+          <div className="px-4 py-5 text-xs text-[#8A96A3] text-center">No staff match.</div>
+        ) : (
+          visible.map((a) => (
+            <button
+              key={a.staffId}
+              onClick={() => setSelectedId(a.staffId)}
+              className="w-full grid grid-cols-[1.2fr_1fr_1fr_0.8fr] gap-2 px-4 py-3.5 text-xs items-center border-b border-[#F0F2F4] last:border-0 min-w-[500px] text-left cursor-pointer hover:bg-[#F7F9FA]"
+            >
+              <div className="font-semibold text-[#1A2027]">{a.name}</div>
+              <div className="text-[#5B6773]">{a.jobTitle || "—"}</div>
+              <div className="text-[#5B6773]">{a.phone || "—"}</div>
+              <div className="font-semibold" style={{ color: a.isActive ? "#1F7A4D" : "#8A96A3" }}>
+                {a.isActive ? "Active" : "Inactive"}
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AddStaffForm({ onCreate }: { onCreate: (input: { name: string; email: string; phone: string; jobTitle: string }) => void }) {
+  const [form, setForm] = useState(emptyStaffForm);
+  const [error, setError] = useState("");
+  const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
+
+  const submit = () => {
+    if (!form.name.trim() || !form.phone.trim()) {
+      setError("Please fill in name and phone number.");
+      return;
+    }
+    if (!form.email.trim() || !isValidEmail(form.email)) {
+      setError("Enter a valid email — that's where the sign-in link and temporary password get sent.");
+      return;
+    }
+    onCreate(form);
+    setForm(emptyStaffForm);
+    setError("");
+  };
+
+  return (
+    <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Full Name *</div>
+          <input
+            value={form.name}
+            onChange={(e) => set({ name: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Job Title</div>
+          <input
+            value={form.jobTitle}
+            onChange={(e) => set({ jobTitle: e.target.value })}
+            placeholder="e.g. Store Assistant"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Email *</div>
+          <input
+            value={form.email}
+            onChange={(e) => set({ email: e.target.value })}
+            placeholder="Where their sign-in link is sent"
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Phone Number *</div>
+          <input
+            value={form.phone}
+            onChange={(e) => set({ phone: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] box-border"
+          />
+        </div>
+      </div>
+
+      {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
+      <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+        Create Staff Account &amp; Send Invite
+      </button>
+    </div>
+  );
+}
+
+function StaffDetailView({
+  staff,
+  onBack,
+  onUpdate,
+  onResetPassword,
+  onRemove,
+  onIssueDocument,
+  onRemoveIssuedDocument,
+}: {
+  staff: StaffAccount;
+  onBack: () => void;
+  onUpdate: (patch: Partial<Pick<StaffAccount, "nationalId" | "degreeCertificate" | "nvcCard" | "drivingLicense" | "isActive">>) => void;
+  onResetPassword: () => string;
+  onRemove: () => void;
+  onIssueDocument: (label: string, fileUrl: string) => void;
+  onRemoveIssuedDocument: (docId: string) => void;
+}) {
+  const [resetMsg, setResetMsg] = useState("");
+  const [showSendForm, setShowSendForm] = useState(false);
+
+  return (
+    <div>
+      <button onClick={onBack} className="text-[11px] font-semibold text-primary mb-3 cursor-pointer">
+        ← Back to Staff Profiles
+      </button>
+
+      <div className="flex items-start justify-between gap-3 mb-5 flex-wrap">
+        <div className="flex items-center gap-3">
+          {staff.photo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={staff.photo} alt="" className="w-14 h-14 rounded-full object-cover border border-[#E4E9EC]" />
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-[#F0F2F4]" />
+          )}
+          <div>
+            <div className="font-heading font-bold text-base text-[#1A2027]">{staff.name}</div>
+            <div className="text-xs text-[#8A96A3]">
+              {staff.jobTitle || "No job title set"} · {staff.staffId}
+            </div>
+          </div>
+        </div>
+        <div
+          className="font-semibold text-xs px-3 py-1.5 rounded-full"
+          style={{ background: staff.isActive ? "#1F7A4D20" : "#8A96A320", color: staff.isActive ? "#1F7A4D" : "#8A96A3" }}
+        >
+          {staff.isActive ? "Active" : "Inactive"}
+        </div>
+      </div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+        <div className="text-[13px] font-bold text-[#1A2027] mb-3">Contact &amp; Bank</div>
+        <DetailRow label="Email" value={staff.email || "—"} />
+        <DetailRow label="Phone" value={staff.phone || "—"} />
+        <DetailRow label="Address" value={staff.address || "Not filled in yet"} />
+        <DetailRow
+          label="Bank"
+          value={staff.bankName ? `${staff.bankName} · ${staff.bankAccountHolder} · ${staff.bankAccountNumber}` : "Not filled in yet"}
+        />
+      </div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-[13px] font-bold text-[#1A2027]">Documents</div>
+          {staff.documentsSubmittedAt ? (
+            <div className="text-[11px] font-semibold text-[#1F7A4D]">✓ Submitted {new Date(staff.documentsSubmittedAt).toLocaleDateString()}</div>
+          ) : (
+            <div className="text-[11px] font-semibold text-[#8A6D1F]">Not yet submitted</div>
+          )}
+        </div>
+        <div className="text-xs text-[#8A96A3] mb-2">Uploaded by the staff member from their portal — replace a file here if they need to fix something.</div>
+        <AdminDocumentRow label="National Identity Card" value={staff.nationalId} onUpload={(dataUrl) => onUpdate({ nationalId: dataUrl })} />
+        <AdminDocumentRow
+          label="Degree Certificate"
+          value={staff.degreeCertificate}
+          onUpload={(dataUrl) => onUpdate({ degreeCertificate: dataUrl })}
+        />
+        <AdminDocumentRow label="NVC Card" value={staff.nvcCard} onUpload={(dataUrl) => onUpdate({ nvcCard: dataUrl })} />
+        <AdminDocumentRow label="Driving License" value={staff.drivingLicense} onUpload={(dataUrl) => onUpdate({ drivingLicense: dataUrl })} />
+      </div>
+
+      <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-5 mb-4">
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-[13px] font-bold text-[#1A2027]">Documents to Staff</div>
+          <button onClick={() => setShowSendForm((v) => !v)} className="text-[11px] font-semibold text-primary cursor-pointer">
+            {showSendForm ? "Cancel" : "+ Send Document"}
+          </button>
+        </div>
+        <div className="text-xs text-[#8A96A3] mb-2">
+          Appointment letter, job description, VOC letter, or any other form — sent to {staff.name.split(" ")[0]} and emailed as a notification.
+        </div>
+
+        {showSendForm && (
+          <IssueDocumentForm
+            onSend={(label, fileUrl) => {
+              onIssueDocument(label, fileUrl);
+              setShowSendForm(false);
+            }}
+          />
+        )}
+
+        {staff.issuedDocuments.length === 0 ? (
+          <div className="text-xs text-[#8A96A3] py-3">No documents sent yet.</div>
+        ) : (
+          staff.issuedDocuments.map((doc) => {
+            const ack = findAcknowledgment(staff, doc.id);
+            return (
+              <div key={doc.id} className="py-2.5 border-b border-[#F0F2F4] last:border-0 text-xs">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[#3A4652] font-semibold">{doc.label}</div>
+                    {ack ? (
+                      <div className="text-[10px] text-[#1F7A4D] font-semibold mt-0.5">
+                        ✓ Signed by {staff.name} on {new Date(ack.agreedAt).toLocaleString()}
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-[#8A6D1F] font-semibold mt-0.5">Awaiting signature</div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary cursor-pointer">
+                      Preview
+                    </a>
+                    <a href={doc.fileUrl} download={doc.label.replace(/\s+/g, "_")} className="text-[11px] font-semibold text-primary cursor-pointer">
+                      Download
+                    </a>
+                    <button onClick={() => onRemoveIssuedDocument(doc.id)} className="text-[11px] font-semibold text-[#D64545] cursor-pointer">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                {ack && (
+                  <div className="flex items-center gap-2.5 mt-2 bg-[#F7F9FA] border border-[#E4E9EC] rounded-lg p-2.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={ack.signatureDataUrl} alt="Signature" className="h-10 w-24 object-contain bg-white rounded border border-[#E4E9EC]" />
+                    <div className="text-[10px] text-[#8A96A3]">
+                      Signature on file — legally recorded acknowledgment{ack.documentIds.length > 1 ? " (signed together with other letters)" : ""}.
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="flex gap-2.5 flex-wrap items-center">
+        <button
+          onClick={() => onUpdate({ isActive: !staff.isActive })}
+          className="bg-white border border-[#E4E9EC] text-[#1A2027] px-4 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+        >
+          {staff.isActive ? "Deactivate" : "Reactivate"}
+        </button>
+        <button
+          onClick={() => setResetMsg(`New temporary password: ${onResetPassword()}`)}
+          className="bg-white border border-[#E4E9EC] text-[#1A2027] px-4 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+        >
+          Reset Password
+        </button>
+        <button
+          onClick={() => {
+            if (confirm(`Remove ${staff.name}'s staff account? This can't be undone.`)) onRemove();
+          }}
+          className="text-[#D64545] px-4 py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer"
+        >
+          Remove
+        </button>
+      </div>
+      {resetMsg && <div className="text-xs text-[#146A8C] mt-2.5">{resetMsg}</div>}
+    </div>
+  );
+}
+
+function IssueDocumentForm({ onSend }: { onSend: (label: string, fileUrl: string) => void }) {
+  const [label, setLabel] = useState("");
+  const [customLabel, setCustomLabel] = useState("");
+  const [fileUrl, setFileUrl] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    setError("");
+    if (isAllowedDocumentFile(file) && !isAllowedImageFile(file)) {
+      setBusy(true);
+      try {
+        setFileUrl(await readDocumentFile(file));
+        setFileName(file.name);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not process that file — try a different one.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    if (!isAllowedImageFile(file)) {
+      setError("Please choose a PNG or JPG photo, a PDF, or a Word document.");
+      return;
+    }
+    setBusy(true);
+    try {
+      setFileUrl(await resizeImageFile(file, 1000, 1400));
+      setFileName(file.name);
+    } catch {
+      setError("Could not process that file — try a different one.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submit = () => {
+    const finalLabel = (label === "Other" ? customLabel : label).trim();
+    if (!finalLabel) {
+      setError("Pick or enter a document name.");
+      return;
+    }
+    if (!fileUrl) {
+      setError("Attach the file to send.");
+      return;
+    }
+    onSend(finalLabel, fileUrl);
+  };
+
+  return (
+    <div className="border border-[#E4E9EC] rounded-lg p-3.5 mb-3.5">
+      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">Document Name</div>
+      <div className="flex flex-wrap gap-2 mb-2.5">
+        {[...ISSUED_DOCUMENT_PRESETS, "Other"].map((preset) => (
+          <button
+            key={preset}
+            type="button"
+            onClick={() => setLabel(preset)}
+            className="px-3 py-1.5 rounded-full text-[11px] font-semibold cursor-pointer border"
+            style={{
+              background: label === preset ? "#1996C8" : "#fff",
+              color: label === preset ? "#fff" : "#3A4652",
+              borderColor: label === preset ? "#1996C8" : "#E4E9EC",
+            }}
+          >
+            {preset}
+          </button>
+        ))}
+      </div>
+      {label === "Other" && (
+        <input
+          value={customLabel}
+          onChange={(e) => setCustomLabel(e.target.value)}
+          placeholder="e.g. Salary Certificate"
+          className="w-full px-3 py-2.5 rounded-lg border border-[#E4E9EC] text-[13px] mb-2.5 box-border"
+        />
+      )}
+
+      <div className="text-xs font-semibold text-[#3A4652] mb-1.5">File</div>
+      <input ref={inputRef} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
+      <div
+        onClick={() => inputRef.current?.click()}
+        className="w-full min-h-[70px] rounded-lg border border-dashed border-[#C7CDD3] bg-[#F7F9FA] flex flex-col items-center justify-center cursor-pointer mb-2.5 px-2 text-center py-2"
+      >
+        {busy ? (
+          <div className="text-[11px] font-semibold text-[#5B6773]">Processing…</div>
+        ) : fileUrl ? (
+          <div className="text-[11px] font-semibold text-[#1A2027]">{fileName || "File attached"} — tap to replace</div>
+        ) : (
+          <>
+            <div className="text-[11px] font-semibold text-[#5B6773]">Attach the document</div>
+            <div className="text-[10px] text-primary underline">photo, PDF, or Word — browse files</div>
+          </>
+        )}
+      </div>
+
+      {error && <div className="text-xs text-[#D64545] mb-2.5">{error}</div>}
+      <button onClick={submit} className="w-full bg-primary text-white text-center py-2.5 rounded-lg text-[13px] font-semibold cursor-pointer">
+        Send to Staff
+      </button>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-3 py-2 border-b border-[#F0F2F4] last:border-0 text-xs">
+      <span className="text-[#8A96A3]">{label}</span>
+      <span className="font-semibold text-[#1A2027] text-right">{value}</span>
     </div>
   );
 }

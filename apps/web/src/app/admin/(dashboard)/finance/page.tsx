@@ -340,6 +340,12 @@ function PayableTab({
     .sort((a, b) => b.balance - a.balance);
   const total = owed.reduce((sum, p) => sum + p.balance, 0);
 
+  // What we've actually charged customers for delivery vs. what couriers actually cost us on
+  // those same orders -- the real delivery margin, tracked internally and never shown to the customer.
+  const deliveryIncome = inputs.orders.reduce((sum, o) => sum + o.deliveryFee, 0);
+  const deliveryCost = inputs.orders.reduce((sum, o) => sum + (o.courierCost ?? 0), 0);
+  const deliveryMargin = deliveryIncome - deliveryCost;
+
   return (
     <>
       <div className="font-heading font-bold text-base text-[#1A2027] mb-1">Accounts Payable</div>
@@ -369,6 +375,16 @@ function PayableTab({
         )}
       </div>
       <Stat label="Total Payable" value={fmt(total)} color="#7A56C8" />
+
+      <div className="font-heading font-bold text-base text-[#1A2027] mt-6 mb-1">Delivery Margin</div>
+      <div className="text-xs text-[#5B6773] mb-4">
+        What we&apos;ve actually charged customers for delivery vs. what couriers actually cost us, across every order placed.
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+        <Stat label="Delivery Fees Charged" value={fmt(deliveryIncome)} color="#1F7A4D" />
+        <Stat label="Courier Cost" value={fmt(deliveryCost)} color="#D64545" />
+        <Stat label="Net Delivery Margin" value={fmt(deliveryMargin)} color={deliveryMargin >= 0 ? "#1A2027" : "#D64545"} />
+      </div>
     </>
   );
 }
