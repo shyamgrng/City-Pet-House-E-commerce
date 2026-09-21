@@ -2,11 +2,20 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius } from "../theme/colors";
 import PlaceholderBox from "./PlaceholderBox";
+import { useCart } from "../context/CartContext";
 import type { MockProduct } from "../lib/mock-catalog";
 
 export default function ProductCard({ product }: { product: MockProduct }) {
   const [wishlisted, setWishlisted] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
   const rating = product.rating ?? 0;
+
+  const handleAddToCart = () => {
+    addItem({ id: product.id, name: product.name, price: product.priceValue });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
+  };
 
   return (
     <Pressable style={styles.card}>
@@ -49,6 +58,11 @@ export default function ProductCard({ product }: { product: MockProduct }) {
             <Text style={[styles.heart, wishlisted && styles.heartActive]}>{wishlisted ? "♥" : "♡"}</Text>
           </Pressable>
         </View>
+        {!product.outOfStock && (
+          <Pressable onPress={handleAddToCart} style={styles.addButton}>
+            <Text style={styles.addButtonText}>{added ? "Added ✓" : "Add to Cart"}</Text>
+          </Pressable>
+        )}
       </View>
     </Pressable>
   );
@@ -72,4 +86,6 @@ const styles = StyleSheet.create({
   hotPrice: { fontSize: 16, fontWeight: "800", color: colors.error },
   heart: { fontSize: 15, color: "#C7CDD2" },
   heartActive: { color: colors.error },
+  addButton: { marginTop: 8, backgroundColor: colors.primary, borderRadius: radius.button, paddingVertical: 8, alignItems: "center" },
+  addButtonText: { color: colors.white, fontSize: 11, fontWeight: "600" },
 });

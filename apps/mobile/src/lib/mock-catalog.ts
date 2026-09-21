@@ -2,6 +2,8 @@ export type MockProduct = {
   id: string;
   name: string;
   price: string;
+  /** Numeric price, needed for Add to Cart (the string is display-only, Indian-grouped). */
+  priceValue: number;
   originalPrice?: string;
   hotSale?: boolean;
   newArrival?: boolean;
@@ -39,38 +41,38 @@ export const SERVICES: MockService[] = [
 export const TODAYS_DEALS: MockProduct[] = [];
 
 export const PET_FOOD: MockProduct[] = [
-  { id: "food-1", name: "Royal Canin Adult Dog Food 3kg", price: "Rs. 2,400", rating: 4 },
-  { id: "food-2", name: "Whiskas Cat Food 1.2kg", price: "Rs. 950", rating: 5 },
-  { id: "food-3", name: "Pedigree Puppy Food 3kg", price: "Rs. 1,800", newArrival: true },
-  { id: "food-4", name: "Purina Kitten Food 1kg", price: "Rs. 1,100" },
+  { id: "food-1", name: "Royal Canin Adult Dog Food 3kg", price: "Rs. 2,400", priceValue: 2400, rating: 4 },
+  { id: "food-2", name: "Whiskas Cat Food 1.2kg", price: "Rs. 950", priceValue: 950, rating: 5 },
+  { id: "food-3", name: "Pedigree Puppy Food 3kg", price: "Rs. 1,800", priceValue: 1800, newArrival: true },
+  { id: "food-4", name: "Purina Kitten Food 1kg", price: "Rs. 1,100", priceValue: 1100 },
 ];
 
 export const PET_ACCESSORIES: MockProduct[] = [
-  { id: "acc-1", name: "Adjustable Nylon Collar", price: "Rs. 450" },
-  { id: "acc-2", name: "Retractable Leash 5m", price: "Rs. 850", rating: 4 },
-  { id: "acc-3", name: "Stainless Steel Food Bowl", price: "Rs. 350" },
-  { id: "acc-4", name: "Pet Carrier Bag", price: "Rs. 2,200", outOfStock: true },
+  { id: "acc-1", name: "Adjustable Nylon Collar", price: "Rs. 450", priceValue: 450 },
+  { id: "acc-2", name: "Retractable Leash 5m", price: "Rs. 850", priceValue: 850, rating: 4 },
+  { id: "acc-3", name: "Stainless Steel Food Bowl", price: "Rs. 350", priceValue: 350 },
+  { id: "acc-4", name: "Pet Carrier Bag", price: "Rs. 2,200", priceValue: 2200, outOfStock: true },
 ];
 
 export const FASHION_WEAR: MockProduct[] = [
-  { id: "wear-1", name: "Winter Sweater for Dogs", price: "Rs. 900" },
-  { id: "wear-2", name: "Raincoat with Hood", price: "Rs. 1,200" },
-  { id: "wear-3", name: "Bandana Set (3pc)", price: "Rs. 400" },
-  { id: "wear-4", name: "Bowtie Collar Attachment", price: "Rs. 300" },
+  { id: "wear-1", name: "Winter Sweater for Dogs", price: "Rs. 900", priceValue: 900 },
+  { id: "wear-2", name: "Raincoat with Hood", price: "Rs. 1,200", priceValue: 1200 },
+  { id: "wear-3", name: "Bandana Set (3pc)", price: "Rs. 400", priceValue: 400 },
+  { id: "wear-4", name: "Bowtie Collar Attachment", price: "Rs. 300", priceValue: 300 },
 ];
 
 export const PET_TOYS: MockProduct[] = [
-  { id: "toy-1", name: "Squeaky Chew Toy", price: "Rs. 380" },
-  { id: "toy-2", name: "Interactive Puzzle Feeder", price: "Rs. 1,050", rating: 5 },
-  { id: "toy-3", name: "Rope Tug Toy", price: "Rs. 320" },
-  { id: "toy-4", name: "Feather Wand for Cats", price: "Rs. 280" },
+  { id: "toy-1", name: "Squeaky Chew Toy", price: "Rs. 380", priceValue: 380 },
+  { id: "toy-2", name: "Interactive Puzzle Feeder", price: "Rs. 1,050", priceValue: 1050, rating: 5 },
+  { id: "toy-3", name: "Rope Tug Toy", price: "Rs. 320", priceValue: 320 },
+  { id: "toy-4", name: "Feather Wand for Cats", price: "Rs. 280", priceValue: 280 },
 ];
 
 export const GROOMING_ACCESSORIES: MockProduct[] = [
-  { id: "groom-1", name: "Slicker Brush", price: "Rs. 550" },
-  { id: "groom-2", name: "Pet Shampoo 250ml", price: "Rs. 700" },
-  { id: "groom-3", name: "Nail Clipper Set", price: "Rs. 480" },
-  { id: "groom-4", name: "Deshedding Tool", price: "Rs. 950" },
+  { id: "groom-1", name: "Slicker Brush", price: "Rs. 550", priceValue: 550 },
+  { id: "groom-2", name: "Pet Shampoo 250ml", price: "Rs. 700", priceValue: 700 },
+  { id: "groom-3", name: "Nail Clipper Set", price: "Rs. 480", priceValue: 480 },
+  { id: "groom-4", name: "Deshedding Tool", price: "Rs. 950", priceValue: 950 },
 ];
 
 export const BRANDS: MockBrand[] = [

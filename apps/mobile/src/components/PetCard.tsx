@@ -2,13 +2,16 @@ import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius } from "../theme/colors";
 import PlaceholderBox from "./PlaceholderBox";
+import { useCart } from "../context/CartContext";
 import { formatRs } from "../lib/format";
 import type { PetMock } from "../lib/pet-catalog";
 
 export default function PetCard({ pet, onPress }: { pet: PetMock; onPress: () => void }) {
   const [wishlisted, setWishlisted] = useState(false);
+  const { addItem } = useCart();
 
   const bookNow = () => {
+    addItem({ id: pet.id, name: `${pet.breed} (Puppy)`, price: pet.price });
     Alert.alert("Added to cart", `${pet.breed} has been added to your cart.`);
   };
 

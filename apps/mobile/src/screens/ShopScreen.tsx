@@ -41,6 +41,7 @@ function toCardProduct(p: ShopProduct) {
     id: p.id,
     name: p.name,
     price: formatRs(salePrice(p)),
+    priceValue: salePrice(p),
     originalPrice: p.hotSale ? formatRs(p.price) : undefined,
     hotSale: p.hotSale,
     newArrival: p.newArrival,

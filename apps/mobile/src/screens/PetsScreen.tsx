@@ -7,6 +7,7 @@ import PetCard from "../components/PetCard";
 import PuppyCard from "../components/PuppyCard";
 import TwoColGrid from "../components/TwoColGrid";
 import PlaceholderBox from "../components/PlaceholderBox";
+import { useCart } from "../context/CartContext";
 import { formatRs } from "../lib/format";
 import { DEWORM_STAGES_COUNT, PETS, SPECIES_CHIPS, VACCINE_STAGES_COUNT, otherAnimalsLabel, type PetMock } from "../lib/pet-catalog";
 
@@ -15,6 +16,7 @@ export default function PetsScreen() {
   const [selected, setSelected] = useState<PetMock | null>(null);
   const [activePhoto, setActivePhoto] = useState(0);
   const [wishlisted, setWishlisted] = useState(false);
+  const { addItem } = useCart();
 
   const filtered = species === "All" ? PETS : PETS.filter((p) => p.species === species);
 
@@ -25,6 +27,7 @@ export default function PetsScreen() {
   };
 
   const bookNow = (pet: PetMock) => {
+    addItem({ id: pet.id, name: `${pet.breed} (Puppy)`, price: pet.price });
     Alert.alert("Added to cart", `${pet.breed} has been added to your cart.`);
   };
 
