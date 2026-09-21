@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
   bannerButtonText: { color: colors.white, fontSize: 13, fontWeight: "600" },
   sectionTitle: { fontWeight: "700", fontSize: 15, color: colors.text, marginHorizontal: 16, marginBottom: 12 },
   doctorList: { paddingHorizontal: 16, gap: 14, paddingBottom: 8 },
-  doctorCard: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: "hidden" },
-  doctorPhotoWrap: { position: "relative", width: "100%", aspectRatio: 1080 / 1350 },
+  doctorCard: { borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: "hidden", paddingTop: 14 },
+  doctorPhotoWrap: { position: "relative", width: "80%", aspectRatio: 1080 / 1350, borderRadius: 10, overflow: "hidden", alignSelf: "center" },
   onlineBadge: {
     position: "absolute",
     top: 8,
