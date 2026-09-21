@@ -1,7 +1,9 @@
-// Maps each "..." menu page to its content editor on the website's admin dashboard
-// (apps/web/src/app/admin/(dashboard)/pages/*), so staff can jump from the mobile
-// page straight to editing it. Dog Adoption and Admin Login have no matching editor
-// (see apps/web/src/lib/admin-data.ts pageEditorList) and are left out on purpose.
+// Maps each "..." menu page to its matching page on the website's admin dashboard,
+// so staff can jump from the mobile page straight to editing/managing it. Most map
+// to a content editor (apps/web/src/app/admin/(dashboard)/pages/*, see
+// apps/web/src/lib/admin-data.ts pageEditorList); Dog Adoption maps to the
+// Pet Available admin page (which also manages adoption posts), and Admin Login
+// maps to the website's own admin sign-in.
 
 export const SITE_URL = "https://citypethouseweb.vercel.app";
 
@@ -16,6 +18,8 @@ export const ADMIN_PAGE_PATHS: Record<string, string> = {
   terms: "/admin/pages/terms",
   privacy: "/admin/pages/privacy",
   refund: "/admin/pages/refund",
+  adoption: "/admin/pet-available",
+  "admin-login": "/admin/login",
 };
 
 export function adminUrlFor(pageKey: string): string | undefined {

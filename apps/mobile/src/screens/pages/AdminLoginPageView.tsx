@@ -34,7 +34,12 @@ export default function AdminLoginPageView() {
         />
 
         <Pressable
-          onPress={() => Alert.alert("Not available yet", "Staff/admin sign-in isn't wired up in the mobile app yet — please use the website to log in.")}
+          onPress={() =>
+            Alert.alert(
+              "Not available yet",
+              "Staff/admin sign-in isn't wired up in the mobile app yet — tap \"Admin ↗\" above to sign in on the website instead."
+            )
+          }
           style={styles.signInButton}
         >
           <Text style={styles.signInButtonText}>Sign In</Text>
