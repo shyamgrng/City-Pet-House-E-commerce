@@ -6,13 +6,25 @@ import type { MockProduct } from "../lib/mock-catalog";
 
 export default function ProductCard({ product }: { product: MockProduct }) {
   const [wishlisted, setWishlisted] = useState(false);
+  const rating = product.rating ?? 0;
+
   return (
     <Pressable style={styles.card}>
       <View style={styles.imageWrap}>
-        <PlaceholderBox label="product photo" height={90} />
+        <PlaceholderBox label={product.name} height={110} />
+        {product.newArrival && (
+          <View style={styles.newBadge}>
+            <Text style={styles.badgeText}>New</Text>
+          </View>
+        )}
         {product.hotSale && (
           <View style={styles.hotSaleBadge}>
-            <Text style={styles.hotSaleText}>Hot Sale</Text>
+            <Text style={styles.badgeText}>Hot Sale</Text>
+          </View>
+        )}
+        {product.outOfStock && (
+          <View style={styles.outOfStockBadge}>
+            <Text style={styles.outOfStockText}>Out of stock</Text>
           </View>
         )}
       </View>
@@ -20,13 +32,23 @@ export default function ProductCard({ product }: { product: MockProduct }) {
         <Text style={styles.name} numberOfLines={1}>
           {product.name}
         </Text>
+        {rating > 0 && (
+          <Text style={styles.rating}>
+            {"★".repeat(Math.round(rating))}
+            {"☆".repeat(5 - Math.round(rating))} <Text style={styles.ratingNumber}>{rating}</Text>
+          </Text>
+        )}
         <View style={styles.priceRow}>
-          <View>
-            {product.originalPrice && <Text style={styles.originalPrice}>{product.originalPrice}</Text>}
-            <Text style={[styles.price, product.hotSale && styles.hotPrice]}>{product.price}</Text>
-          </View>
+          {product.hotSale ? (
+            <View>
+              <Text style={styles.originalPrice}>{product.originalPrice ?? product.price}</Text>
+              <Text style={styles.hotPrice}>{product.price}</Text>
+            </View>
+          ) : (
+            <Text style={styles.price}>{product.price}</Text>
+          )}
           <Pressable onPress={() => setWishlisted((w) => !w)} hitSlop={8}>
-            <Text style={[styles.heart, wishlisted && styles.heartActive]}>♥</Text>
+            <Text style={[styles.heart, wishlisted && styles.heartActive]}>{wishlisted ? "♥" : "♡"}</Text>
           </Pressable>
         </View>
       </View>
@@ -35,16 +57,21 @@ export default function ProductCard({ product }: { product: MockProduct }) {
 }
 
 const styles = StyleSheet.create({
-  card: { flex: 1, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: radius.card, overflow: "hidden" },
+  card: { flex: 1, borderRadius: radius.card, overflow: "hidden" },
   imageWrap: { position: "relative" },
-  hotSaleBadge: { position: "absolute", top: 6, right: 6, backgroundColor: colors.error, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
-  hotSaleText: { color: colors.white, fontSize: 9, fontWeight: "700" },
-  info: { padding: 10 },
-  name: { fontSize: 12, fontWeight: "500", color: colors.text },
+  newBadge: { position: "absolute", top: 6, left: 6, backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  hotSaleBadge: { position: "absolute", top: 6, right: 6, backgroundColor: colors.error, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 },
+  badgeText: { color: colors.white, fontSize: 9, fontWeight: "700" },
+  outOfStockBadge: { position: "absolute", bottom: 6, left: 6, right: 6, backgroundColor: "rgba(0,0,0,0.7)", paddingVertical: 4, borderRadius: 4 },
+  outOfStockText: { color: colors.white, fontSize: 9, fontWeight: "600", textAlign: "center" },
+  info: { paddingTop: 10 },
+  name: { fontSize: 12, fontWeight: "600", color: colors.text },
+  rating: { fontSize: 10, color: "#C9962B", marginTop: 2 },
+  ratingNumber: { color: colors.textMuted },
   priceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 },
   originalPrice: { fontSize: 9, color: colors.textMuted, textDecorationLine: "line-through" },
-  price: { fontSize: 12, fontWeight: "700", color: colors.primary },
-  hotPrice: { color: colors.error },
-  heart: { fontSize: 15, color: colors.border },
+  price: { fontSize: 13, fontWeight: "700", color: colors.primary },
+  hotPrice: { fontSize: 13, fontWeight: "700", color: colors.error },
+  heart: { fontSize: 15, color: "#C7CDD2" },
   heartActive: { color: colors.error },
 });

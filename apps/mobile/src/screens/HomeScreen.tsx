@@ -1,134 +1,139 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, radius } from "../theme/colors";
+import { colors } from "../theme/colors";
 import { CATEGORIES } from "../theme/categories";
-import { BRANDS, FASHION_WEAR, GROOMING_ACCESSORIES, PET_ACCESSORIES, PET_FOOD, PET_TOYS, PUPPIES, SERVICES, TODAYS_DEALS } from "../lib/mock-catalog";
-import CategoryCircle from "../components/CategoryCircle";
-import BrandCircle from "../components/BrandCircle";
+import {
+  BLOG_POSTS,
+  BRANDS,
+  FASHION_WEAR,
+  GROOMING_ACCESSORIES,
+  PET_ACCESSORIES,
+  PET_FOOD,
+  PET_TOYS,
+  PUPPIES,
+  TESTIMONIALS,
+  TODAYS_DEALS,
+} from "../lib/mock-catalog";
+import AppHeader from "../components/AppHeader";
+import CircleCard from "../components/CircleCard";
 import ProductCard from "../components/ProductCard";
 import PuppyCard from "../components/PuppyCard";
-import ServiceCard from "../components/ServiceCard";
 import SectionHeader from "../components/SectionHeader";
 import TwoColGrid from "../components/TwoColGrid";
 import PlaceholderBox from "../components/PlaceholderBox";
+import PromoBanner from "../components/PromoBanner";
+
+const HERO_HEADLINE = "Pet products, puppies, adoption & vet care";
+const HERO_SUBTEXT = "Order online, pay by receipt upload — shop, puppies, adoption or vet consults.";
+const HOT_SALE_BANNER_TEXT = "Hot Sale — up to 30% off this week only";
+const MICROCHIP_BANNER_TEXT = "Dog & Cat Microchipping — quick, permanent ID for your pet.";
+const DELIVERY_BANNER_TEXT = "Delivery available across Kathmandu Valley — Kathmandu · Lalitpur · Bhaktapur";
+const GROOMING_BANNER_TEXT = "Professional dog grooming — book your slot today";
+
+function EmptyRailNotice({ text }: { text: string }) {
+  return (
+    <View style={styles.emptyCard}>
+      <Text style={styles.emptyText}>{text}</Text>
+    </View>
+  );
+}
 
 export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <View style={styles.topBar}>
-        <View style={styles.brandRow}>
-          <Image source={require("../../assets/brand/cph-logo.jpeg")} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.tagline}>One Roof Solution to Your Pet Care</Text>
-        </View>
-        <View style={styles.topBarActions}>
-          <Pressable style={styles.iconButton}>
-            <Text style={styles.iconText}>🔔</Text>
-          </Pressable>
-          <Pressable style={styles.iconButton}>
-            <Text style={styles.iconText}>👤</Text>
-          </Pressable>
-        </View>
-      </View>
+      <AppHeader />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.searchBar}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput placeholder="Search products, services & more" placeholderTextColor={colors.textMuted} style={styles.searchInput} />
-        </View>
-
         <View style={styles.hero}>
-          <PlaceholderBox label="cover photo — shop & clinic" height={210} radius={14} />
+          <PlaceholderBox label="cover photo — shop & clinic" height={165} radius={12} />
           <View style={styles.heroTextWrap} pointerEvents="none">
-            <Text style={styles.heroTitle}>Everything Your Pet Needs, All in One Place</Text>
-            <Text style={styles.heroSubtitle}>Shop · Vet Consult · Adoption · Grooming</Text>
+            <Text style={styles.heroTitle}>{HERO_HEADLINE}</Text>
+            <Text style={styles.heroSubtitle}>{HERO_SUBTEXT}</Text>
           </View>
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
           {CATEGORIES.map((cat) => (
-            <CategoryCircle key={cat.name} category={cat} />
+            <CircleCard key={cat.name} name={cat.name} size={86} />
           ))}
         </ScrollView>
 
         <SectionHeader title="Available Puppies" onSeeAll={() => {}} />
         <TwoColGrid items={PUPPIES} keyExtractor={(p) => p.id} renderItem={(p) => <PuppyCard puppy={p} />} />
 
-        <SectionHeader title="Our Services" />
-        <TwoColGrid items={SERVICES} keyExtractor={(s) => s.id} renderItem={(s) => <ServiceCard service={s} />} />
+        <PromoBanner
+          label="banner — pet microchipping"
+          height={170}
+          variant="button-left"
+          text={MICROCHIP_BANNER_TEXT}
+          buttonLabel="Book Now"
+        />
 
-        <View style={styles.bannerWrap}>
-          <PlaceholderBox label="Hot Sales Banner" height={80} radius={12} />
-        </View>
+        <PromoBanner label="banner" height={120} variant="pill-center" text={HOT_SALE_BANNER_TEXT} />
 
         <SectionHeader title="Today's Deals" onSeeAll={() => {}} />
         {TODAYS_DEALS.length > 0 ? (
           <TwoColGrid items={TODAYS_DEALS} keyExtractor={(p) => p.id} renderItem={(p) => <ProductCard product={p} />} />
         ) : (
-          <View style={styles.emptyDealsCard}>
-            <Text style={styles.emptyDealsText}>No deals running — check back soon.</Text>
-          </View>
+          <EmptyRailNotice text={'No deals running right now — tick "Today\'s Deal" on a product in Admin → Shop to feature it here.'} />
         )}
 
-        <SectionHeader title="Pet Food" />
+        <SectionHeader title="Pet Food" onSeeAll={() => {}} />
         <TwoColGrid items={PET_FOOD} keyExtractor={(p) => p.id} renderItem={(p) => <ProductCard product={p} />} />
 
-        <SectionHeader title="Pet Accessories" />
+        <SectionHeader title="Pet Accessories" onSeeAll={() => {}} />
         <TwoColGrid items={PET_ACCESSORIES} keyExtractor={(p) => p.id} renderItem={(p) => <ProductCard product={p} />} />
 
-        <SectionHeader title="Fashion Wear" />
+        <SectionHeader title="Fashion Wear" onSeeAll={() => {}} />
         <TwoColGrid items={FASHION_WEAR} keyExtractor={(p) => p.id} renderItem={(p) => <ProductCard product={p} />} />
 
-        <SectionHeader title="Toys for Your Pet" />
+        <SectionHeader title="Toys for Your Pet" onSeeAll={() => {}} />
         <TwoColGrid items={PET_TOYS} keyExtractor={(p) => p.id} renderItem={(p) => <ProductCard product={p} />} />
 
-        <View style={styles.deliveryBannerWrap}>
-          <PlaceholderBox label="delivery banner" height={70} radius={12} />
-          <View style={styles.deliveryTextPill} pointerEvents="none">
-            <Text style={styles.deliveryText}>Free delivery inside Kathmandu Valley on orders over Rs. 2,000</Text>
-          </View>
-        </View>
+        <PromoBanner label="delivery banner" height={110} variant="pill-center" text={DELIVERY_BANNER_TEXT} />
 
         <SectionHeader title="Shop by Brand" />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.brandRowScroll}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.brandRow}>
           {BRANDS.map((b) => (
-            <BrandCircle key={b.id} brand={b} />
+            <CircleCard key={b.id} name={b.name} size={88} />
           ))}
         </ScrollView>
 
-        <SectionHeader title="Grooming Accessories" />
+        <SectionHeader title="Grooming Accessories" onSeeAll={() => {}} />
         <TwoColGrid items={GROOMING_ACCESSORIES} keyExtractor={(p) => p.id} renderItem={(p) => <ProductCard product={p} />} />
 
-        <View style={styles.groomingBannerWrap}>
-          <PlaceholderBox label="big banner — dog grooming services" height={120} radius={12} />
-          <View style={styles.groomingOverlay} pointerEvents="box-none">
-            <View style={styles.groomingTextPill}>
-              <Text style={styles.groomingText}>Professional grooming, right at our clinic</Text>
+        <PromoBanner
+          label="big banner — dog grooming services"
+          height={220}
+          variant="button-left"
+          text={GROOMING_BANNER_TEXT}
+          buttonLabel="Book Now"
+          buttonColor="#1F7A4D"
+        />
+
+        <SectionHeader title="Our Happy Customers" />
+        <View style={styles.testimonialList}>
+          {TESTIMONIALS.map((t) => (
+            <View key={t.id} style={styles.testimonialCard}>
+              <Text style={styles.testimonialQuote}>&quot;{t.quote}&quot;</Text>
+              <Text style={styles.testimonialName}>{t.name}</Text>
             </View>
-            <Pressable style={styles.bookNowButton}>
-              <Text style={styles.bookNowText}>Book Now</Text>
-            </Pressable>
-          </View>
+          ))}
         </View>
 
-        <View style={styles.vaccinationCard}>
-          <Text style={styles.vaccinationTitle}>Happy Pet Owner</Text>
-          <Text style={styles.vaccinationSubtitle}>Download Vaccination Record App</Text>
-          <View style={styles.storeRow}>
-            <View style={styles.storeBadge}>
-              <Text style={styles.storeIcon}>📱</Text>
-              <View>
-                <Text style={styles.storeBadgeSmall}>Available on the</Text>
-                <Text style={styles.storeBadgeBig}>App Store</Text>
+        <SectionHeader title="Latest from the Blog" />
+        <View style={styles.blogList}>
+          {BLOG_POSTS.map((post) => (
+            <Pressable key={post.id} style={styles.blogCard}>
+              <PlaceholderBox label="blog photo" height={100} />
+              <View style={styles.blogInfo}>
+                <Text style={styles.blogDate}>{post.date}</Text>
+                <Text style={styles.blogTitle} numberOfLines={2}>
+                  {post.title}
+                </Text>
               </View>
-            </View>
-            <View style={styles.storeBadge}>
-              <Text style={styles.storeIcon}>▶</Text>
-              <View>
-                <Text style={styles.storeBadgeSmall}>ANDROID APP ON</Text>
-                <Text style={styles.storeBadgeBig}>Google Play</Text>
-              </View>
-            </View>
-          </View>
+            </Pressable>
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -137,95 +142,31 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 6,
-    backgroundColor: colors.background,
-  },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 },
-  logo: { width: 28, height: 28, borderRadius: 8 },
-  tagline: { fontSize: 12, color: colors.textSecondary, flexShrink: 1 },
-  topBarActions: { flexDirection: "row", gap: 8, alignItems: "center" },
-  iconButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 999,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconText: { fontSize: 14 },
   content: { paddingBottom: 24 },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    height: 40,
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  searchIcon: { fontSize: 13 },
-  searchInput: { flex: 1, fontSize: 13, color: colors.text },
-  hero: { marginHorizontal: 16, marginVertical: 10, borderRadius: 14, overflow: "hidden" },
+  hero: { marginHorizontal: 16, marginBottom: 10, marginTop: 2 },
   heroTextWrap: { position: "absolute", left: 0, right: 0, bottom: 0, padding: 12, alignItems: "center" },
   heroTitle: { fontWeight: "700", fontSize: 13, lineHeight: 17, textAlign: "center", color: colors.white, marginBottom: 3 },
-  heroSubtitle: { fontSize: 10, textAlign: "center", color: colors.white },
+  heroSubtitle: { fontSize: 11, textAlign: "center", color: colors.white, lineHeight: 15 },
   categoryRow: { paddingHorizontal: 16, gap: 14, paddingBottom: 10 },
-  bannerWrap: { marginHorizontal: 16, marginVertical: 6 },
-  emptyDealsCard: {
+  emptyCard: {
     marginHorizontal: 16,
     marginBottom: 20,
     padding: 18,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderStyle: "dashed",
     borderColor: colors.border,
     alignItems: "center",
   },
-  emptyDealsText: { fontSize: 11, color: colors.textMuted, textAlign: "center" },
-  deliveryBannerWrap: { marginHorizontal: 16, marginBottom: 20, alignItems: "center", justifyContent: "center" },
-  deliveryTextPill: {
-    position: "absolute",
-    backgroundColor: "rgba(255,255,255,0.85)",
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
-    maxWidth: "80%",
-  },
-  deliveryText: { fontSize: 12, fontWeight: "600", color: colors.primary, textAlign: "center" },
-  brandRowScroll: { paddingHorizontal: 16, gap: 16, paddingBottom: 20 },
-  groomingBannerWrap: { marginHorizontal: 16, marginBottom: 20 },
-  groomingOverlay: { position: "absolute", inset: 0, alignItems: "center", justifyContent: "center", gap: 8 },
-  groomingTextPill: { backgroundColor: "rgba(255,255,255,0.85)", paddingHorizontal: 12, paddingVertical: 4, borderRadius: 6 },
-  groomingText: { fontSize: 12, fontWeight: "600", color: "#1F7A4D" },
-  bookNowButton: { backgroundColor: "#1F7A4D", paddingHorizontal: 18, paddingVertical: 8, borderRadius: 8 },
-  bookNowText: { color: colors.white, fontSize: 12, fontWeight: "600" },
-  vaccinationCard: {
-    marginHorizontal: 16,
-    marginBottom: 20,
-    padding: 20,
-    borderRadius: 12,
-    backgroundColor: "#F0F1F2",
-    alignItems: "center",
-    gap: 12,
-  },
-  vaccinationTitle: { fontWeight: "700", fontSize: 15, color: "#1F7A4D", textAlign: "center" },
-  vaccinationSubtitle: { fontWeight: "700", fontSize: 13, color: colors.text, textAlign: "center" },
-  storeRow: { flexDirection: "row", gap: 10 },
-  storeBadge: { backgroundColor: "#000", borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, flexDirection: "row", alignItems: "center", gap: 6 },
-  storeIcon: { fontSize: 16, color: colors.white },
-  storeBadgeSmall: { fontSize: 8, color: colors.white, lineHeight: 10 },
-  storeBadgeBig: { fontSize: 11, fontWeight: "700", color: colors.white, lineHeight: 14 },
+  emptyText: { fontSize: 12, color: colors.textMuted, textAlign: "center" },
+  brandRow: { paddingHorizontal: 16, gap: 16, paddingBottom: 20 },
+  testimonialList: { paddingHorizontal: 16, paddingBottom: 20, gap: 14 },
+  testimonialCard: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 16 },
+  testimonialQuote: { fontSize: 12, color: "#3A4652", lineHeight: 18, marginBottom: 10 },
+  testimonialName: { fontSize: 12, fontWeight: "600", color: colors.text },
+  blogList: { paddingHorizontal: 16, paddingBottom: 24, gap: 14 },
+  blogCard: { borderWidth: 1, borderColor: colors.border, borderRadius: 10, overflow: "hidden" },
+  blogInfo: { padding: 12 },
+  blogDate: { fontSize: 11, color: colors.textMuted, marginBottom: 4 },
+  blogTitle: { fontSize: 13, fontWeight: "600", color: colors.text, lineHeight: 18 },
 });

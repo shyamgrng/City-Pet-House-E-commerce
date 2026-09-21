@@ -7,7 +7,7 @@ export default function SectionHeader({ title, onSeeAll }: { title: string; onSe
       <Text style={styles.title}>{title}</Text>
       {onSeeAll && (
         <Pressable onPress={onSeeAll}>
-          <Text style={styles.seeAll}>See all</Text>
+          <Text style={styles.seeAll}>See all →</Text>
         </Pressable>
       )}
     </View>
