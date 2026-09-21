@@ -20,6 +20,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "City Pet House needs access to your photos so you can upload a payment receipt screenshot."
+        }
+      ]
+    ]
   }
 }
