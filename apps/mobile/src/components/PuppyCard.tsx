@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   name: { fontSize: 12, fontWeight: "600", color: colors.text, lineHeight: 16 },
   meta: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   priceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 },
-  price: { fontSize: 13, fontWeight: "700", color: colors.primary },
+  price: { fontSize: 16, fontWeight: "800", color: "#0F7CA8" },
   heart: { fontSize: 15, color: "#C7CDD2" },
   heartActive: { color: colors.error },
 });

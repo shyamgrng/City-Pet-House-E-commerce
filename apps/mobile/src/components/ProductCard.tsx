@@ -68,8 +68,8 @@ const styles = StyleSheet.create({
   ratingNumber: { color: colors.textMuted },
   priceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 },
   originalPrice: { fontSize: 9, color: colors.textMuted, textDecorationLine: "line-through" },
-  price: { fontSize: 14, fontWeight: "700", color: colors.primary },
-  hotPrice: { fontSize: 14, fontWeight: "700", color: colors.error },
+  price: { fontSize: 16, fontWeight: "800", color: "#0F7CA8" },
+  hotPrice: { fontSize: 16, fontWeight: "800", color: colors.error },
   heart: { fontSize: 15, color: "#C7CDD2" },
   heartActive: { color: colors.error },
 });
