@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { MORE_MENU_LINKS } from "../lib/menu-links";
 import { LEGAL_PRIVACY, LEGAL_REFUND, LEGAL_TERMS } from "../lib/static-content";
+import { adminUrlFor } from "../lib/admin-links";
 import PageModalHeader from "./PageModalHeader";
 import ServicesPageView from "../screens/pages/ServicesPageView";
 import BlogPageView from "../screens/pages/BlogPageView";
@@ -121,7 +122,11 @@ export default function AppHeader() {
 
       <Modal visible={activePage !== null} animationType="slide" onRequestClose={() => setActivePage(null)}>
         <SafeAreaView style={styles.pageWrap} edges={["top"]}>
-          <PageModalHeader title={activePage ? PAGE_TITLES[activePage] ?? "" : ""} onClose={() => setActivePage(null)} />
+          <PageModalHeader
+            title={activePage ? PAGE_TITLES[activePage] ?? "" : ""}
+            onClose={() => setActivePage(null)}
+            adminUrl={activePage ? adminUrlFor(activePage) : undefined}
+          />
           {activePage && renderPage(activePage)}
         </SafeAreaView>
       </Modal>

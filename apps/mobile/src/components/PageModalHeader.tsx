@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors } from "../theme/colors";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { colors, radius } from "../theme/colors";
 
-export default function PageModalHeader({ title, onClose }: { title: string; onClose: () => void }) {
+export default function PageModalHeader({ title, onClose, adminUrl }: { title: string; onClose: () => void; adminUrl?: string }) {
   return (
     <View style={styles.wrap}>
       <Pressable onPress={onClose} style={styles.backButton} hitSlop={8}>
@@ -10,7 +10,13 @@ export default function PageModalHeader({ title, onClose }: { title: string; onC
       <Text style={styles.title} numberOfLines={1}>
         {title}
       </Text>
-      <View style={styles.spacer} />
+      {adminUrl ? (
+        <Pressable onPress={() => Linking.openURL(adminUrl)} style={styles.adminButton} hitSlop={8}>
+          <Text style={styles.adminButtonText}>Admin ↗</Text>
+        </Pressable>
+      ) : (
+        <View style={styles.spacer} />
+      )}
     </View>
   );
 }
@@ -30,4 +36,6 @@ const styles = StyleSheet.create({
   backText: { fontSize: 18, color: colors.text },
   title: { flex: 1, fontSize: 16, fontWeight: "700", color: colors.text },
   spacer: { width: 30 },
+  adminButton: { paddingHorizontal: 10, height: 30, borderRadius: radius.button, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
+  adminButtonText: { fontSize: 11, fontWeight: "700", color: colors.primary },
 });
