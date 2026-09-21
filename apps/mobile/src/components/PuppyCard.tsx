@@ -15,9 +15,7 @@ export default function PuppyCard({ puppy }: { puppy: MockPuppy }) {
         </View>
       </View>
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>
-          {puppy.breed}
-        </Text>
+        <Text style={styles.name}>{puppy.breed}</Text>
         <Text style={styles.meta}>
           {puppy.sex} · {puppy.age}
         </Text>
@@ -38,7 +36,7 @@ const styles = StyleSheet.create({
   statusBadge: { position: "absolute", top: 6, left: 6, backgroundColor: "#1F7A4D", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   statusText: { color: colors.white, fontSize: 9, fontWeight: "600" },
   info: { paddingTop: 10 },
-  name: { fontSize: 12, fontWeight: "600", color: colors.text },
+  name: { fontSize: 12, fontWeight: "600", color: colors.text, lineHeight: 16 },
   meta: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   priceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 },
   price: { fontSize: 13, fontWeight: "700", color: colors.primary },

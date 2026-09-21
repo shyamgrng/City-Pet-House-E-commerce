@@ -29,9 +29,7 @@ export default function ProductCard({ product }: { product: MockProduct }) {
         )}
       </View>
       <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>
-          {product.name}
-        </Text>
+        <Text style={styles.name}>{product.name}</Text>
         {rating > 0 && (
           <Text style={styles.rating}>
             {"★".repeat(Math.round(rating))}
@@ -65,7 +63,7 @@ const styles = StyleSheet.create({
   outOfStockBadge: { position: "absolute", bottom: 6, left: 6, right: 6, backgroundColor: "rgba(0,0,0,0.7)", paddingVertical: 4, borderRadius: 4 },
   outOfStockText: { color: colors.white, fontSize: 9, fontWeight: "600", textAlign: "center" },
   info: { paddingTop: 10 },
-  name: { fontSize: 12, fontWeight: "600", color: colors.text },
+  name: { fontSize: 12, fontWeight: "600", color: colors.text, lineHeight: 16 },
   rating: { fontSize: 10, color: "#C9962B", marginTop: 2 },
   ratingNumber: { color: colors.textMuted },
   priceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 4 },
