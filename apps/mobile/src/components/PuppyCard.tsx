@@ -9,7 +9,7 @@ export default function PuppyCard({ puppy }: { puppy: MockPuppy }) {
   return (
     <Pressable style={styles.card}>
       <View style={styles.imageWrap}>
-        <PlaceholderBox label={puppy.breed} height={110} />
+        <PlaceholderBox label={puppy.breed} fill />
         <View style={styles.statusBadge}>
           <Text style={styles.statusText}>Available</Text>
         </View>
@@ -34,7 +34,7 @@ export default function PuppyCard({ puppy }: { puppy: MockPuppy }) {
 
 const styles = StyleSheet.create({
   card: { flex: 1, borderRadius: radius.card, overflow: "hidden" },
-  imageWrap: { position: "relative" },
+  imageWrap: { position: "relative", width: "100%", aspectRatio: 1 },
   statusBadge: { position: "absolute", top: 6, left: 6, backgroundColor: "#1F7A4D", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   statusText: { color: colors.white, fontSize: 9, fontWeight: "600" },
   info: { paddingTop: 10 },

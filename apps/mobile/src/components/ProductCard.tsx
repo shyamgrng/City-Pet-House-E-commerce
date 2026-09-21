@@ -11,7 +11,7 @@ export default function ProductCard({ product }: { product: MockProduct }) {
   return (
     <Pressable style={styles.card}>
       <View style={styles.imageWrap}>
-        <PlaceholderBox label={product.name} height={110} />
+        <PlaceholderBox label={product.name} fill />
         {product.newArrival && (
           <View style={styles.newBadge}>
             <Text style={styles.badgeText}>New</Text>
@@ -58,7 +58,7 @@ export default function ProductCard({ product }: { product: MockProduct }) {
 
 const styles = StyleSheet.create({
   card: { flex: 1, borderRadius: radius.card, overflow: "hidden" },
-  imageWrap: { position: "relative" },
+  imageWrap: { position: "relative", width: "100%", aspectRatio: 1 },
   newBadge: { position: "absolute", top: 6, left: 6, backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   hotSaleBadge: { position: "absolute", top: 6, right: 6, backgroundColor: colors.error, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 },
   badgeText: { color: colors.white, fontSize: 9, fontWeight: "700" },
