@@ -15,6 +15,7 @@ import {
   TODAYS_DEALS,
 } from "../lib/mock-catalog";
 import AppHeader from "../components/AppHeader";
+import AppFooter from "../components/AppFooter";
 import CircleCard from "../components/CircleCard";
 import ProductCard from "../components/ProductCard";
 import PuppyCard from "../components/PuppyCard";
@@ -135,6 +136,8 @@ export default function HomeScreen() {
             </Pressable>
           ))}
         </View>
+
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );
