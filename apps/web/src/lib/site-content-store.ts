@@ -101,6 +101,16 @@ export function useSiteContentStore<T>(storageKey: string, seed: T) {
   const update = (data: T) => {
     setState((s) => ({ ...s, data, saveError: null }));
 
+    // Always write through to localStorage first, cloud-configured or not. If Supabase is
+    // configured but the site_content table hasn't been created yet (supabase/site-content-schema.sql
+    // not run), the upsert below fails -- without this, the edit would vanish on refresh instead
+    // of at least surviving in this browser, same as every page did before this store existed.
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(data));
+    } catch {
+      setState((s) => ({ ...s, saveError: "Couldn't save — your browser's storage is full. Delete an old photo somewhere on the site to free up space, then try again." }));
+    }
+
     if (supabase) {
       const db = supabase;
       void db
@@ -109,13 +119,6 @@ export function useSiteContentStore<T>(storageKey: string, seed: T) {
         .then(({ error }) => {
           if (error) setState((s) => ({ ...s, saveError: CLOUD_ERROR_MESSAGE }));
         });
-      return;
-    }
-
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(data));
-    } catch {
-      setState((s) => ({ ...s, saveError: "Couldn't save — your browser's storage is full. Delete an old photo somewhere on the site to free up space, then try again." }));
     }
   };
 
