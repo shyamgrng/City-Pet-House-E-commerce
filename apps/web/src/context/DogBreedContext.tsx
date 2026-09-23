@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext } from "react";
 import { dogBreedSeed } from "@/lib/dog-breed-seed";
 import type { DogBreed } from "@/lib/dog-breed-types";
+import { useSiteContentStore } from "@/lib/site-content-store";
 
 const STORAGE_KEY = "cph_dog_breeds";
 
@@ -16,37 +17,17 @@ type DogBreedValue = {
 
 const DogBreedContext = createContext<DogBreedValue | null>(null);
 
-function loadStored(): DogBreed[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as DogBreed[]) : null;
-    return Array.isArray(parsed) && parsed.length ? parsed : dogBreedSeed;
-  } catch {
-    return dogBreedSeed;
-  }
-}
-
 export function DogBreedProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ breeds: DogBreed[]; ready: boolean }>({ breeds: dogBreedSeed, ready: false });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ breeds: loadStored(), ready: true });
-  }, []);
-
-  const persist = (breeds: DogBreed[]) => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(breeds));
-    setState({ breeds, ready: true });
-  };
+  const { data: breeds, ready, update: persist } = useSiteContentStore<DogBreed[]>(STORAGE_KEY, dogBreedSeed);
 
   return (
     <DogBreedContext.Provider
       value={{
-        breeds: state.breeds,
-        ready: state.ready,
-        addBreed: (input) => persist([{ id: "breed-" + Date.now(), ...input }, ...state.breeds]),
-        updateBreed: (id, input) => persist(state.breeds.map((b) => (b.id === id ? { id, ...input } : b))),
-        removeBreed: (id) => persist(state.breeds.filter((b) => b.id !== id)),
+        breeds,
+        ready,
+        addBreed: (input) => persist([{ id: "breed-" + Date.now(), ...input }, ...breeds]),
+        updateBreed: (id, input) => persist(breeds.map((b) => (b.id === id ? { id, ...input } : b))),
+        removeBreed: (id) => persist(breeds.filter((b) => b.id !== id)),
       }}
     >
       {children}

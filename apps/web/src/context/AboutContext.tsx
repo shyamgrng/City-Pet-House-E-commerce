@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext } from "react";
 import { aboutSeed } from "@/lib/about-seed";
 import type { AboutContent, AboutListItem } from "@/lib/about-types";
+import { useSiteContentStore } from "@/lib/site-content-store";
 
 const STORAGE_KEY = "cph_about";
 
@@ -19,47 +20,25 @@ type AboutValue = {
 
 const AboutContext = createContext<AboutValue | null>(null);
 
-function loadStored(): AboutContent {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return aboutSeed;
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : aboutSeed;
-  } catch {
-    return aboutSeed;
-  }
-}
-
 export function AboutProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ content: AboutContent; ready: boolean }>({ content: aboutSeed, ready: false });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ content: loadStored(), ready: true });
-  }, []);
-
-  const persist = (content: AboutContent) => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
-    setState({ content, ready: true });
-  };
+  const { data: content, ready, update: persist } = useSiteContentStore<AboutContent>(STORAGE_KEY, aboutSeed);
 
   return (
     <AboutContext.Provider
       value={{
-        content: state.content,
-        ready: state.ready,
-        setIntro: (intro) => persist({ ...state.content, intro }),
-        setClosingText: (closingText) => persist({ ...state.content, closingText }),
+        content,
+        ready,
+        setIntro: (intro) => persist({ ...content, intro }),
+        setClosingText: (closingText) => persist({ ...content, closingText }),
         addWhyChoose: () =>
           persist({
-            ...state.content,
-            whyChoose: [...state.content.whyChoose, { id: "why-" + Math.random().toString(36).slice(2, 8), title: "", desc: "", icon: "" }],
+            ...content,
+            whyChoose: [...content.whyChoose, { id: "why-" + Math.random().toString(36).slice(2, 8), title: "", desc: "", icon: "" }],
           }),
-        updateWhyChoose: (id, patch) =>
-          persist({ ...state.content, whyChoose: state.content.whyChoose.map((w) => (w.id === id ? { ...w, ...patch } : w)) }),
-        removeWhyChoose: (id) => persist({ ...state.content, whyChoose: state.content.whyChoose.filter((w) => w.id !== id) }),
+        updateWhyChoose: (id, patch) => persist({ ...content, whyChoose: content.whyChoose.map((w) => (w.id === id ? { ...w, ...patch } : w)) }),
+        removeWhyChoose: (id) => persist({ ...content, whyChoose: content.whyChoose.filter((w) => w.id !== id) }),
         updateCommitment: (id, patch) =>
-          persist({ ...state.content, commitments: state.content.commitments.map((c) => (c.id === id ? { ...c, ...patch } : c)) }),
+          persist({ ...content, commitments: content.commitments.map((c) => (c.id === id ? { ...c, ...patch } : c)) }),
       }}
     >
       {children}

@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext } from "react";
 import { microchipContentSeed, microchipSeed } from "@/lib/microchip-seed";
 import type { MicrochipPageContent, MicrochipRecord } from "@/lib/microchip-types";
+import { useSiteContentStore } from "@/lib/site-content-store";
 
 const RECORDS_KEY = "cph_microchip_records";
 const CONTENT_KEY = "cph_microchip_content";
@@ -26,81 +27,40 @@ type MicrochipValue = {
 
 const MicrochipContext = createContext<MicrochipValue | null>(null);
 
-function loadRecords(): MicrochipRecord[] {
-  const raw = window.localStorage.getItem(RECORDS_KEY);
-  if (!raw) return microchipSeed;
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : microchipSeed;
-  } catch {
-    return microchipSeed;
-  }
-}
-
-function loadContent(): MicrochipPageContent {
-  const raw = window.localStorage.getItem(CONTENT_KEY);
-  if (!raw) return microchipContentSeed;
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : microchipContentSeed;
-  } catch {
-    return microchipContentSeed;
-  }
-}
-
 export function MicrochipProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ records: MicrochipRecord[]; content: MicrochipPageContent; ready: boolean }>({
-    records: microchipSeed,
-    content: microchipContentSeed,
-    ready: false,
-  });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ records: loadRecords(), content: loadContent(), ready: true });
-  }, []);
-
-  const persistRecords = (records: MicrochipRecord[]) => {
-    window.localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
-    setState((s) => ({ ...s, records, ready: true }));
-  };
-
-  const persistContent = (content: MicrochipPageContent) => {
-    window.localStorage.setItem(CONTENT_KEY, JSON.stringify(content));
-    setState((s) => ({ ...s, content, ready: true }));
-  };
+  const { data: records, ready: recordsReady, update: persistRecords } = useSiteContentStore<MicrochipRecord[]>(RECORDS_KEY, microchipSeed);
+  const { data: content, ready: contentReady, update: persistContent } = useSiteContentStore<MicrochipPageContent>(CONTENT_KEY, microchipContentSeed);
 
   const lookupRecord = (query: string): MicrochipRecord | null => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
-    return state.records.find((m) => m.mcNumber.toLowerCase() === q || m.petName.toLowerCase() === q) ?? null;
+    return records.find((m) => m.mcNumber.toLowerCase() === q || m.petName.toLowerCase() === q) ?? null;
   };
 
   return (
     <MicrochipContext.Provider
       value={{
-        records: state.records,
-        content: state.content,
-        ready: state.ready,
+        records,
+        content,
+        ready: recordsReady && contentReady,
         addRecord: (input) => {
           const id = "mc-" + Date.now();
-          persistRecords([{ id, ...input }, ...state.records]);
+          persistRecords([{ id, ...input }, ...records]);
         },
-        updateRecord: (id, patch) => persistRecords(state.records.map((m) => (m.id === id ? { ...m, ...patch } : m))),
-        removeRecord: (id) => persistRecords(state.records.filter((m) => m.id !== id)),
+        updateRecord: (id, patch) => persistRecords(records.map((m) => (m.id === id ? { ...m, ...patch } : m))),
+        removeRecord: (id) => persistRecords(records.filter((m) => m.id !== id)),
         lookupRecord,
-        setBannerTitle: (bannerTitle) => persistContent({ ...state.content, bannerTitle }),
-        setBannerSubtitle: (bannerSubtitle) => persistContent({ ...state.content, bannerSubtitle }),
-        setSearchCaption: (searchCaption) => persistContent({ ...state.content, searchCaption }),
-        updateSection: (id, patch) =>
-          persistContent({ ...state.content, sections: state.content.sections.map((s) => (s.id === id ? { ...s, ...patch } : s)) }),
+        setBannerTitle: (bannerTitle) => persistContent({ ...content, bannerTitle }),
+        setBannerSubtitle: (bannerSubtitle) => persistContent({ ...content, bannerSubtitle }),
+        setSearchCaption: (searchCaption) => persistContent({ ...content, searchCaption }),
+        updateSection: (id, patch) => persistContent({ ...content, sections: content.sections.map((s) => (s.id === id ? { ...s, ...patch } : s)) }),
         addFaq: () =>
           persistContent({
-            ...state.content,
-            faqs: [...state.content.faqs, { id: "faq-" + Math.random().toString(36).slice(2, 8), q: "New question", a: "Answer goes here." }],
+            ...content,
+            faqs: [...content.faqs, { id: "faq-" + Math.random().toString(36).slice(2, 8), q: "New question", a: "Answer goes here." }],
           }),
-        updateFaq: (id, patch) => persistContent({ ...state.content, faqs: state.content.faqs.map((f) => (f.id === id ? { ...f, ...patch } : f)) }),
-        removeFaq: (id) => persistContent({ ...state.content, faqs: state.content.faqs.filter((f) => f.id !== id) }),
+        updateFaq: (id, patch) => persistContent({ ...content, faqs: content.faqs.map((f) => (f.id === id ? { ...f, ...patch } : f)) }),
+        removeFaq: (id) => persistContent({ ...content, faqs: content.faqs.filter((f) => f.id !== id) }),
       }}
     >
       {children}

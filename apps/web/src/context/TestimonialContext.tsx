@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext } from "react";
 import { testimonialSeed } from "@/lib/testimonial-seed";
 import type { Testimonial } from "@/lib/testimonial-types";
+import { useSiteContentStore } from "@/lib/site-content-store";
 
 const STORAGE_KEY = "cph_testimonials";
 
@@ -16,37 +17,17 @@ type TestimonialValue = {
 
 const TestimonialContext = createContext<TestimonialValue | null>(null);
 
-function loadStored(): Testimonial[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Testimonial[]) : null;
-    return Array.isArray(parsed) && parsed.length ? parsed : testimonialSeed;
-  } catch {
-    return testimonialSeed;
-  }
-}
-
 export function TestimonialProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ testimonials: Testimonial[]; ready: boolean }>({ testimonials: testimonialSeed, ready: false });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ testimonials: loadStored(), ready: true });
-  }, []);
-
-  const persist = (testimonials: Testimonial[]) => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(testimonials));
-    setState({ testimonials, ready: true });
-  };
+  const { data: testimonials, ready, update: persist } = useSiteContentStore<Testimonial[]>(STORAGE_KEY, testimonialSeed);
 
   return (
     <TestimonialContext.Provider
       value={{
-        testimonials: state.testimonials,
-        ready: state.ready,
-        addTestimonial: (input) => persist([{ id: "t-" + Date.now(), ...input }, ...state.testimonials]),
-        updateTestimonial: (id, input) => persist(state.testimonials.map((t) => (t.id === id ? { id, ...input } : t))),
-        removeTestimonial: (id) => persist(state.testimonials.filter((t) => t.id !== id)),
+        testimonials,
+        ready,
+        addTestimonial: (input) => persist([{ id: "t-" + Date.now(), ...input }, ...testimonials]),
+        updateTestimonial: (id, input) => persist(testimonials.map((t) => (t.id === id ? { id, ...input } : t))),
+        removeTestimonial: (id) => persist(testimonials.filter((t) => t.id !== id)),
       }}
     >
       {children}

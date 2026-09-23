@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext } from "react";
 import { faqSeed } from "@/lib/faq-seed";
 import type { FaqPageContent } from "@/lib/faq-types";
+import { useSiteContentStore } from "@/lib/site-content-store";
 
 const STORAGE_KEY = "cph_faq_content";
 
@@ -20,46 +21,22 @@ type FaqValue = {
 
 const FaqContext = createContext<FaqValue | null>(null);
 
-function loadStored(): FaqPageContent {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return faqSeed;
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? parsed : faqSeed;
-  } catch {
-    return faqSeed;
-  }
-}
-
 export function FaqProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<{ content: FaqPageContent; ready: boolean }>({ content: faqSeed, ready: false });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setState({ content: loadStored(), ready: true });
-  }, []);
-
-  const persist = (content: FaqPageContent) => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
-    setState({ content, ready: true });
-  };
+  const { data: content, ready, update: persist } = useSiteContentStore<FaqPageContent>(STORAGE_KEY, faqSeed);
 
   return (
     <FaqContext.Provider
       value={{
-        content: state.content,
-        ready: state.ready,
-        setPageTitle: (pageTitle) => persist({ ...state.content, pageTitle }),
-        setPageSubtitle: (pageSubtitle) => persist({ ...state.content, pageSubtitle }),
-        setContactHeading: (contactHeading) => persist({ ...state.content, contactHeading }),
-        setContactSubtext: (contactSubtext) => persist({ ...state.content, contactSubtext }),
+        content,
+        ready,
+        setPageTitle: (pageTitle) => persist({ ...content, pageTitle }),
+        setPageSubtitle: (pageSubtitle) => persist({ ...content, pageSubtitle }),
+        setContactHeading: (contactHeading) => persist({ ...content, contactHeading }),
+        setContactSubtext: (contactSubtext) => persist({ ...content, contactSubtext }),
         addItem: () =>
-          persist({
-            ...state.content,
-            items: [...state.content.items, { id: "faq-" + Date.now(), cat: "General", q: "New question", a: "Answer goes here." }],
-          }),
-        updateItem: (id, patch) => persist({ ...state.content, items: state.content.items.map((it) => (it.id === id ? { ...it, ...patch } : it)) }),
-        removeItem: (id) => persist({ ...state.content, items: state.content.items.filter((it) => it.id !== id) }),
+          persist({ ...content, items: [...content.items, { id: "faq-" + Date.now(), cat: "General", q: "New question", a: "Answer goes here." }] }),
+        updateItem: (id, patch) => persist({ ...content, items: content.items.map((it) => (it.id === id ? { ...it, ...patch } : it)) }),
+        removeItem: (id) => persist({ ...content, items: content.items.filter((it) => it.id !== id) }),
       }}
     >
       {children}
