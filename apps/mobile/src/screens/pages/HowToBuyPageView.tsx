@@ -1,20 +1,22 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../theme/colors";
-import { HOW_TO_BUY_INTRO, HOW_TO_BUY_STEPS } from "../../lib/static-content";
+import { HOW_TO_BUY_CONTENT } from "../../lib/static-content";
+import { useSiteContent } from "../../lib/site-content";
 
 export default function HowToBuyPageView() {
+  const content = useSiteContent("cph_how_to_buy", HOW_TO_BUY_CONTENT);
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>How to Buy from City Pet House</Text>
-      <Text style={styles.intro}>{HOW_TO_BUY_INTRO}</Text>
+      <Text style={styles.intro}>{content.intro}</Text>
 
-      {HOW_TO_BUY_STEPS.map((step, i) => (
+      {content.steps.map((step, i) => (
         <View key={i} style={styles.stepRow}>
           <View style={styles.stepIconCol}>
             <View style={styles.stepIcon}>
               <Text style={styles.stepIconText}>{step.icon}</Text>
             </View>
-            {i < HOW_TO_BUY_STEPS.length - 1 && <View style={styles.stepLine} />}
+            {i < content.steps.length - 1 && <View style={styles.stepLine} />}
           </View>
           <View style={styles.stepBody}>
             <Text style={styles.stepLabel}>STEP {i + 1}</Text>

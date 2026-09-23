@@ -2,13 +2,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../theme/colors";
 import PlaceholderBox from "../../components/PlaceholderBox";
 import { BLOG_POSTS_FULL } from "../../lib/static-content";
+import { useSiteContent } from "../../lib/site-content";
 
 export default function BlogPageView() {
+  const posts = useSiteContent("cph_blog_posts", BLOG_POSTS_FULL);
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Blog</Text>
       <View style={styles.list}>
-        {BLOG_POSTS_FULL.map((post) => (
+        {posts.map((post) => (
           <Pressable key={post.id} style={styles.card}>
             <PlaceholderBox label="article photo" height={130} />
             <View style={styles.cardBody}>

@@ -23,13 +23,25 @@ import SectionHeader from "../components/SectionHeader";
 import TwoColGrid from "../components/TwoColGrid";
 import PlaceholderBox from "../components/PlaceholderBox";
 import PromoBanner from "../components/PromoBanner";
+import { useSiteContent } from "../lib/site-content";
 
-const HERO_HEADLINE = "Pet products, puppies, adoption & vet care";
-const HERO_SUBTEXT = "Order online, pay by receipt upload — shop, puppies, adoption or vet consults.";
-const HOT_SALE_BANNER_TEXT = "Hot Sale — up to 30% off this week only";
-const MICROCHIP_BANNER_TEXT = "Dog & Cat Microchipping — quick, permanent ID for your pet.";
-const DELIVERY_BANNER_TEXT = "Delivery available across Kathmandu Valley — Kathmandu · Lalitpur · Bhaktapur";
-const GROOMING_BANNER_TEXT = "Professional dog grooming — book your slot today";
+type HomeHeroContent = {
+  heroHeadline: string;
+  heroSubtext: string;
+  hotSaleBannerText: string;
+  microchipBannerText: string;
+  deliveryBannerText: string;
+  groomingBannerText: string;
+};
+
+const HOME_HERO_FALLBACK: HomeHeroContent = {
+  heroHeadline: "Pet products, puppies, adoption & vet care",
+  heroSubtext: "Order online, pay by receipt upload — shop, puppies, adoption or vet consults.",
+  hotSaleBannerText: "Hot Sale — up to 30% off this week only",
+  microchipBannerText: "Dog & Cat Microchipping — quick, permanent ID for your pet.",
+  deliveryBannerText: "Delivery available across Kathmandu Valley — Kathmandu · Lalitpur · Bhaktapur",
+  groomingBannerText: "Professional dog grooming — book your slot today",
+};
 
 function EmptyRailNotice({ text }: { text: string }) {
   return (
@@ -40,6 +52,10 @@ function EmptyRailNotice({ text }: { text: string }) {
 }
 
 export default function HomeScreen() {
+  const hero = useSiteContent("cph_home_content", HOME_HERO_FALLBACK);
+  const testimonials = useSiteContent("cph_testimonials", TESTIMONIALS);
+  const blogPosts = useSiteContent("cph_blog_posts", BLOG_POSTS);
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <AppHeader />
@@ -48,8 +64,8 @@ export default function HomeScreen() {
         <View style={styles.hero}>
           <PlaceholderBox label="cover photo — shop & clinic" height={165} radius={12} />
           <View style={styles.heroTextWrap} pointerEvents="none">
-            <Text style={styles.heroTitle}>{HERO_HEADLINE}</Text>
-            <Text style={styles.heroSubtitle}>{HERO_SUBTEXT}</Text>
+            <Text style={styles.heroTitle}>{hero.heroHeadline}</Text>
+            <Text style={styles.heroSubtitle}>{hero.heroSubtext}</Text>
           </View>
         </View>
 
@@ -66,11 +82,11 @@ export default function HomeScreen() {
           label="banner — pet microchipping"
           height={170}
           variant="button-left"
-          text={MICROCHIP_BANNER_TEXT}
+          text={hero.microchipBannerText}
           buttonLabel="Book Now"
         />
 
-        <PromoBanner label="banner" height={120} variant="pill-center" text={HOT_SALE_BANNER_TEXT} />
+        <PromoBanner label="banner" height={120} variant="pill-center" text={hero.hotSaleBannerText} />
 
         <SectionHeader title="Today's Deals" onSeeAll={() => {}} />
         {TODAYS_DEALS.length > 0 ? (
@@ -91,7 +107,7 @@ export default function HomeScreen() {
         <SectionHeader title="Toys for Your Pet" onSeeAll={() => {}} />
         <TwoColGrid items={PET_TOYS} keyExtractor={(p) => p.id} renderItem={(p) => <ProductCard product={p} />} />
 
-        <PromoBanner label="delivery banner" height={110} variant="pill-center" text={DELIVERY_BANNER_TEXT} />
+        <PromoBanner label="delivery banner" height={110} variant="pill-center" text={hero.deliveryBannerText} />
 
         <SectionHeader title="Shop by Brand" />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.brandRow}>
@@ -107,14 +123,14 @@ export default function HomeScreen() {
           label="big banner — dog grooming services"
           height={220}
           variant="button-left"
-          text={GROOMING_BANNER_TEXT}
+          text={hero.groomingBannerText}
           buttonLabel="Book Now"
           buttonColor="#1F7A4D"
         />
 
         <SectionHeader title="Our Happy Customers" />
         <View style={styles.testimonialList}>
-          {TESTIMONIALS.map((t) => (
+          {testimonials.map((t) => (
             <View key={t.id} style={styles.testimonialCard}>
               <Text style={styles.testimonialQuote}>&quot;{t.quote}&quot;</Text>
               <Text style={styles.testimonialName}>{t.name}</Text>
@@ -124,7 +140,7 @@ export default function HomeScreen() {
 
         <SectionHeader title="Latest from the Blog" />
         <View style={styles.blogList}>
-          {BLOG_POSTS.map((post) => (
+          {blogPosts.map((post) => (
             <Pressable key={post.id} style={styles.blogCard}>
               <PlaceholderBox label="blog photo" height={100} />
               <View style={styles.blogInfo}>

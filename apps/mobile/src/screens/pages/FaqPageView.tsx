@@ -1,29 +1,29 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors } from "../../theme/colors";
-import { FAQ_ITEMS } from "../../lib/static-content";
+import { FAQ_CONTENT } from "../../lib/static-content";
+import { useSiteContent } from "../../lib/site-content";
 
 export default function FaqPageView() {
+  const content = useSiteContent("cph_faq_content", FAQ_CONTENT);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const categories = useMemo(() => ["All", ...Array.from(new Set(FAQ_ITEMS.map((i) => i.cat)))], []);
+  const categories = useMemo(() => ["All", ...Array.from(new Set(content.items.map((i) => i.cat)))], [content.items]);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return FAQ_ITEMS.filter((it) => {
+    return content.items.filter((it) => {
       if (category !== "All" && it.cat !== category) return false;
       if (q && !(it.q.toLowerCase().includes(q) || it.a.toLowerCase().includes(q))) return false;
       return true;
     });
-  }, [category, search]);
+  }, [content.items, category, search]);
 
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Frequently Asked Questions</Text>
-      <Text style={styles.subtitle}>
-        Find answers to common questions about ordering pet products, booking veterinary services, buying puppies, adoption, grooming, and more.
-      </Text>
+      <Text style={styles.title}>{content.pageTitle}</Text>
+      <Text style={styles.subtitle}>{content.pageSubtitle}</Text>
       <TextInput
         value={search}
         onChangeText={setSearch}
@@ -60,8 +60,8 @@ export default function FaqPageView() {
       )}
 
       <View style={styles.contactCard}>
-        <Text style={styles.contactTitle}>Still Have Questions?</Text>
-        <Text style={styles.contactSubtitle}>We are always happy to help pet parents.</Text>
+        <Text style={styles.contactTitle}>{content.contactHeading}</Text>
+        <Text style={styles.contactSubtitle}>{content.contactSubtext}</Text>
         <Text style={styles.contactInfo}>
           City Pet House & Animal Clinic{"\n"}info@citypethouse.com.np · +977-9851313717{"\n"}Gokarneshwor Municipality–6, Kathmandu, Nepal
         </Text>

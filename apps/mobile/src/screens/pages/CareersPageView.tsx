@@ -1,17 +1,19 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors, radius } from "../../theme/colors";
 import PlaceholderBox from "../../components/PlaceholderBox";
-import { CAREER_HEADLINE, CAREER_JOBS } from "../../lib/static-content";
+import { CAREER_CONTENT } from "../../lib/static-content";
+import { useSiteContent } from "../../lib/site-content";
 
 export default function CareersPageView() {
+  const content = useSiteContent("cph_career_content", CAREER_CONTENT);
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <PlaceholderBox label="career banner image" height={160} radius={12} />
-      <Text style={styles.headline}>{CAREER_HEADLINE}</Text>
+      <Text style={styles.headline}>{content.headline}</Text>
 
       <Text style={styles.sectionTitle}>Open Positions</Text>
       <View style={styles.jobList}>
-        {CAREER_JOBS.map((job) => (
+        {content.jobs.map((job) => (
           <View key={job.id} style={styles.jobCard}>
             <PlaceholderBox label="job photo" height={110} radius={10} />
             <Text style={styles.jobTitle}>{job.title}</Text>

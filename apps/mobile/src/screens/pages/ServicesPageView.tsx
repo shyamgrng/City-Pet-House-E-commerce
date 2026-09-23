@@ -2,15 +2,17 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors, radius } from "../../theme/colors";
 import PlaceholderBox from "../../components/PlaceholderBox";
 import { SERVICES } from "../../lib/static-content";
+import { useSiteContent } from "../../lib/site-content";
 
 export default function ServicesPageView() {
+  const services = useSiteContent("cph_services", SERVICES);
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Our Services</Text>
       <Text style={styles.subtitle}>Complete pet care under one roof — from routine checkups to emergency treatment.</Text>
 
       <View style={styles.list}>
-        {SERVICES.map((svc) => (
+        {services.map((svc) => (
           <View key={svc.id} style={styles.card}>
             <PlaceholderBox label="service photo" height={150} />
             <View style={styles.cardBody}>

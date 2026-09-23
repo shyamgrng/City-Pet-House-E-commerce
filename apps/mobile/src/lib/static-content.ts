@@ -2,7 +2,8 @@
 // career-seed.ts, service-seed.ts, blog-seed.ts), so the "..." menu pages read the same as web.
 
 export type FaqItem = { id: string; cat: string; q: string; a: string };
-export const FAQ_ITEMS: FaqItem[] = [
+export type FaqContent = { pageTitle: string; pageSubtitle: string; contactHeading: string; contactSubtext: string; items: FaqItem[] };
+const FAQ_ITEMS: FaqItem[] = [
   { id: "faq-1", cat: "Account & Registration", q: "Do I need an account to purchase products?", a: "Yes. Customers need to create an account before placing an order. Your account helps us manage your orders, delivery details, service bookings, and provide a better shopping experience." },
   { id: "faq-2", cat: "Account & Registration", q: "How do I create an account?", a: "You can create an account by clicking the Register/Login option and providing your name, email address, phone number, and password." },
   { id: "faq-3", cat: "Account & Registration", q: "Can I browse products without creating an account?", a: "Yes. You can browse our products and services without an account. However, account registration is required to purchase products or book services." },
@@ -19,19 +20,30 @@ export const FAQ_ITEMS: FaqItem[] = [
   { id: "faq-21", cat: "Puppy Purchase", q: "What age puppies are available for sale?", a: "Puppies will not be sold before 40 days of age." },
   { id: "faq-23", cat: "Pet Adoption", q: "Can I adopt pets through City Pet House?", a: "Yes. Our adoption platform helps connect pets needing homes with interested adopters." },
 ];
+export const FAQ_CONTENT: FaqContent = {
+  pageTitle: "Frequently Asked Questions",
+  pageSubtitle:
+    "Find answers to common questions about ordering pet products, booking veterinary services, buying puppies, adoption, grooming, and more.",
+  contactHeading: "Still Have Questions?",
+  contactSubtext: "We are always happy to help pet parents.",
+  items: FAQ_ITEMS,
+};
 
 export type HowToBuyStep = { icon: string; title: string; desc: string; items: string[]; note?: string; benefits?: string };
-export const HOW_TO_BUY_INTRO =
-  "Shopping for your pet has never been easier. Follow these simple steps to order quality pet food, accessories, supplements, and pet care products from City Pet House.";
-export const HOW_TO_BUY_STEPS: HowToBuyStep[] = [
-  { icon: "👤", title: "Create Your City Pet House Account", desc: "To place an order, first create your customer account.", items: ["Click \"Register/Login\".", "Enter your name, email, phone number, and password.", "Login to start shopping."], benefits: "Track orders, save delivery details, view purchase history." },
-  { icon: "🛒", title: "Browse and Select Pet Products", desc: "Explore our online store and choose products suitable for your pet.", items: ["Search for your required product.", "Read product details.", "Select quantity.", "Click \"Add to Cart\"."] },
-  { icon: "📋", title: "Review Your Order", desc: "Before checkout, check selected products, confirm quantity, and review the total amount.", items: [] },
-  { icon: "📍", title: "Provide Your Delivery Information", desc: "Enter your correct delivery details — name, contact number, address, and location.", items: [], note: "Please provide accurate contact details to ensure smooth delivery." },
-  { icon: "📱", title: "Complete Your Payment", desc: "City Pet House uses secure QR-based digital payment.", items: ["Select QR Payment option.", "Scan the displayed QR code.", "Complete your payment.", "Save your payment confirmation screenshot."] },
-  { icon: "📤", title: "Submit Your Payment Proof", desc: "After completing payment, upload your payment receipt and click Submit.", items: [], benefits: "Our team will verify your payment before processing your order." },
-  { icon: "🚚", title: "Track Your Order Until Delivery", desc: "You'll receive updates: order received, payment verified, order confirmed, prepared, and dispatched.", items: [] },
-];
+export type HowToBuyContent = { intro: string; steps: HowToBuyStep[] };
+export const HOW_TO_BUY_CONTENT: HowToBuyContent = {
+  intro:
+    "Shopping for your pet has never been easier. Follow these simple steps to order quality pet food, accessories, supplements, and pet care products from City Pet House.",
+  steps: [
+    { icon: "👤", title: "Create Your City Pet House Account", desc: "To place an order, first create your customer account.", items: ["Click \"Register/Login\".", "Enter your name, email, phone number, and password.", "Login to start shopping."], benefits: "Track orders, save delivery details, view purchase history." },
+    { icon: "🛒", title: "Browse and Select Pet Products", desc: "Explore our online store and choose products suitable for your pet.", items: ["Search for your required product.", "Read product details.", "Select quantity.", "Click \"Add to Cart\"."] },
+    { icon: "📋", title: "Review Your Order", desc: "Before checkout, check selected products, confirm quantity, and review the total amount.", items: [] },
+    { icon: "📍", title: "Provide Your Delivery Information", desc: "Enter your correct delivery details — name, contact number, address, and location.", items: [], note: "Please provide accurate contact details to ensure smooth delivery." },
+    { icon: "📱", title: "Complete Your Payment", desc: "City Pet House uses secure QR-based digital payment.", items: ["Select QR Payment option.", "Scan the displayed QR code.", "Complete your payment.", "Save your payment confirmation screenshot."] },
+    { icon: "📤", title: "Submit Your Payment Proof", desc: "After completing payment, upload your payment receipt and click Submit.", items: [], benefits: "Our team will verify your payment before processing your order." },
+    { icon: "🚚", title: "Track Your Order Until Delivery", desc: "You'll receive updates: order received, payment verified, order confirmed, prepared, and dispatched.", items: [] },
+  ],
+};
 
 export type ServiceItem = { id: string; name: string; desc: string };
 export const SERVICES: ServiceItem[] = [
@@ -54,12 +66,15 @@ export const BLOG_POSTS_FULL: BlogPost[] = [
 ];
 
 export type CareerJob = { id: string; title: string; tag: string; desc: string };
-export const CAREER_HEADLINE = "Exciting opportunities and a rewarding career.";
-export const CAREER_JOBS: CareerJob[] = [
-  { id: "job-clinic", title: "Vet Technician (Clinic)", tag: "Full-time · Boudha Clinic", desc: "Assist our vets with checkups, vaccinations, minor procedures & patient care at our Boudha clinic." },
-  { id: "job-field", title: "Vet Technician (Field)", tag: "Full-time · Kathmandu Valley", desc: "Travel to home visits across Kathmandu, Lalitpur & Bhaktapur for house-call consults and treatments." },
-  { id: "job-grooming", title: "Dog Grooming (Grooming Ghar)", tag: "Full-time · Grooming Ghar", desc: "Bathing, styling, nail trims & coat care for dogs of all breeds at our Grooming Ghar studio." },
-];
+export type CareerContent = { headline: string; jobs: CareerJob[] };
+export const CAREER_CONTENT: CareerContent = {
+  headline: "Exciting opportunities and a rewarding career.",
+  jobs: [
+    { id: "job-clinic", title: "Vet Technician (Clinic)", tag: "Full-time · Boudha Clinic", desc: "Assist our vets with checkups, vaccinations, minor procedures & patient care at our Boudha clinic." },
+    { id: "job-field", title: "Vet Technician (Field)", tag: "Full-time · Kathmandu Valley", desc: "Travel to home visits across Kathmandu, Lalitpur & Bhaktapur for house-call consults and treatments." },
+    { id: "job-grooming", title: "Dog Grooming (Grooming Ghar)", tag: "Full-time · Grooming Ghar", desc: "Bathing, styling, nail trims & coat care for dogs of all breeds at our Grooming Ghar studio." },
+  ],
+};
 
 export type AdoptionPost = {
   id: string;
@@ -78,13 +93,16 @@ export const ADOPTION_POSTS: AdoptionPost[] = [
   { id: "ad-2", name: "Luna", breed: "Labrador Mix", sex: "Female", age: "8 months", vaccination: "1st dose done", address: "Patan, Lalitpur", desc: "Energetic pup looking for an active family.", contact: "+977 9807654321", daysLeft: 13 },
 ];
 
+// Field names match the website's PetTag type (apps/web/src/lib/pet-tag-types.ts) exactly, so
+// a live record fetched from Supabase needs no reshaping.
 export type PetTagRecord = {
   tagId: string;
   petName: string;
   breed: string;
   color: string;
   sex: string;
-  age: string;
+  ageYears: number;
+  ageMonths: number;
   microchip?: string;
   ownerName: string;
   phone: string;
@@ -100,7 +118,8 @@ export const PET_TAG_RECORDS: PetTagRecord[] = [
     breed: "Golden Retriever",
     color: "Golden",
     sex: "Male",
-    age: "3 years",
+    ageYears: 3,
+    ageMonths: 0,
     microchip: "941000012345678",
     ownerName: "Rajesh Thapa",
     phone: "+977 9841001001",
@@ -111,20 +130,60 @@ export const PET_TAG_RECORDS: PetTagRecord[] = [
   },
 ];
 
+export function formatTagAge(years: number, months: number): string {
+  if (!years && !months) return "Newborn";
+  const parts: string[] = [];
+  if (years) parts.push(`${years} yr${years === 1 ? "" : "s"}`);
+  if (months) parts.push(`${months} mo`);
+  return parts.join(" ");
+}
+
+// Field names match the website's MicrochipRecord type (apps/web/src/lib/microchip-types.ts) --
+// there's no "species" field there (the clinic just records breed), and the address is built
+// from separate house/municipality/ward/district fields rather than one free-text string.
 export type MicrochipRecord = {
-  chipNumber: string;
+  mcNumber: string;
   petName: string;
-  species: string;
   breed: string;
   ownerName: string;
   phone: string;
-  address: string;
+  houseNo: string;
+  municipality: string;
+  wardNo: string;
+  district: string;
+  provinceNo: string;
+  zone: string;
 };
 export const MICROCHIP_RECORDS: MicrochipRecord[] = [
-  { chipNumber: "941000012345678", petName: "Max", species: "Dog", breed: "Golden Retriever", ownerName: "Rajesh Thapa", phone: "+977 9841001001", address: "Baneshwor, Kathmandu" },
+  {
+    mcNumber: "941000012345678",
+    petName: "Max",
+    breed: "Golden Retriever",
+    ownerName: "Rajesh Thapa",
+    phone: "+977 9841001001",
+    houseNo: "",
+    municipality: "Baneshwor, Kathmandu",
+    wardNo: "",
+    district: "",
+    provinceNo: "",
+    zone: "",
+  },
 ];
 
-export const LEGAL_TERMS = `City Pet House & Animal Clinic ("we", "us") provides pet products, veterinary consultation, adoption listings, and related services through our website and mobile app.
+export function microchipAddress(m: MicrochipRecord): string {
+  return [m.houseNo, m.municipality, m.wardNo ? `Ward ${m.wardNo}` : "", m.district, m.provinceNo, m.zone].filter(Boolean).join(", ");
+}
+
+// Shape matches the website's LegalDoc / { terms, privacy, refund } (apps/web/src/lib/legal-types.ts,
+// context/LegalContext.tsx) so the one Supabase row for "cph_legal_docs" needs no reshaping.
+export type LegalDoc = { effectiveDate: string; lastUpdated: string; content: string };
+export type LegalDocs = { terms: LegalDoc; privacy: LegalDoc; refund: LegalDoc };
+
+export const LEGAL_DOCS: LegalDocs = {
+  terms: {
+    effectiveDate: "",
+    lastUpdated: "",
+    content: `City Pet House & Animal Clinic ("we", "us") provides pet products, veterinary consultation, adoption listings, and related services through our website and mobile app.
 
 By using our services you agree to:
 - Provide accurate account, order, and payment information
@@ -132,9 +191,12 @@ By using our services you agree to:
 - Accept that orders may be cancelled within 12 hours of placing them, before dispatch
 - Understand that online vet consultation is not suitable for emergencies
 
-We reserve the right to update these terms at any time. Continued use of our services means you accept the current version.`;
-
-export const LEGAL_PRIVACY = `We collect the information you provide when creating an account, placing an order, booking a service, or contacting us — name, phone, email, address, and payment receipts.
+We reserve the right to update these terms at any time. Continued use of our services means you accept the current version.`,
+  },
+  privacy: {
+    effectiveDate: "",
+    lastUpdated: "",
+    content: `We collect the information you provide when creating an account, placing an order, booking a service, or contacting us — name, phone, email, address, and payment receipts.
 
 This information is used to:
 - Process and deliver your orders and bookings
@@ -142,10 +204,15 @@ This information is used to:
 - Contact you about your account, orders, or consultations
 - Improve our products and services
 
-We do not sell your personal information to third parties. Payment receipts are used only for internal verification.`;
-
-export const LEGAL_REFUND = `If your order or service cannot be fulfilled (e.g. an item is out of stock, or a vet consult cannot be completed), we will process a refund to your original payment method or offer store credit, your choice.
+We do not sell your personal information to third parties. Payment receipts are used only for internal verification.`,
+  },
+  refund: {
+    effectiveDate: "",
+    lastUpdated: "",
+    content: `If your order or service cannot be fulfilled (e.g. an item is out of stock, or a vet consult cannot be completed), we will process a refund to your original payment method or offer store credit, your choice.
 
 Refund requests should be raised within 7 days of the issue. Delivered products found to be damaged or incorrect are eligible for replacement or refund — please contact us with photos of the item within 48 hours of delivery.
 
-Puppy/pet purchases follow a separate health-assurance policy — contact us directly for details.`;
+Puppy/pet purchases follow a separate health-assurance policy — contact us directly for details.`,
+  },
+};

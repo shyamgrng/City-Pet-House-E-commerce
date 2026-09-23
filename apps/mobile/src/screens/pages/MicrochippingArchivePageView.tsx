@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, radius } from "../../theme/colors";
-import { MICROCHIP_RECORDS, type MicrochipRecord } from "../../lib/static-content";
+import { MICROCHIP_RECORDS, microchipAddress, type MicrochipRecord } from "../../lib/static-content";
+import { useSiteContent } from "../../lib/site-content";
 
 export default function MicrochippingArchivePageView() {
+  const records = useSiteContent("cph_microchip_records", MICROCHIP_RECORDS);
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<MicrochipRecord | null>(null);
 
   const lookup = () => {
-    const found = MICROCHIP_RECORDS.find((r) => r.chipNumber === query.trim());
+    const found = records.find((r) => r.mcNumber === query.trim());
     setResult(found ?? null);
     setSubmitted(true);
   };
@@ -41,13 +43,13 @@ export default function MicrochippingArchivePageView() {
         <View style={styles.resultCard}>
           <Text style={styles.resultLabel}>PET</Text>
           <Text style={styles.resultPetName}>
-            {result.petName} — {result.breed} ({result.species})
+            {result.petName} — {result.breed}
           </Text>
           <View style={styles.divider} />
           <Text style={styles.resultLabel}>OWNER</Text>
           <Text style={styles.resultOwnerName}>{result.ownerName}</Text>
           <Text style={styles.resultLine}>📞 {result.phone}</Text>
-          <Text style={styles.resultLine}>📍 {result.address}</Text>
+          <Text style={styles.resultLine}>📍 {microchipAddress(result)}</Text>
         </View>
       )}
 

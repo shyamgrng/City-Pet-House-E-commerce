@@ -2,15 +2,17 @@ import { useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, radius } from "../../theme/colors";
 import PlaceholderBox from "../../components/PlaceholderBox";
-import { PET_TAG_RECORDS, type PetTagRecord } from "../../lib/static-content";
+import { PET_TAG_RECORDS, formatTagAge, type PetTagRecord } from "../../lib/static-content";
+import { useSiteContent } from "../../lib/site-content";
 
 export default function PetTagArchivePageView() {
+  const tags = useSiteContent("cph_pet_tags", PET_TAG_RECORDS);
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<PetTagRecord | null>(null);
 
   const lookup = () => {
-    const found = PET_TAG_RECORDS.find((r) => r.tagId.toLowerCase() === query.trim().toLowerCase());
+    const found = tags.find((r) => r.tagId.toLowerCase() === query.trim().toLowerCase());
     setResult(found ?? null);
     setSubmitted(true);
   };
@@ -28,7 +30,7 @@ export default function PetTagArchivePageView() {
           </View>
           <Text style={styles.petName}>{result.petName}</Text>
           <Text style={styles.petMeta}>
-            {result.breed} · {result.color} · {result.sex}, {result.age}
+            {result.breed} · {result.color} · {result.sex}, {formatTagAge(result.ageYears, result.ageMonths)}
           </Text>
           {result.microchip && (
             <View style={styles.microchipPill}>

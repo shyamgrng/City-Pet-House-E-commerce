@@ -3,7 +3,8 @@ import { Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from "reac
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../theme/colors";
 import { MORE_MENU_LINKS } from "../lib/menu-links";
-import { LEGAL_PRIVACY, LEGAL_REFUND, LEGAL_TERMS } from "../lib/static-content";
+import { LEGAL_DOCS, type LegalDocs } from "../lib/static-content";
+import { useSiteContent } from "../lib/site-content";
 import { adminUrlFor } from "../lib/admin-links";
 import PageModalHeader from "./PageModalHeader";
 import ServicesPageView from "../screens/pages/ServicesPageView";
@@ -32,7 +33,7 @@ const PAGE_TITLES: Record<string, string> = {
   refund: "Return & Refund",
 };
 
-function renderPage(key: string) {
+function renderPage(key: string, legalDocs: LegalDocs) {
   switch (key) {
     case "services":
       return <ServicesPageView />;
@@ -53,11 +54,11 @@ function renderPage(key: string) {
     case "admin-login":
       return <AdminLoginPageView />;
     case "terms":
-      return <LegalPageView title="Terms & Conditions" body={LEGAL_TERMS} />;
+      return <LegalPageView title="Terms & Conditions" body={legalDocs.terms.content} />;
     case "privacy":
-      return <LegalPageView title="Privacy Policy" body={LEGAL_PRIVACY} />;
+      return <LegalPageView title="Privacy Policy" body={legalDocs.privacy.content} />;
     case "refund":
-      return <LegalPageView title="Return & Refund" body={LEGAL_REFUND} />;
+      return <LegalPageView title="Return & Refund" body={legalDocs.refund.content} />;
     default:
       return null;
   }
@@ -68,6 +69,7 @@ export default function AppHeader() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activePage, setActivePage] = useState<string | null>(null);
+  const legalDocs = useSiteContent("cph_legal_docs", LEGAL_DOCS);
 
   return (
     <View style={styles.wrap}>
@@ -127,7 +129,7 @@ export default function AppHeader() {
             onClose={() => setActivePage(null)}
             adminUrl={activePage ? adminUrlFor(activePage) : undefined}
           />
-          {activePage && renderPage(activePage)}
+          {activePage && renderPage(activePage, legalDocs)}
         </SafeAreaView>
       </Modal>
     </View>
