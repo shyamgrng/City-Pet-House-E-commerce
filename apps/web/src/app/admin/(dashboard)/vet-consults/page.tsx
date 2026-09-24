@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePaymentMethods } from "@/context/PaymentMethodsContext";
 import { useVet } from "@/context/VetContext";
 import { ACTIVITY_TYPE_COLORS, STATUS_COLORS, type ActivityType, type VetBooking } from "@/lib/vet-types";
 
@@ -577,6 +578,8 @@ function PaymentDetailModal({
   const isAwaitingDoctorConfirm = booking.status === "Awaiting Doctor Reconfirm";
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
+  const { methods } = usePaymentMethods();
+  const methodLabel = methods.find((m) => m.key === booking.paymentMethod)?.label ?? booking.paymentMethod ?? "—";
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
@@ -604,13 +607,11 @@ function PaymentDetailModal({
           <div>Amount: Rs. {booking.amount}</div>
         </div>
 
-        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-1.5">Payment Receipt</div>
-        <div className="h-[240px] mb-4 rounded-lg overflow-hidden bg-[#F7F9FA] border border-[#E4E9EC] flex items-center justify-center">
-          {booking.receiptPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={booking.receiptPhoto} alt="payment receipt" className="w-full h-full object-contain" />
-          ) : (
-            <span className="text-xs text-[#8A96A3]">No screenshot uploaded</span>
+        <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-1.5">Payment</div>
+        <div className="rounded-lg bg-[#F7F9FA] border border-[#E4E9EC] p-3.5 mb-4 flex items-center justify-between">
+          <span className="text-[13px] font-semibold text-[#1A2027]">Paid via {methodLabel}</span>
+          {booking.fonepayVerified && (
+            <span className="text-[11px] font-semibold text-[#1F7A4D] bg-[#E7F3EC] rounded-full px-2.5 py-1">✓ Fonepay confirmed</span>
           )}
         </div>
 

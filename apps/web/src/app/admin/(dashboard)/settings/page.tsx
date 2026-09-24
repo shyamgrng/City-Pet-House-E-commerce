@@ -47,7 +47,7 @@ export default function SettingsPage() {
     setSettings: setDeliverySettings,
     ready: deliveryReady,
   } = useDeliverySettings();
-  const { methods, toggleMethod, setQr, ready: methodsReady } = usePaymentMethods();
+  const { methods, toggleMethod, setQr, setBankDetails, ready: methodsReady } = usePaymentMethods();
   const [saved, setSaved] = useState(false);
 
   if (!settingsReady || !deliveryReady || !methodsReady) return null;
@@ -103,36 +103,78 @@ export default function SettingsPage() {
 
       <Card
         title="Accepted Payment Methods"
-        subtitle="Toggle a method active/inactive and upload its QR — active methods with a QR appear at every checkout. Recommended QR image size: 500×500px (square)."
+        subtitle="Toggle a method active/inactive — active methods appear at checkout. Fonepay generates a live QR with the exact amount automatically (needs FONEPAY_* env vars in Vercel); other QR methods use an uploaded QR image (recommended 500×500px) with the amount shown as text next to it."
       >
         {methods.map((m) => (
-          <div key={m.key} className="flex items-center gap-3.5 py-3 border-b border-[#F0F2F4] last:border-0">
+          <div key={m.key} className="flex items-start gap-3.5 py-3 border-b border-[#F0F2F4] last:border-0">
             <button
               type="button"
               onClick={() => {
                 toggleMethod(m.key);
                 setSaved(false);
               }}
-              className="w-5 h-5 rounded-[5px] border flex items-center justify-center text-[13px] text-white shrink-0 cursor-pointer"
+              className="w-5 h-5 mt-0.5 rounded-[5px] border flex items-center justify-center text-[13px] text-white shrink-0 cursor-pointer"
               style={{ background: m.active ? "#1996C8" : "#fff", borderColor: "#C7CDD3" }}
             >
               {m.active ? "✓" : ""}
             </button>
-            <div className="text-[13px] font-semibold text-[#1A2027] flex-1">{m.label}</div>
-            <div className="w-28 shrink-0">
-              <ImageUploadField
-                value={m.qrImage}
-                onChange={(v) => {
-                  setQr(m.key, v);
-                  setSaved(false);
-                }}
-                label="QR"
-                shape="rect"
-                height="h-16"
-                maxWidth={500}
-                maxHeight={500}
-              />
-            </div>
+            <div className="text-[13px] font-semibold text-[#1A2027] flex-1 pt-0.5">{m.label}</div>
+
+            {m.kind === "dynamic-qr" && (
+              <div className="w-52 shrink-0 text-[11px] text-[#8A96A3]">
+                Live QR via Fonepay&apos;s API — no upload needed. Set FONEPAY_MERCHANT_CODE, FONEPAY_USERNAME, FONEPAY_PASSWORD and
+                FONEPAY_SECRET_KEY in Vercel to enable.
+              </div>
+            )}
+
+            {m.kind === "static-qr" && (
+              <div className="w-28 shrink-0">
+                <ImageUploadField
+                  value={m.qrImage}
+                  onChange={(v) => {
+                    setQr(m.key, v);
+                    setSaved(false);
+                  }}
+                  label="QR"
+                  shape="rect"
+                  height="h-16"
+                  maxWidth={500}
+                  maxHeight={500}
+                />
+              </div>
+            )}
+
+            {m.kind === "bank" && (
+              <div className="w-64 shrink-0 flex flex-col gap-1.5">
+                <input
+                  value={m.bankName}
+                  onChange={(e) => {
+                    setBankDetails(m.key, { bankName: e.target.value });
+                    setSaved(false);
+                  }}
+                  placeholder="Bank name"
+                  className="w-full border border-[#E4E9EC] rounded-md px-2.5 py-1.5 text-xs"
+                />
+                <input
+                  value={m.accountName}
+                  onChange={(e) => {
+                    setBankDetails(m.key, { accountName: e.target.value });
+                    setSaved(false);
+                  }}
+                  placeholder="Account name"
+                  className="w-full border border-[#E4E9EC] rounded-md px-2.5 py-1.5 text-xs"
+                />
+                <input
+                  value={m.accountNumber}
+                  onChange={(e) => {
+                    setBankDetails(m.key, { accountNumber: e.target.value });
+                    setSaved(false);
+                  }}
+                  placeholder="Account number"
+                  className="w-full border border-[#E4E9EC] rounded-md px-2.5 py-1.5 text-xs"
+                />
+              </div>
+            )}
           </div>
         ))}
       </Card>

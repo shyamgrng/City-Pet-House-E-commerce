@@ -119,8 +119,15 @@ export type VetBooking = {
   scheduledAt: number | null;
   amount: number;
   status: VetStatus;
+  /** Set once the customer confirms they've paid (via QR/bank transfer) -- kept as a boolean
+   * for backward compatibility with bookings from before receipt upload was removed. */
   paymentReceiptUploaded: boolean;
-  receiptPhoto: string;
+  /** Absent for bookings paid after receipt upload was removed in favor of QR/bank payment. */
+  receiptPhoto?: string;
+  paymentMethod?: string;
+  /** Set only for Fonepay payments once its status API confirms the transfer went through --
+   * a convenience signal for admin, never a substitute for their manual approval. */
+  fonepayVerified?: boolean;
   callStartedByDoctor: boolean;
   chatMessages: ChatMessage[];
   clientDocuments: SharedDoc[];

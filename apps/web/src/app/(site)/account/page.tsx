@@ -16,7 +16,7 @@ import { daysLeft, isExpired, type AdoptionPost } from "@/lib/adoption-types";
 import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import { isValidEmail } from "@/lib/email-format";
-import { STATUS_COLORS as ORDER_STATUS_COLORS } from "@/lib/order-types";
+import { orderStatusLabel, STATUS_COLORS as ORDER_STATUS_COLORS } from "@/lib/order-types";
 import { isValidNepalPhone } from "@/lib/phone";
 import { coverPhoto, coverPhotoAlt } from "@/lib/pet-types";
 import { STATUS_COLORS as VET_STATUS_COLORS } from "@/lib/vet-types";
@@ -154,7 +154,7 @@ function OrdersTab({ ownerId }: { ownerId: string }) {
             </div>
           </div>
           <div className="text-[11px] font-semibold" style={{ color: ORDER_STATUS_COLORS[o.status] }}>
-            {o.status}
+            {orderStatusLabel(o.status)}
           </div>
         </Link>
       ))}

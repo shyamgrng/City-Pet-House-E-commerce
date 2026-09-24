@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import MediaSlot from "@/components/MediaSlot";
+import PaymentMethodPanel from "@/components/PaymentMethodPanel";
 import PhoneInput from "@/components/PhoneInput";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -16,7 +17,6 @@ import type { Account } from "@/lib/auth-types";
 import { formatRs } from "@/lib/catalog-types";
 import type { CartItem } from "@/lib/cart-types";
 import { calculateCourierCost, calculateDeliveryFee, type CourierCostResult, type DeliveryFeeResult } from "@/lib/delivery-fee";
-import { IMAGE_ACCEPT, isAllowedImageFile, resizeImageFile } from "@/lib/image-upload";
 import { isValidNepalPhone } from "@/lib/phone";
 
 function useCartDeliveryFee(items: CartItem[]) {
@@ -157,11 +157,9 @@ function CheckoutSection({
   const DELIVERY_FEE = deliveryResult.fee;
   const [address, setAddress] = useState(user.address);
   const [phone, setPhone] = useState(user.phone);
-  const [receiptPhoto, setReceiptPhoto] = useState("");
-  const [receiptUploading, setReceiptUploading] = useState(false);
+  const [selectedMethodKey, setSelectedMethodKey] = useState(activeMethods[0]?.key ?? "");
+  const [fonepayVerified, setFonepayVerified] = useState(false);
   const [error, setError] = useState("");
-  const [previewQr, setPreviewQr] = useState<{ src: string; label: string } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   // A saveError left over from an earlier, unrelated failed save (e.g. a previous order
   // attempt) must not be shown as if it belonged to this fresh checkout session.
@@ -170,23 +168,14 @@ function CheckoutSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFile = async (file: File | undefined) => {
-    if (!file) return;
-    setError("");
-    if (!isAllowedImageFile(file)) {
-      setError("Please choose an image file (JPEG, PNG, GIF, SVG, TIFF, or RAW).");
-      return;
+  // The seed's payment methods render first (before live data loads); once the real list
+  // arrives, fall back off a method that turned out to be inactive/missing.
+  useEffect(() => {
+    if (activeMethods.length > 0 && !activeMethods.some((m) => m.key === selectedMethodKey)) {
+      setSelectedMethodKey(activeMethods[0].key);
     }
-    setReceiptUploading(true);
-    try {
-      const dataUrl = await resizeImageFile(file, 1000, 1400);
-      setReceiptPhoto(dataUrl);
-    } catch {
-      setError("Could not process that image — try a different file.");
-    } finally {
-      setReceiptUploading(false);
-    }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMethods]);
 
   const submit = () => {
     if (items.length === 0) {
@@ -201,8 +190,8 @@ function CheckoutSection({
       setError("Enter a valid 10-digit phone number.");
       return;
     }
-    if (!receiptPhoto) {
-      setError("Please upload your payment receipt to continue.");
+    if (!selectedMethodKey) {
+      setError("Please choose a payment method.");
       return;
     }
     const id = placeOrder({
@@ -217,7 +206,8 @@ function CheckoutSection({
       courierCost: courierResult.cost,
       courierName: courierResult.courierName,
       total,
-      receiptPhoto,
+      paymentMethod: selectedMethodKey,
+      fonepayVerified,
     });
     clear();
     router.push(`/order/${id}`);
@@ -264,71 +254,26 @@ function CheckoutSection({
       </div>
 
       <div className="bg-[#EAF4F9] border border-[#CFE6F1] rounded-xl p-5 mb-4">
-        <div className="text-sm font-bold text-[#1A2027] mb-1">Payment Instructions</div>
+        <div className="text-sm font-bold text-[#1A2027] mb-1">Payment</div>
         <div className="text-xs text-[#5B6773] mb-4 leading-relaxed">
-          Pay via any of the QR codes below. Upload your receipt screenshot — your order will be held for 6 hours pending admin
-          approval.
+          Choose how you&apos;d like to pay, then confirm below once you&apos;ve sent the payment — your order will be held pending
+          admin approval.
         </div>
-        <div className="flex gap-3 justify-center mb-4 flex-wrap">
-          {activeMethods.map((pm) => (
-            <div key={pm.key} className="text-center">
-              <div
-                onClick={() => pm.qrImage && setPreviewQr({ src: pm.qrImage, label: pm.label })}
-                className="w-[92px] h-[92px] mb-1 rounded-lg bg-white overflow-hidden"
-                style={{ cursor: pm.qrImage ? "zoom-in" : "default" }}
-              >
-                <MediaSlot src={pm.qrImage} label="QR" className="w-full h-full text-[9px] font-mono" />
-              </div>
-              <div className="text-[11px] font-semibold text-[#1A2027]">{pm.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {previewQr && (
-          <div
-            onClick={() => setPreviewQr(null)}
-            className="fixed inset-0 bg-black/70 flex flex-col items-center justify-center z-[70] p-6"
-          >
-            <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-5 max-w-[92vw]">
-              <div className="text-center text-sm font-bold text-[#1A2027] mb-3">{previewQr.label}</div>
-              {/* eslint-disable-next-line @next/next/no-img-element -- admin-uploaded data: URL, shown full-size for scanning */}
-              <img src={previewQr.src} alt={`${previewQr.label} QR code`} className="w-[min(80vw,340px)] h-[min(80vw,340px)] object-contain mx-auto" />
-            </div>
-            <button
-              onClick={() => setPreviewQr(null)}
-              className="mt-4 text-white text-sm font-semibold bg-white/15 px-5 py-2 rounded-lg cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        )}
-
-        <div className="text-xs font-semibold text-[#3A4652] mb-1.5">
-          Upload Payment Receipt <span className="text-[#D64545]">*</span>
-        </div>
-        <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
-        {receiptPhoto ? (
-          <div className="mb-1">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={receiptPhoto} alt="payment receipt" className="w-full max-h-[220px] object-contain rounded-lg border border-[#C7DCE6] bg-white mb-2" />
-            <button onClick={() => fileRef.current?.click()} className="text-xs font-semibold text-primary cursor-pointer">
-              Replace
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => fileRef.current?.click()}
-            disabled={receiptUploading}
-            className="w-full h-[120px] mb-1 rounded-lg border-2 border-dashed border-[#C7DCE6] bg-white flex items-center justify-center text-xs text-[#8A96A3] cursor-pointer"
-          >
-            {receiptUploading ? "Processing photo…" : "Drop your payment receipt screenshot"}
-          </button>
-        )}
+        <PaymentMethodPanel
+          methods={activeMethods}
+          amount={total}
+          reference={`cart-${user.id}`}
+          remarks1="City Pet House"
+          remarks2="Order Payment"
+          selectedKey={selectedMethodKey}
+          onSelect={setSelectedMethodKey}
+          onFonepayVerifiedChange={setFonepayVerified}
+        />
       </div>
 
       {(error || saveError) && <div className="text-xs text-[#D64545] mb-3">{error || saveError}</div>}
       <button onClick={submit} className="w-full bg-primary text-white text-center py-3.5 rounded-[9px] text-sm font-semibold cursor-pointer">
-        Place Order &amp; Upload Receipt
+        I&apos;ve Paid — Place Order
       </button>
     </>
   );

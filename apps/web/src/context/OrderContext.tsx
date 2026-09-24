@@ -30,7 +30,8 @@ type PlaceOrderInput = {
   courierCost?: number;
   courierName?: string;
   total: number;
-  receiptPhoto: string;
+  paymentMethod: string;
+  fonepayVerified?: boolean;
 };
 
 type OrderValue = {

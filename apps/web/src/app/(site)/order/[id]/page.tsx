@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useOrder } from "@/context/OrderContext";
 import { formatRs } from "@/lib/catalog-types";
-import { orderTimeline, STATUS_COLORS } from "@/lib/order-types";
+import { orderStatusLabel, orderTimeline, STATUS_COLORS } from "@/lib/order-types";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -96,7 +96,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
                 {step.key === "receipt" && (
                   <div className="bg-[#F7F9FA] border border-[#E4E9EC] rounded-lg px-3.5 py-3 mt-2.5 text-xs text-[#3A4652]">
-                    📎 Payment receipt uploaded — held for admin review, usually within a few hours
+                    💳 {order.fonepayVerified ? "Payment confirmed via Fonepay" : "Payment submitted"} — held for admin review, usually
+                    within a few hours
                   </div>
                 )}
 
@@ -114,7 +115,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <div className="text-xs text-[#5B6773] mt-0.5">📞 {order.ownerPhone}</div>
         <div className="text-xs text-[#5B6773] mt-0.5">📍 {order.address}</div>
         <div className="text-[11px] font-bold mt-2.5" style={{ color: STATUS_COLORS[order.status] }}>
-          Status: {order.status}
+          Status: {orderStatusLabel(order.status)}
         </div>
       </div>
     </div>

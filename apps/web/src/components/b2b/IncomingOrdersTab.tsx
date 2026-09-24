@@ -8,7 +8,7 @@ import { useCatalog } from "@/context/CatalogContext";
 import { useOrder } from "@/context/OrderContext";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { getFulfillment, ordersNeedingFulfillment } from "@/lib/order-fulfillment";
-import type { Order } from "@/lib/order-types";
+import { orderStatusLabel, type Order } from "@/lib/order-types";
 
 export default function IncomingOrdersTab() {
   const { supplier } = useB2BAuth();
@@ -153,7 +153,7 @@ function SupplierOrderModal({
 
         <div className="flex justify-between items-center py-2.5 border-t border-b border-[#EEF1F3] mb-3.5">
           <div className="text-xs text-[#5B6773]">Payment</div>
-          <div className="text-xs font-semibold text-[#1F7A4D]">{order.status}</div>
+          <div className="text-xs font-semibold text-[#1F7A4D]">{orderStatusLabel(order.status)}</div>
         </div>
 
         <div className="text-[11px] font-bold text-[#8A96A3] uppercase mb-2">Product List</div>

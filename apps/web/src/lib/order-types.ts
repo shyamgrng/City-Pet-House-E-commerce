@@ -50,7 +50,12 @@ export type Order = {
   courierCost?: number;
   courierName?: string;
   status: OrderStatus;
-  receiptPhoto: string;
+  /** Absent for orders placed after receipt upload was removed in favor of QR/bank payment. */
+  receiptPhoto?: string;
+  paymentMethod: string;
+  /** Set only for Fonepay payments once its status API confirms the transfer went through --
+   * a convenience signal for admin, never a substitute for their manual approval. */
+  fonepayVerified?: boolean;
   rejectReason?: string;
   createdAt: number;
   approvedAt?: number;
@@ -62,6 +67,13 @@ export type Order = {
   /** Absent for orders with no B2B-supplied items, or before a supplier has interacted with theirs. */
   supplierFulfillments?: SupplierFulfillment[];
 };
+
+/** Display text for a status — "Receipt Uploaded" predates removing receipt upload and would
+ * now read as if a receipt is still involved, so it's shown as "Awaiting Approval" instead.
+ * The underlying stored value is left unchanged so existing comparisons/filters keep working. */
+export function orderStatusLabel(status: OrderStatus): string {
+  return status === "Receipt Uploaded" ? "Awaiting Approval" : status;
+}
 
 export const STATUS_COLORS: Record<OrderStatus, string> = {
   "Receipt Uploaded": "#C88A19",
@@ -84,7 +96,7 @@ export function orderTimeline(order: Order): TimelineStep[] {
   const r = rank[order.status];
   return [
     { key: "placed", title: "Order Placed", subtitle: "Order confirmed · emailed to you & admin", icon: "1", done: true },
-    { key: "receipt", title: "Receipt Uploaded", subtitle: "Payment receipt submitted for review", icon: "📎", done: true },
+    { key: "receipt", title: "Payment Submitted", subtitle: "Your payment is waiting for admin approval", icon: "💳", done: true },
     {
       key: "approved",
       title: "Payment Approved",

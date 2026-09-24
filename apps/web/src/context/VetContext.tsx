@@ -84,7 +84,7 @@ type VetValue = {
   toggleAvailabilitySlot: (doctorId: string, date: string, time: string) => void;
   toggleWebVetActive: () => void;
   bookConsult: (input: NewBookingInput) => VetBooking | null;
-  submitPayment: (bookingId: string, receiptPhoto: string) => boolean;
+  submitPayment: (bookingId: string, paymentMethod: string, fonepayVerified: boolean) => boolean;
   approvePayment: (bookingId: string) => void;
   rejectPayment: (bookingId: string, reason: string) => void;
   finalizeBooking: (bookingId: string) => void;
@@ -519,7 +519,6 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
       id,
       status: "Pending Payment",
       paymentReceiptUploaded: false,
-      receiptPhoto: "",
       callStartedByDoctor: false,
       chatMessages: [],
       clientDocuments: [],
@@ -558,8 +557,8 @@ export function VetProvider({ children }: { children: React.ReactNode }) {
     return booking;
   };
 
-  const submitPayment = (bookingId: string, receiptPhoto: string): boolean => {
-    const ok = updateBooking(bookingId, { paymentReceiptUploaded: true, receiptPhoto, status: "Payment Review" as VetStatus });
+  const submitPayment = (bookingId: string, paymentMethod: string, fonepayVerified: boolean): boolean => {
+    const ok = updateBooking(bookingId, { paymentReceiptUploaded: true, paymentMethod, fonepayVerified, status: "Payment Review" as VetStatus });
     if (!ok) return false;
     const booking = state.bookings.find((b) => b.id === bookingId);
     if (booking) logActivity("Payment", `${booking.ownerName} submitted a payment receipt for approval`);

@@ -6,13 +6,13 @@ import { useCatalog } from "@/context/CatalogContext";
 import { useCourierAuth } from "@/context/CourierAuthContext";
 import { useDelivery } from "@/context/DeliveryContext";
 import { useOrder } from "@/context/OrderContext";
+import { usePaymentMethods } from "@/context/PaymentMethodsContext";
 import type { B2BProductSubmission } from "@/lib/b2b-types";
 import type { CourierAccount } from "@/lib/courier-auth-types";
 import { STATUS_COLORS, type Delivery } from "@/lib/delivery-types";
 import { supplierForProduct } from "@/lib/order-fulfillment";
-import { STATUS_COLORS as ORDER_STATUS_COLORS, type Order } from "@/lib/order-types";
+import { orderStatusLabel, STATUS_COLORS as ORDER_STATUS_COLORS, type Order } from "@/lib/order-types";
 import type { RefundRecord } from "@/lib/refund-types";
-import MediaSlot from "@/components/MediaSlot";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 
 const deliveryTabDefs = [
@@ -34,7 +34,7 @@ type ActivityEntry = { ts: number; activity: string; order: string; type: string
 function buildActivityLog(orders: Order[], deliveries: Delivery[], refunds: RefundRecord[]): ActivityEntry[] {
   const entries: ActivityEntry[] = [];
   for (const o of orders) {
-    entries.push({ ts: o.createdAt, activity: `Receipt submitted for review — Rs. ${o.total.toLocaleString("en-IN")}`, order: o.id, type: "Payment" });
+    entries.push({ ts: o.createdAt, activity: `Payment submitted for review — Rs. ${o.total.toLocaleString("en-IN")}`, order: o.id, type: "Payment" });
     if (o.status === "Payment Approved" || o.status === "On the Way" || o.status === "Delivered") {
       if (o.approvedAt) entries.push({ ts: o.approvedAt, activity: `Payment approved — Rs. ${o.total.toLocaleString("en-IN")}`, order: o.id, type: "Payment" });
     }
@@ -193,9 +193,9 @@ export default function DeliveriesPage() {
       </div>
 
       {tab === "payments" && (
-        <Section title="Payment Queue" subtitle="Receipts awaiting verification — approve to move to Orders for packing">
+        <Section title="Payment Queue" subtitle="Payments awaiting verification — approve to move to Orders for packing">
           {paymentQueue.length === 0 ? (
-            <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">No receipts awaiting review</div>
+            <div className="bg-white border border-[#E4E9EC] rounded-[10px] p-6 text-center text-xs text-[#8A96A3]">No payments awaiting review</div>
           ) : (
             <div className="bg-white border border-[#E4E9EC] rounded-[10px] overflow-hidden">
               {paymentQueue.map((o) => (
@@ -308,7 +308,7 @@ export default function DeliveriesPage() {
       )}
 
       {tab === "rejected" && (
-        <Section title="Rejected Payments" subtitle="Receipts declined by admin">
+        <Section title="Rejected Payments" subtitle="Payments declined by admin">
           {rejectedOrders.length === 0 ? (
             <EmptyRow show />
           ) : (
@@ -539,6 +539,8 @@ function PaymentQueueRow({
 }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
+  const { methods } = usePaymentMethods();
+  const methodLabel = methods.find((m) => m.key === order.paymentMethod)?.label ?? order.paymentMethod ?? "—";
   const fmtTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   return (
@@ -548,8 +550,9 @@ function PaymentQueueRow({
         <div>{order.ownerName}</div>
         <div className="font-semibold">Rs. {order.total.toLocaleString("en-IN")}</div>
         <div className="text-[11px] text-[#5B6773]">{fmtTime(order.createdAt)}</div>
-        <button onClick={onViewReceipt} className="w-9 h-9 rounded-md overflow-hidden border border-[#E4E9EC] cursor-pointer relative">
-          <MediaSlot src={order.receiptPhoto} label="receipt" className="absolute inset-0 w-full h-full" />
+        <button onClick={onViewReceipt} className="text-left cursor-pointer">
+          <div className="text-[11px] font-semibold text-[#1A2027]">{methodLabel}</div>
+          {order.fonepayVerified && <div className="text-[10px] font-semibold text-[#1F7A4D]">✓ Confirmed</div>}
         </button>
         <div className="flex gap-2">
           <ActionBtn color="#1F7A4D" onClick={() => onApprove(order)}>
@@ -675,22 +678,22 @@ function PaymentReceiptModal({
 }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
+  const { methods } = usePaymentMethods();
+  const methodLabel = methods.find((m) => m.key === order.paymentMethod)?.label ?? order.paymentMethod ?? "—";
   const fmtTime = (ts: number) => new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl p-6 w-[420px] max-h-[88vh] overflow-auto">
         <div className="flex justify-between items-center mb-4">
-          <div className="text-[15px] font-bold text-[#1A2027]">Payment Receipt — {order.id}</div>
+          <div className="text-[15px] font-bold text-[#1A2027]">Payment — {order.id}</div>
           <div onClick={onClose} className="text-base text-[#8A96A3] cursor-pointer">✕</div>
         </div>
 
-        <div className="h-[280px] mb-4 rounded-lg overflow-hidden bg-[#F7F9FA] border border-dashed border-[#C7CDD3] flex items-center justify-center">
-          {order.receiptPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={order.receiptPhoto} alt="payment receipt" className="w-full h-full object-contain" />
-          ) : (
-            <span className="text-xs text-[#8A96A3]">No screenshot uploaded</span>
+        <div className="rounded-lg bg-[#F7F9FA] border border-[#E4E9EC] p-4 mb-4 flex items-center justify-between">
+          <span className="text-[13px] font-semibold text-[#1A2027]">Paid via {methodLabel}</span>
+          {order.fonepayVerified && (
+            <span className="text-[11px] font-semibold text-[#1F7A4D] bg-[#E7F3EC] rounded-full px-2.5 py-1">✓ Fonepay confirmed</span>
           )}
         </div>
 
@@ -799,7 +802,7 @@ function OrderDetailModal({
         <div className="flex justify-between items-center py-2.5 border-t border-b border-[#EEF1F3] mb-3.5">
           <div className="text-xs text-[#5B6773]">Payment</div>
           <div className="text-xs font-semibold" style={{ color: ORDER_STATUS_COLORS[order.status] }}>
-            {order.status}
+            {orderStatusLabel(order.status)}
           </div>
         </div>
 

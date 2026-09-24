@@ -4,6 +4,7 @@ import { useB2B } from "@/context/B2BContext";
 import { useB2BAuth } from "@/context/B2BAuthContext";
 import { useOrder } from "@/context/OrderContext";
 import { getFulfillment, ordersSentBySupplier } from "@/lib/order-fulfillment";
+import { orderStatusLabel } from "@/lib/order-types";
 import { myProductIds } from "@/lib/b2b-analytics";
 
 export default function StatusTab() {
@@ -63,7 +64,7 @@ export default function StatusTab() {
                   {itemsSummary(o)} · {fmt(o.total)}
                 </div>
               </div>
-              <div className="text-[11px] font-bold text-[#1F7A4D] shrink-0 ml-3">{o.status}</div>
+              <div className="text-[11px] font-bold text-[#1F7A4D] shrink-0 ml-3">{orderStatusLabel(o.status)}</div>
             </div>
           ))
         )}

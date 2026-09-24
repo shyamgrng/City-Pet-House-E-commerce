@@ -72,9 +72,9 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
       <div className="px-4 md:px-8 py-16 flex justify-center">
         <div className="max-w-[720px] w-full text-center bg-[#FDEDEC] border border-[#F3C7C3] rounded-2xl px-12 py-14">
           <div className="text-5xl mb-4">✕</div>
-          <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Payment Receipt Rejected</div>
+          <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Payment Rejected</div>
           <div className="text-base text-[#8A3A34] leading-relaxed mb-4">
-            We couldn&apos;t verify the payment receipt for your consult with {booking.doctorName}.
+            We couldn&apos;t verify your payment for the consult with {booking.doctorName}.
           </div>
           {booking.rejectReason && (
             <div className="bg-white border border-[#F3C7C3] rounded-[10px] px-[18px] py-3.5 text-[13px] text-[#8A3A34] font-semibold inline-block mb-4">
@@ -105,7 +105,7 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
             href={`/vet/payment/${booking.id}`}
             className="bg-[#1F7A4D] text-white px-[26px] py-3.5 rounded-[9px] text-[15px] font-semibold inline-block"
           >
-            Upload Payment Receipt →
+            Pay Now →
           </Link>
         </div>
       </div>
@@ -119,8 +119,9 @@ export default function VetStatusPage({ params }: { params: Promise<{ id: string
           <div className="text-5xl mb-4">⏳</div>
           <div className="font-heading font-bold text-2xl text-[#1A2027] mb-3">Payment Submitted</div>
           <div className="text-base text-[#6B5D2E] leading-relaxed">
-            Thanks {booking.ownerName} — we&apos;ve received your payment receipt for your <strong>Vet Consult</strong> with{" "}
-            <strong>{booking.doctorName}</strong>. Our team is verifying it now and you&apos;ll be notified the moment it&apos;s approved.
+            Thanks {booking.ownerName} — {booking.fonepayVerified ? "we've confirmed your Fonepay payment" : "we've received your payment"}{" "}
+            for your <strong>Vet Consult</strong> with <strong>{booking.doctorName}</strong>. Our team is verifying it now and
+            you&apos;ll be notified the moment it&apos;s approved.
           </div>
         </div>
       </div>
