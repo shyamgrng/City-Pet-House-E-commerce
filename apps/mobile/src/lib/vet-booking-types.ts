@@ -15,7 +15,8 @@ export type VetBooking = {
   petSpecies: string;
   petAge: string;
   reason: string;
-  receiptUri: string;
+  paymentMethod?: string;
+  fonepayVerified?: boolean;
   status: VetStatus;
   invoiceNumber: string;
 };

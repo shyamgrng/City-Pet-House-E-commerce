@@ -137,7 +137,7 @@ export default function VetStatusView({
         <Text style={styles.cardTitle}>Payment Approved</Text>
         {status === "Payment Review" ? (
           <View style={styles.innerNote}>
-            <Text style={styles.innerNoteText}>Verifying your payment receipt…</Text>
+            <Text style={styles.innerNoteText}>Verifying your payment…</Text>
           </View>
         ) : status === "Awaiting Doctor Reconfirm" ? (
           <>

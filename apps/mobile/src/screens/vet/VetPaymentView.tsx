@@ -1,11 +1,10 @@
-import * as ImagePicker from "expo-image-picker";
-import { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors, radius } from "../../theme/colors";
-import PlaceholderBox from "../../components/PlaceholderBox";
+import PaymentMethodPanel from "../../components/PaymentMethodPanel";
+import { PAYMENT_METHODS_FALLBACK } from "../../lib/payment-methods";
+import { useSiteContent } from "../../lib/site-content";
 import type { VetBooking } from "../../lib/vet-booking-types";
-
-const PAYMENT_METHODS = ["eSewa", "Khalti", "Bank Transfer"];
 
 export default function VetPaymentView({
   booking,
@@ -14,33 +13,27 @@ export default function VetPaymentView({
 }: {
   booking: VetBooking;
   onBack: () => void;
-  onSubmit: (receiptUri: string) => void;
+  onSubmit: (paymentMethod: string, fonepayVerified: boolean) => void;
 }) {
-  const [receiptUri, setReceiptUri] = useState("");
+  const methods = useSiteContent("cph_payment_methods", PAYMENT_METHODS_FALLBACK);
+  const activeMethods = methods.filter((m) => m.active);
+  const [selectedMethodKey, setSelectedMethodKey] = useState(activeMethods[0]?.key ?? "");
+  const [fonepayVerified, setFonepayVerified] = useState(false);
   const [error, setError] = useState("");
 
-  const pickReceipt = async () => {
-    setError("");
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError("We need permission to access your photos to upload the receipt.");
-      return;
+  useEffect(() => {
+    if (activeMethods.length > 0 && !activeMethods.some((m) => m.key === selectedMethodKey)) {
+      setSelectedMethodKey(activeMethods[0].key);
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setReceiptUri(result.assets[0].uri);
-    }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMethods]);
 
   const submit = () => {
-    if (!receiptUri) {
-      setError("Please upload your payment receipt to continue.");
+    if (!selectedMethodKey) {
+      setError("Please choose a payment method.");
       return;
     }
-    onSubmit(receiptUri);
+    onSubmit(selectedMethodKey, fonepayVerified);
   };
 
   return (
@@ -49,40 +42,24 @@ export default function VetPaymentView({
         <Text style={styles.backLink}>← Back</Text>
       </Pressable>
       <Text style={styles.title}>Consult Fee Payment</Text>
-      <Text style={styles.subtitle}>Pay via any of the QR codes below, then upload your receipt screenshot. Your booking is held pending admin approval.</Text>
+      <Text style={styles.subtitle}>Choose how you&apos;d like to pay, then confirm below once you&apos;ve sent the payment. Your booking is held pending admin approval.</Text>
 
       <View style={styles.feeCard}>
-        <Text style={styles.feeLabel}>Consultation Fee</Text>
-        <Text style={styles.feeAmount}>Rs. {booking.amount}</Text>
-        <View style={styles.qrRow}>
-          {PAYMENT_METHODS.map((pm) => (
-            <View key={pm} style={styles.qrItem}>
-              <PlaceholderBox label="QR" height={90} radius={10} />
-              <Text style={styles.qrLabel}>{pm}</Text>
-            </View>
-          ))}
-        </View>
+        <PaymentMethodPanel
+          methods={activeMethods}
+          amount={booking.amount}
+          reference={`vet-${booking.invoiceNumber}`}
+          remarks1="City Pet House"
+          remarks2="Vet Consult"
+          selectedKey={selectedMethodKey}
+          onSelect={setSelectedMethodKey}
+          onFonepayVerifiedChange={setFonepayVerified}
+        />
       </View>
-
-      <Text style={styles.uploadLabel}>
-        Upload Payment Receipt <Text style={styles.required}>*</Text>
-      </Text>
-      {receiptUri ? (
-        <View style={styles.receiptWrap}>
-          <Image source={{ uri: receiptUri }} style={styles.receiptImage} resizeMode="contain" />
-          <Pressable onPress={pickReceipt}>
-            <Text style={styles.replaceLink}>Replace</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <Pressable onPress={pickReceipt} style={styles.dropZone}>
-          <Text style={styles.dropZoneText}>Tap to upload your payment screenshot</Text>
-        </Pressable>
-      )}
 
       {error !== "" && <Text style={styles.error}>{error}</Text>}
       <Pressable onPress={submit} style={styles.submitButton}>
-        <Text style={styles.submitButtonText}>Submit for Approval</Text>
+        <Text style={styles.submitButtonText}>I&apos;ve Paid — Submit for Approval</Text>
       </Pressable>
     </ScrollView>
   );
@@ -93,20 +70,8 @@ const styles = StyleSheet.create({
   backLink: { fontSize: 13, fontWeight: "600", color: colors.primary, marginBottom: 14 },
   title: { fontWeight: "700", fontSize: 20, color: colors.text, textAlign: "center", marginBottom: 6 },
   subtitle: { fontSize: 13, color: "#5B6773", textAlign: "center", marginBottom: 18, lineHeight: 18 },
-  feeCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 18, alignItems: "center", marginBottom: 18 },
-  feeLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 6 },
-  feeAmount: { fontWeight: "700", fontSize: 22, color: colors.text, marginBottom: 16 },
-  qrRow: { flexDirection: "row", gap: 12 },
-  qrItem: { alignItems: "center", gap: 6, width: 90 },
-  qrLabel: { fontSize: 11, fontWeight: "600", color: colors.text },
-  uploadLabel: { fontSize: 12, fontWeight: "600", color: "#3A4652", marginBottom: 8 },
-  required: { color: colors.error },
-  receiptWrap: { marginBottom: 16, gap: 8 },
-  receiptImage: { width: "100%", height: 220, borderRadius: 10, borderWidth: 1, borderColor: colors.border },
-  replaceLink: { fontSize: 12, fontWeight: "600", color: colors.primary },
-  dropZone: { height: 150, marginBottom: 16, borderRadius: 10, borderWidth: 2, borderStyle: "dashed", borderColor: colors.border, alignItems: "center", justifyContent: "center" },
-  dropZoneText: { fontSize: 12, color: colors.textMuted },
-  error: { fontSize: 12, color: colors.error, marginBottom: 10 },
+  feeCard: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 18, marginBottom: 18 },
+  error: { fontSize: 12, color: colors.error, marginBottom: 10, textAlign: "center" },
   submitButton: { backgroundColor: colors.primary, borderRadius: radius.button, paddingVertical: 14, alignItems: "center" },
   submitButtonText: { color: colors.white, fontSize: 14, fontWeight: "600" },
 });

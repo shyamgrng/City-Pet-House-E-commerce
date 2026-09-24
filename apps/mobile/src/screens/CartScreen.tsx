@@ -1,30 +1,41 @@
-import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius } from "../theme/colors";
 import AppHeader from "../components/AppHeader";
+import PaymentMethodPanel from "../components/PaymentMethodPanel";
 import PlaceholderBox from "../components/PlaceholderBox";
 import OrderConfirmationView from "./cart/OrderConfirmationView";
 import { useCart } from "../context/CartContext";
 import { formatRs } from "../lib/format";
 import { calculateDeliveryFee, type Order, type OrderStatus } from "../lib/order-types";
+import { PAYMENT_METHODS_FALLBACK } from "../lib/payment-methods";
+import { useSiteContent } from "../lib/site-content";
 
-const PAYMENT_METHODS = ["eSewa", "Khalti", "Bank Transfer"];
 const STATUS_SEQUENCE: OrderStatus[] = ["Receipt Uploaded", "Payment Approved", "On the Way", "Delivered"];
 
 export default function CartScreen() {
   const { items, subtotal, inc, dec, remove, clear } = useCart();
   const [order, setOrder] = useState<Order | null>(null);
+  const methods = useSiteContent("cph_payment_methods", PAYMENT_METHODS_FALLBACK);
+  const activeMethods = methods.filter((m) => m.active);
 
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
-  const [receiptUri, setReceiptUri] = useState("");
+  const [selectedMethodKey, setSelectedMethodKey] = useState(activeMethods[0]?.key ?? "");
+  const [fonepayVerified, setFonepayVerified] = useState(false);
   const [error, setError] = useState("");
   const orderCounter = useRef(1);
 
   const { fee: deliveryFee, freeApplied } = calculateDeliveryFee(subtotal);
   const total = items.length > 0 ? subtotal + deliveryFee : 0;
+
+  useEffect(() => {
+    if (activeMethods.length > 0 && !activeMethods.some((m) => m.key === selectedMethodKey)) {
+      setSelectedMethodKey(activeMethods[0].key);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMethods]);
 
   // Simulates the real backend's admin-approval -> dispatch -> delivered pipeline locally,
   // since there's no real backend behind this mobile prototype yet.
@@ -37,19 +48,6 @@ export default function CartScreen() {
     }, 4000);
     return () => clearTimeout(timer);
   }, [order]);
-
-  const pickReceipt = async () => {
-    setError("");
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError("We need permission to access your photos to upload the receipt.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.7 });
-    if (!result.canceled && result.assets[0]) {
-      setReceiptUri(result.assets[0].uri);
-    }
-  };
 
   const placeOrder = () => {
     if (items.length === 0) {
@@ -64,8 +62,8 @@ export default function CartScreen() {
       setError("Enter a valid 10-digit phone number.");
       return;
     }
-    if (!receiptUri) {
-      setError("Please upload your payment receipt to continue.");
+    if (!selectedMethodKey) {
+      setError("Please choose a payment method.");
       return;
     }
     const newOrder: Order = {
@@ -78,6 +76,8 @@ export default function CartScreen() {
       deliveryFee,
       total,
       status: "Receipt Uploaded",
+      paymentMethod: selectedMethodKey,
+      fonepayVerified,
       createdAt: Date.now(),
     };
     setOrder(newOrder);
@@ -88,7 +88,7 @@ export default function CartScreen() {
     setOrder(null);
     setAddress("");
     setPhone("");
-    setReceiptUri("");
+    setFonepayVerified(false);
     setError("");
   };
 
@@ -197,39 +197,26 @@ export default function CartScreen() {
             </View>
 
             <View style={styles.paymentCard}>
-              <Text style={styles.sectionTitleInline}>Payment Instructions</Text>
+              <Text style={styles.sectionTitleInline}>Payment</Text>
               <Text style={styles.paymentSubtext}>
-                Pay via any of the QR codes below. Upload your receipt screenshot — your order will be held for 6 hours pending admin approval.
+                Choose how you&apos;d like to pay, then confirm below once you&apos;ve sent the payment — your order will be held
+                pending admin approval.
               </Text>
-              <View style={styles.qrRow}>
-                {PAYMENT_METHODS.map((pm) => (
-                  <View key={pm} style={styles.qrItem}>
-                    <PlaceholderBox label="QR" height={80} radius={10} />
-                    <Text style={styles.qrLabel}>{pm}</Text>
-                  </View>
-                ))}
-              </View>
-
-              <Text style={styles.fieldLabel}>
-                Upload Payment Receipt <Text style={styles.required}>*</Text>
-              </Text>
-              {receiptUri ? (
-                <View style={styles.receiptWrap}>
-                  <Image source={{ uri: receiptUri }} style={styles.receiptImage} resizeMode="contain" />
-                  <Pressable onPress={pickReceipt}>
-                    <Text style={styles.replaceLink}>Replace</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable onPress={pickReceipt} style={styles.dropZone}>
-                  <Text style={styles.dropZoneText}>Tap to upload your payment receipt screenshot</Text>
-                </Pressable>
-              )}
+              <PaymentMethodPanel
+                methods={activeMethods}
+                amount={total}
+                reference={`cart-${Date.now()}`}
+                remarks1="City Pet House"
+                remarks2="Order Payment"
+                selectedKey={selectedMethodKey}
+                onSelect={setSelectedMethodKey}
+                onFonepayVerifiedChange={setFonepayVerified}
+              />
             </View>
 
             {error !== "" && <Text style={styles.error}>{error}</Text>}
             <Pressable onPress={placeOrder} style={styles.placeOrderButton}>
-              <Text style={styles.placeOrderButtonText}>Place Order & Upload Receipt</Text>
+              <Text style={styles.placeOrderButtonText}>I&apos;ve Paid — Place Order</Text>
             </Pressable>
           </>
         )}
@@ -284,15 +271,6 @@ const styles = StyleSheet.create({
   totalValue: { fontSize: 18, fontWeight: "700", color: colors.primary },
   paymentCard: { backgroundColor: "#EAF4F9", borderWidth: 1, borderColor: "#CFE6F1", borderRadius: 12, padding: 18, marginBottom: 16 },
   paymentSubtext: { fontSize: 12, color: "#5B6773", lineHeight: 17, marginBottom: 14 },
-  qrRow: { flexDirection: "row", justifyContent: "center", gap: 12, marginBottom: 16 },
-  qrItem: { alignItems: "center", gap: 6, width: 80 },
-  qrLabel: { fontSize: 11, fontWeight: "600", color: colors.text },
-  required: { color: colors.error },
-  receiptWrap: { gap: 8 },
-  receiptImage: { width: "100%", height: 200, borderRadius: 10, borderWidth: 1, borderColor: "#C7DCE6", backgroundColor: colors.white },
-  replaceLink: { fontSize: 12, fontWeight: "600", color: colors.primary },
-  dropZone: { height: 110, borderRadius: 10, borderWidth: 2, borderStyle: "dashed", borderColor: "#C7DCE6", backgroundColor: colors.white, alignItems: "center", justifyContent: "center" },
-  dropZoneText: { fontSize: 12, color: colors.textMuted, paddingHorizontal: 20, textAlign: "center" },
   error: { fontSize: 12, color: colors.error, marginBottom: 12 },
   placeOrderButton: { backgroundColor: colors.primary, borderRadius: radius.button, paddingVertical: 14, alignItems: "center" },
   placeOrderButtonText: { color: colors.white, fontSize: 14, fontWeight: "600" },

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, radius } from "../../theme/colors";
 import { formatRs } from "../../lib/format";
-import { orderTimeline, STATUS_COLORS, type Order } from "../../lib/order-types";
+import { orderStatusLabel, orderTimeline, STATUS_COLORS, type Order } from "../../lib/order-types";
 
 function ProductReview({ name }: { name: string }) {
   const [rating, setRating] = useState(0);
@@ -103,7 +103,10 @@ export default function OrderConfirmationView({ order, onBackToShop }: { order: 
 
               {step.key === "receipt" && (
                 <View style={styles.receiptNote}>
-                  <Text style={styles.receiptNoteText}>📎 Payment receipt uploaded — held for admin review, usually within a few hours</Text>
+                  <Text style={styles.receiptNoteText}>
+                    💳 {order.fonepayVerified ? "Payment confirmed via Fonepay" : "Payment submitted"} — held for admin review, usually
+                    within a few hours
+                  </Text>
                 </View>
               )}
 
@@ -124,7 +127,7 @@ export default function OrderConfirmationView({ order, onBackToShop }: { order: 
         <Text style={styles.receiverLine}>{order.ownerName}</Text>
         <Text style={styles.receiverLine}>📞 {order.ownerPhone}</Text>
         <Text style={styles.receiverLine}>📍 {order.address}</Text>
-        <Text style={[styles.receiverStatus, { color: STATUS_COLORS[order.status] }]}>Status: {order.status}</Text>
+        <Text style={[styles.receiverStatus, { color: STATUS_COLORS[order.status] }]}>Status: {orderStatusLabel(order.status)}</Text>
       </View>
     </ScrollView>
   );

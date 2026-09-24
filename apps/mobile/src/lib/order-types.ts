@@ -18,8 +18,17 @@ export type Order = {
   deliveryFee: number;
   total: number;
   status: OrderStatus;
+  paymentMethod: string;
+  fonepayVerified?: boolean;
   createdAt: number;
 };
+
+/** "Receipt Uploaded" predates removing receipt upload and would now read as if a receipt is
+ * still involved, so it's shown as "Awaiting Approval" instead. The underlying stored value is
+ * left unchanged so the status-progression logic elsewhere keeps working. */
+export function orderStatusLabel(status: OrderStatus): string {
+  return status === "Receipt Uploaded" ? "Awaiting Approval" : status;
+}
 
 export type TimelineStep = { key: string; title: string; subtitle: string; icon: string; done: boolean };
 
@@ -34,7 +43,7 @@ export function orderTimeline(order: Order): TimelineStep[] {
   const r = rank[order.status];
   return [
     { key: "placed", title: "Order Placed", subtitle: "Order confirmed · emailed to you & admin", icon: "1", done: true },
-    { key: "receipt", title: "Receipt Uploaded", subtitle: "Payment receipt submitted for review", icon: "📎", done: true },
+    { key: "receipt", title: "Payment Submitted", subtitle: "Your payment is waiting for admin approval", icon: "💳", done: true },
     {
       key: "approved",
       title: "Payment Approved",

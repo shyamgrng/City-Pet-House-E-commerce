@@ -84,7 +84,6 @@ export default function VetBookView({
       petSpecies,
       petAge,
       reason,
-      receiptUri: "",
       status: "Payment Review",
       invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
     });

@@ -47,7 +47,9 @@ export default function VetScreen() {
             const doctor = VET_DOCTORS.find((d) => d.id === step.booking.doctorId) ?? VET_DOCTORS[0];
             setStep({ name: "book", doctor });
           }}
-          onSubmit={(receiptUri) => setStep({ name: "status", booking: { ...step.booking, receiptUri, status: "Payment Review" } })}
+          onSubmit={(paymentMethod, fonepayVerified) =>
+            setStep({ name: "status", booking: { ...step.booking, paymentMethod, fonepayVerified, status: "Payment Review" } })
+          }
         />
       )}
     </SafeAreaView>
